@@ -295,7 +295,7 @@ success:null
 })
 
 // oyun sayfası
-app.get("/play",(req,res)=>{
+app.get("/game",(req,res)=>{
     const username = req.query.username
     res.render("game",{username})
 })

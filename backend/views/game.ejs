@@ -1,3 +1,1173 @@
-<h2><%= username %> ile oynuyorsun!</h2>
-<canvas id="gameCanvas"></canvas>
-<script src="/game.js"></script>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attack on Titan Game</title>
+  <style>
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{
+      background:#0b0b0b;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      flex-direction:column;
+      gap:12px;
+      overflow:hidden;
+    }
+
+    .topbar{
+      width:1000px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:18px;
+      font-weight:bold;
+    }
+
+    .help{
+      width:1000px;
+      font-size:14px;
+      opacity:.95;
+      line-height:1.5;
+    }
+
+    canvas{
+      background:linear-gradient(to top, #1a1a1a 0%, #101820 55%, #0a1018 100%);
+      border:2px solid #d8d8d8;
+      display:block;
+      cursor:crosshair;
+      box-shadow:0 0 30px rgba(255,255,255,.08);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div>Oyuncu: <%= username || "Player" %></div>
+    <div id="scoreText">Score: 0</div>
+  </div>
+
+  <div class="help">
+    Hareket: A / D veya ← / → | Zıplama: W / ↑ | Saldırı: Space | Halat: Mouse | Restart: R
+  </div>
+
+  <canvas id="gameCanvas" width="1000" height="560"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreText = document.getElementById("scoreText");
+
+    const WORLD = {
+      width: 3900,
+      height: 560
+    };
+
+    const camera = { x: 0 };
+
+    const game = {
+      state: "playing",
+      message: "",
+      maxProgressX: 80,
+      invincibleTimer: 0
+    };
+
+    const ground = {
+      x: 0,
+      y: 490,
+      width: WORLD.width,
+      height: 70
+    };
+
+    const player = {
+      x: 80,
+      y: ground.y - 46,
+      width: 28,
+      height: 46,
+      vx: 0,
+      vy: 0,
+
+      speed: 3.0,
+      maxRunSpeed: 4.4,
+      gravity: 0.58,
+      jumpPower: -11.8,
+
+      onGround: false,
+      facing: 1,
+
+      grappling: false,
+      grappleTarget: null,
+      grapplePull: 0.82,
+      airFriction: 0.992,
+      groundFriction: 0.78,
+      maxGrappleDistance: 430,
+
+      boostMode: false,
+      boostTimer: 0,
+
+      maxHealth: 100,
+      health: 100,
+
+      maxGas: 100,
+      gas: 100,
+
+      attackTimer: 0,
+      attackCooldown: 0,
+      hitFlashTimer: 0
+    };
+
+    const keys = {};
+
+    const buildings = [
+      { x: 220,  y: 370, width: 90,  height: 120 },
+      { x: 370,  y: 330, width: 110, height: 160 },
+      { x: 560,  y: 290, width: 120, height: 200 },
+      { x: 760,  y: 345, width: 100, height: 145 },
+      { x: 980,  y: 260, width: 130, height: 230 },
+      { x: 1200, y: 320, width: 120, height: 170 },
+      { x: 1470, y: 280, width: 135, height: 210 },
+      { x: 1730, y: 350, width: 110, height: 140 },
+      { x: 1970, y: 240, width: 145, height: 250 },
+      { x: 2260, y: 300, width: 130, height: 190 },
+      { x: 2520, y: 255, width: 150, height: 235 },
+      { x: 2810, y: 335, width: 115, height: 155 },
+      { x: 3070, y: 270, width: 150, height: 220 },
+      { x: 3340, y: 320, width: 110, height: 170 },
+      { x: 3530, y: 275, width: 125, height: 215 }
+    ];
+
+    const towers = [
+      { x: 690,  y: 220, width: 38, height: 270 },
+      { x: 1625, y: 205, width: 40, height: 285 },
+      { x: 2440, y: 190, width: 42, height: 300 },
+      { x: 3250, y: 200, width: 40, height: 290 }
+    ];
+
+    const trees = [
+      { x: 900,  trunkY: 295, trunkH: 195, crownR: 34 },
+      { x: 1875, trunkY: 265, trunkH: 225, crownR: 38 },
+      { x: 2730, trunkY: 285, trunkH: 205, crownR: 34 }
+    ];
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function randInt(min, max) {
+      return Math.floor(rand(min, max + 1));
+    }
+
+    function rectsCollide(a, b) {
+      return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+      );
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function dist(ax, ay, bx, by) {
+      const dx = bx - ax;
+      const dy = by - ay;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function getPlayerRect() {
+      return {
+        x: player.x,
+        y: player.y,
+        width: player.width,
+        height: player.height
+      };
+    }
+
+    function createTitan(x, minX, maxX, dir = 1) {
+      const height = randInt(82, 130);
+      const width = Math.floor(height * 0.42);
+      const hp = Math.max(2, Math.floor(height / 34));
+
+      return {
+        x,
+        y: ground.y - height,
+        width,
+        height,
+        alive: true,
+        dir,
+        faceDir: dir,
+        minX,
+        maxX,
+        moveSpeed: rand(0.55, 1.0),
+        maxHealth: hp,
+        health: hp,
+        hitCooldown: 0,
+        attackCooldown: 0,
+        stunTimer: 0,
+        attackFlashTimer: 0,
+        damage: randInt(10, 18),
+        bloodTimer: 0
+      };
+    }
+
+    const titans = [
+      createTitan(650, 620, 900, 1),
+      createTitan(1340, 1260, 1540, -1),
+      createTitan(2110, 2050, 2290, 1),
+      createTitan(2920, 2860, 3120, -1),
+      createTitan(3510, 3440, 3670, -1)
+    ];
+
+    const items = [
+      { x: 250,  y: 344, width: 18, height: 18, collected: false, kind: "score", score: 50 },
+      { x: 418,  y: 304, width: 18, height: 18, collected: false, kind: "score", score: 50 },
+      { x: 610,  y: 264, width: 18, height: 18, collected: false, kind: "boost", score: 180 },
+      { x: 790,  y: 319, width: 18, height: 18, collected: false, kind: "score", score: 50 },
+      { x: 1035, y: 234, width: 18, height: 18, collected: false, kind: "medkit", score: 25, heal: 30 },
+      { x: 1248, y: 294, width: 18, height: 18, collected: false, kind: "boost", score: 180 },
+      { x: 1515, y: 254, width: 18, height: 18, collected: false, kind: "score", score: 50 },
+      { x: 1765, y: 324, width: 18, height: 18, collected: false, kind: "medkit", score: 25, heal: 35 },
+      { x: 2030, y: 214, width: 18, height: 18, collected: false, kind: "boost", score: 180 },
+      { x: 2310, y: 274, width: 18, height: 18, collected: false, kind: "gas", score: 20, gas: 35 },
+      { x: 2570, y: 229, width: 18, height: 18, collected: false, kind: "score", score: 50 },
+      { x: 2858, y: 309, width: 18, height: 18, collected: false, kind: "boost", score: 180 },
+      { x: 3125, y: 244, width: 18, height: 18, collected: false, kind: "medkit", score: 25, heal: 40 },
+      { x: 3375, y: 294, width: 18, height: 18, collected: false, kind: "gas", score: 20, gas: 40 },
+      { x: 3575, y: 249, width: 18, height: 18, collected: false, kind: "score", score: 50 }
+    ];
+
+    const finish = {
+      x: 3820,
+      y: 380,
+      width: 44,
+      height: 110
+    };
+
+    let killScore = 0;
+    let itemScore = 0;
+    const bloodEffects = [];
+
+    function spawnBlood(x, y, count = 10) {
+      for (let i = 0; i < count; i++) {
+        bloodEffects.push({
+          x,
+          y,
+          vx: rand(-2.8, 2.8),
+          vy: rand(-3.2, -0.6),
+          life: randInt(18, 32),
+          size: rand(2, 5)
+        });
+      }
+    }
+
+    function updateBloodEffects() {
+      for (let i = bloodEffects.length - 1; i >= 0; i--) {
+        const p = bloodEffects[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.18;
+        p.life--;
+        if (p.life <= 0) bloodEffects.splice(i, 1);
+      }
+    }
+
+    function getDistanceScore() {
+      return Math.max(0, Math.floor((game.maxProgressX - 80) / 16));
+    }
+
+    function getTotalScore() {
+      return getDistanceScore() + killScore + itemScore;
+    }
+
+    function setLose(message) {
+      game.state = "lose";
+      game.message = message;
+      player.vx = 0;
+      player.vy = 0;
+      player.grappling = false;
+      player.grappleTarget = null;
+    }
+
+    function setWin(message) {
+      game.state = "win";
+      game.message = message;
+      player.vx = 0;
+      player.vy = 0;
+      player.grappling = false;
+      player.grappleTarget = null;
+    }
+
+    function resetGame() {
+      player.x = 80;
+      player.y = ground.y - player.height;
+      player.vx = 0;
+      player.vy = 0;
+      player.onGround = true;
+      player.facing = 1;
+      player.grappling = false;
+      player.grappleTarget = null;
+      player.boostMode = false;
+      player.boostTimer = 0;
+      player.health = player.maxHealth;
+      player.gas = player.maxGas;
+      player.attackTimer = 0;
+      player.attackCooldown = 0;
+      player.hitFlashTimer = 0;
+
+      camera.x = 0;
+      killScore = 0;
+      itemScore = 0;
+      game.maxProgressX = 80;
+      game.state = "playing";
+      game.message = "";
+      game.invincibleTimer = 0;
+
+      bloodEffects.length = 0;
+
+      titans.length = 0;
+      titans.push(
+        createTitan(650, 620, 900, 1),
+        createTitan(1340, 1260, 1540, -1),
+        createTitan(2110, 2050, 2290, 1),
+        createTitan(2920, 2860, 3120, -1),
+        createTitan(3510, 3440, 3670, -1)
+      );
+
+      items.forEach(i => i.collected = false);
+    }
+
+    function getAnchorPoints() {
+      const anchors = [];
+
+      for (const b of buildings) {
+        anchors.push({ x: b.x + 10, y: b.y - 8 });
+        anchors.push({ x: b.x + b.width - 10, y: b.y - 8 });
+        anchors.push({ x: b.x + b.width / 2, y: b.y - 16 });
+      }
+
+      for (const t of towers) {
+        anchors.push({ x: t.x + t.width / 2, y: t.y - 15 });
+      }
+
+      for (const tree of trees) {
+        anchors.push({ x: tree.x, y: tree.trunkY - 30 });
+      }
+
+      return anchors;
+    }
+
+    const anchorPoints = getAnchorPoints();
+
+    function findBestAnchor(clickWorldX, clickWorldY) {
+      const playerCenterX = player.x + player.width / 2;
+      const playerCenterY = player.y + player.height / 2;
+
+      let best = null;
+      let bestScore = Infinity;
+
+      for (const a of anchorPoints) {
+        const clickDistance = dist(clickWorldX, clickWorldY, a.x, a.y);
+        const playerDistance = dist(playerCenterX, playerCenterY, a.x, a.y);
+
+        if (clickDistance <= 80 && playerDistance <= player.maxGrappleDistance && a.y < playerCenterY + 120) {
+          const score = clickDistance + playerDistance * 0.18;
+          if (score < bestScore) {
+            bestScore = score;
+            best = a;
+          }
+        }
+      }
+
+      return best;
+    }
+
+    function startGrapple(target) {
+      if (player.gas <= 0) return;
+
+      const gasCost = 10;
+      if (player.gas < gasCost) return;
+
+      player.gas -= gasCost;
+
+      const px = player.x + player.width / 2;
+      const py = player.y + player.height / 2;
+
+      player.grappling = true;
+      player.grappleTarget = { x: target.x, y: target.y };
+
+      const dx = target.x - px;
+      const dy = target.y - py;
+      const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+
+      player.vx += (dx / len) * 3.4;
+      player.vy += (dy / len) * 3.4;
+      player.onGround = false;
+    }
+
+    function getSlashHitbox() {
+      const width = 52;
+      const height = 28;
+      const x = player.facing === 1 ? player.x + player.width - 4 : player.x - width + 4;
+      const y = player.y + 8;
+      return { x, y, width, height };
+    }
+
+    function attackTitanIfPossible(titan) {
+      if (!titan.alive || titan.hitCooldown > 0 || player.attackTimer <= 0) return false;
+
+      const slash = getSlashHitbox();
+
+      const nape = {
+        x: titan.x + titan.width * 0.08,
+        y: titan.y + titan.height * 0.10,
+        width: titan.width * 0.84,
+        height: titan.height * 0.34
+      };
+
+      const playerCenterX = player.x + player.width / 2;
+      const playerCenterY = player.y + player.height / 2;
+      const titanCenterX = titan.x + titan.width / 2;
+      const titanCenterY = titan.y + titan.height / 2;
+
+      const behindTitan =
+        (titan.faceDir === 1 && playerCenterX < titanCenterX + titan.width * 0.38) ||
+        (titan.faceDir === -1 && playerCenterX > titanCenterX - titan.width * 0.38);
+
+      const highEnough = playerCenterY < titanCenterY + titan.height * 0.18;
+      const closeEnough = dist(playerCenterX, playerCenterY, titanCenterX, titanCenterY) < 135;
+
+      if (rectsCollide(slash, nape) && behindTitan && highEnough && closeEnough) {
+        let damage = 1;
+        if (player.boostMode) {
+          damage = 2;
+        } else if (Math.abs(player.vx) > 4.8 || Math.abs(player.vy) > 5.2) {
+          damage = 2;
+        }
+
+        titan.health -= damage;
+        titan.hitCooldown = 16;
+        titan.bloodTimer = 14;
+        titan.stunTimer = 28;
+
+        const bloodX = titan.x + titan.width / 2;
+        const bloodY = titan.y + titan.height * 0.22;
+        spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 12);
+
+        // vurduğu tarafta kalsın
+        if (playerCenterX < titanCenterX) {
+          player.x = Math.min(player.x, titan.x - player.width - 2);
+        } else {
+          player.x = Math.max(player.x, titan.x + titan.width + 2);
+        }
+
+        player.vx *= 0.35;
+        player.vy = Math.min(player.vy, -2.8);
+
+        if (titan.health <= 0) {
+          titan.alive = false;
+          killScore += titan.maxHealth * 140;
+          spawnBlood(bloodX, bloodY, 22);
+        }
+
+        return true;
+      }
+
+      return false;
+    }
+
+    function damagePlayer(amount, titanX) {
+      if (game.invincibleTimer > 0 || game.state !== "playing") return;
+
+      player.health -= amount;
+      game.invincibleTimer = 65;
+      player.hitFlashTimer = 18;
+
+      const knockDir = (player.x + player.width / 2) < titanX ? -1 : 1;
+      player.vx = 5.0 * knockDir;
+      player.vy = -6.0;
+      player.grappling = false;
+      player.grappleTarget = null;
+
+      spawnBlood(player.x + player.width / 2, player.y + player.height / 2, 8);
+
+      if (player.health <= 0) {
+        player.health = 0;
+        setLose("Canın bitti!");
+      }
+    }
+
+    function titanCanAttackPlayer(titan) {
+      const playerCenterX = player.x + player.width / 2;
+      const playerCenterY = player.y + player.height / 2;
+      const titanCenterX = titan.x + titan.width / 2;
+      const titanFrontReach = titan.width * 0.72;
+      const titanTop = titan.y + 10;
+      const titanBottom = titan.y + titan.height - 10;
+
+      const inVerticalRange =
+        playerCenterY > titanTop &&
+        playerCenterY < titanBottom;
+
+      const inFront =
+        (titan.faceDir === 1 &&
+          playerCenterX >= titanCenterX + 2 &&
+          playerCenterX <= titanCenterX + titanFrontReach) ||
+        (titan.faceDir === -1 &&
+          playerCenterX <= titanCenterX - 2 &&
+          playerCenterX >= titanCenterX - titanFrontReach);
+
+      return inFront && inVerticalRange;
+    }
+
+    document.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      keys[key] = true;
+
+      const jumpPressed = (key === "w" || e.key === "ArrowUp");
+      const attackPressed = (e.code === "Space");
+
+      if (jumpPressed && game.state === "playing" && player.onGround) {
+        player.vy = player.jumpPower;
+        player.onGround = false;
+      }
+
+      if (attackPressed && game.state === "playing" && player.attackCooldown <= 0) {
+        player.attackTimer = 10;
+        player.attackCooldown = 16;
+      }
+
+      if (key === "r") {
+        resetGame();
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      const key = e.key.toLowerCase();
+      keys[key] = false;
+    });
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (game.state !== "playing") return;
+      if (player.gas <= 0) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const worldX = clickX + camera.x;
+      const worldY = clickY;
+
+      const anchor = findBestAnchor(worldX, worldY);
+      if (anchor) startGrapple(anchor);
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (player.grappling) {
+        player.grappling = false;
+        player.grappleTarget = null;
+      }
+    });
+
+    function updateTimers() {
+      if (player.boostMode) {
+        player.boostTimer--;
+        if (player.boostTimer <= 0) {
+          player.boostMode = false;
+        }
+      }
+
+      if (player.attackTimer > 0) player.attackTimer--;
+      if (player.attackCooldown > 0) player.attackCooldown--;
+      if (player.hitFlashTimer > 0) player.hitFlashTimer--;
+      if (game.invincibleTimer > 0) game.invincibleTimer--;
+
+      titans.forEach(t => {
+        if (t.hitCooldown > 0) t.hitCooldown--;
+        if (t.attackCooldown > 0) t.attackCooldown--;
+        if (t.attackFlashTimer > 0) t.attackFlashTimer--;
+        if (t.bloodTimer > 0) t.bloodTimer--;
+        if (t.stunTimer > 0) t.stunTimer--;
+      });
+
+      updateBloodEffects();
+    }
+
+    function updatePlayer() {
+      if (game.state !== "playing") return;
+
+      const moveLeft = keys["a"] || keys["arrowleft"];
+      const moveRight = keys["d"] || keys["arrowright"];
+      const accel = player.onGround ? 0.62 : 0.30;
+      const maxHorizontal = player.boostMode ? 7.0 : player.maxRunSpeed;
+
+      if (moveLeft) {
+        player.vx -= accel;
+        player.facing = -1;
+      }
+      if (moveRight) {
+        player.vx += accel;
+        player.facing = 1;
+      }
+
+      if (!moveLeft && !moveRight && player.onGround) {
+        player.vx *= player.groundFriction;
+      }
+
+      if (!player.onGround) {
+        player.vx *= player.airFriction;
+      }
+
+      player.vx = clamp(player.vx, -maxHorizontal, maxHorizontal);
+
+      if (player.grappling && player.grappleTarget) {
+        const px = player.x + player.width / 2;
+        const py = player.y + player.height / 2;
+        const tx = player.grappleTarget.x;
+        const ty = player.grappleTarget.y;
+
+        const dx = tx - px;
+        const dy = ty - py;
+        const length = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+        const nx = dx / length;
+        const ny = dy / length;
+
+        player.vx += nx * player.grapplePull;
+        player.vy += ny * player.grapplePull;
+
+        if (length < 34) {
+          player.vx += 2.3 * player.facing;
+          player.vy -= 1.4;
+          player.grappling = false;
+          player.grappleTarget = null;
+        }
+      }
+
+      player.vy += player.gravity;
+      player.vx = clamp(player.vx, -11, 11);
+      player.vy = clamp(player.vy, -16, 15);
+
+      const prevY = player.y;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      if (player.x < 0) {
+        player.x = 0;
+        player.vx = 0;
+      }
+      if (player.x + player.width > WORLD.width) {
+        player.x = WORLD.width - player.width;
+        player.vx = 0;
+      }
+
+      player.onGround = false;
+
+      if (player.y + player.height >= ground.y) {
+        player.y = ground.y - player.height;
+        player.vy = 0;
+        player.onGround = true;
+      }
+
+      const standables = [];
+      for (const b of buildings) standables.push({ x: b.x, y: b.y, width: b.width, height: 12 });
+      for (const t of towers) standables.push({ x: t.x, y: t.y, width: t.width, height: 12 });
+
+      for (const s of standables) {
+        const playerRect = getPlayerRect();
+
+        if (rectsCollide(playerRect, s)) {
+          const prevBottom = prevY + player.height;
+          const currBottom = player.y + player.height;
+
+          if (prevBottom <= s.y + 8 && currBottom >= s.y) {
+            player.y = s.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+          }
+        }
+      }
+
+      if (player.y > canvas.height + 220) {
+        setLose("Düştün!");
+      }
+
+      if (player.x > game.maxProgressX) {
+        game.maxProgressX = player.x;
+      }
+    }
+
+    function updateTitans() {
+      if (game.state !== "playing") return;
+
+      titans.forEach(titan => {
+        if (!titan.alive) return;
+
+        if (titan.stunTimer <= 0) {
+          titan.x += titan.dir * titan.moveSpeed;
+          if (titan.x <= titan.minX) titan.dir = 1;
+          if (titan.x >= titan.maxX) titan.dir = -1;
+        }
+
+        titan.faceDir = titan.dir;
+
+        if (player.attackTimer > 0) {
+          attackTitanIfPossible(titan);
+        }
+
+        const titanRect = {
+          x: titan.x,
+          y: titan.y,
+          width: titan.width,
+          height: titan.height
+        };
+
+        if (rectsCollide(getPlayerRect(), titanRect)) {
+          if (titan.stunTimer <= 0 && titanCanAttackPlayer(titan) && titan.attackCooldown <= 0) {
+            damagePlayer(titan.damage, titan.x + titan.width / 2);
+            titan.attackCooldown = 40;
+            titan.attackFlashTimer = 12;
+          }
+        }
+      });
+    }
+
+    function updateItems() {
+      if (game.state !== "playing") return;
+
+      items.forEach(item => {
+        if (item.collected) return;
+
+        const itemRect = {
+          x: item.x,
+          y: item.y,
+          width: item.width,
+          height: item.height
+        };
+
+        if (rectsCollide(getPlayerRect(), itemRect)) {
+          item.collected = true;
+          itemScore += item.score;
+
+          if (item.kind === "boost") {
+            player.boostMode = true;
+            player.boostTimer = 520;
+            player.vx += 1.5 * player.facing;
+            player.vy -= 1.5;
+          } else if (item.kind === "medkit") {
+            player.health = Math.min(player.maxHealth, player.health + item.heal);
+          } else if (item.kind === "gas") {
+            player.gas = Math.min(player.maxGas, player.gas + item.gas);
+          }
+        }
+      });
+    }
+
+    function updateFinish() {
+      if (game.state !== "playing") return;
+
+      const finishRect = {
+        x: finish.x,
+        y: finish.y,
+        width: finish.width,
+        height: finish.height
+      };
+
+      if (rectsCollide(getPlayerRect(), finishRect)) {
+        setWin("Bölüm tamamlandı!");
+      }
+    }
+
+    function updateCamera() {
+      camera.x = player.x - canvas.width * 0.42;
+      camera.x = clamp(camera.x, 0, WORLD.width - canvas.width);
+    }
+
+    function drawSky() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, "#0a1018");
+      grad.addColorStop(0.55, "#162433");
+      grad.addColorStop(1, "#2f2f2f");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 16; i++) {
+        const x = i * 180 - (camera.x * 0.18 % 180);
+        ctx.fillStyle = i % 2 === 0 ? "#202a35" : "#1b2430";
+        ctx.fillRect(x, 170, 110, 260);
+      }
+
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(255,255,220,0.08)";
+      ctx.arc(840 - camera.x * 0.02, 90, 36, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawGround() {
+      ctx.fillStyle = "#3c4b2a";
+      ctx.fillRect(ground.x - camera.x, ground.y, ground.width, ground.height);
+
+      ctx.fillStyle = "#567041";
+      ctx.fillRect(ground.x - camera.x, ground.y, ground.width, 8);
+    }
+
+    function drawBuildings() {
+      buildings.forEach((b, index) => {
+        ctx.fillStyle = index % 2 === 0 ? "#766a60" : "#6b6058";
+        ctx.fillRect(b.x - camera.x, b.y, b.width, b.height);
+
+        ctx.fillStyle = "#7b1f1f";
+        ctx.beginPath();
+        ctx.moveTo(b.x - camera.x - 8, b.y);
+        ctx.lineTo(b.x - camera.x + b.width / 2, b.y - 18);
+        ctx.lineTo(b.x - camera.x + b.width + 8, b.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#d8c47a";
+        for (let row = 0; row < 4; row++) {
+          for (let col = 0; col < Math.floor(b.width / 26); col++) {
+            const wx = b.x - camera.x + 10 + col * 22;
+            const wy = b.y + 18 + row * 30;
+            if (wy + 14 < b.y + b.height - 8) {
+              ctx.fillRect(wx, wy, 10, 14);
+            }
+          }
+        }
+      });
+    }
+
+    function drawTowers() {
+      towers.forEach(t => {
+        ctx.fillStyle = "#8b8279";
+        ctx.fillRect(t.x - camera.x, t.y, t.width, t.height);
+
+        ctx.fillStyle = "#5b1c1c";
+        ctx.beginPath();
+        ctx.moveTo(t.x - camera.x - 6, t.y);
+        ctx.lineTo(t.x - camera.x + t.width / 2, t.y - 20);
+        ctx.lineTo(t.x - camera.x + t.width + 6, t.y);
+        ctx.closePath();
+        ctx.fill();
+      });
+    }
+
+    function drawTrees() {
+      trees.forEach(tree => {
+        ctx.fillStyle = "#5d3d1e";
+        ctx.fillRect(tree.x - camera.x - 7, tree.trunkY, 14, tree.trunkH);
+
+        ctx.fillStyle = "#1f7a43";
+        ctx.beginPath();
+        ctx.arc(tree.x - camera.x, tree.trunkY - 18, tree.crownR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(tree.x - camera.x - 18, tree.trunkY - 5, tree.crownR * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(tree.x - camera.x + 18, tree.trunkY - 4, tree.crownR * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function drawItems() {
+      items.forEach(item => {
+        if (item.collected) return;
+
+        const drawX = item.x - camera.x;
+        const drawY = item.y;
+
+        if (item.kind === "boost") {
+          ctx.fillStyle = "#00d8ff";
+          ctx.beginPath();
+          ctx.arc(drawX + 9, drawY + 9, 9, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (item.kind === "medkit") {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(drawX, drawY, 18, 18);
+          ctx.fillStyle = "#e74c3c";
+          ctx.fillRect(drawX + 7, drawY + 3, 4, 12);
+          ctx.fillRect(drawX + 3, drawY + 7, 12, 4);
+        } else if (item.kind === "gas") {
+          ctx.fillStyle = "#bfc7cf";
+          ctx.fillRect(drawX + 4, drawY + 2, 10, 14);
+          ctx.fillStyle = "#6f7a84";
+          ctx.fillRect(drawX + 6, drawY, 6, 4);
+          ctx.strokeStyle = "#ffffff";
+          ctx.strokeRect(drawX + 4, drawY + 2, 10, 14);
+        } else {
+          ctx.fillStyle = "#f1c40f";
+          ctx.beginPath();
+          ctx.arc(drawX + 9, drawY + 9, 8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = "rgba(255,255,255,0.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(drawX - 1, drawY - 1, 20, 20);
+      });
+    }
+
+    function drawTitans() {
+      titans.forEach(titan => {
+        if (!titan.alive) return;
+
+        const x = titan.x - camera.x;
+        const y = titan.y;
+
+        ctx.fillStyle = titan.hitCooldown > 0 ? "#e9897f" : "#c96a5d";
+        ctx.fillRect(x, y, titan.width, titan.height);
+
+        ctx.fillStyle = "rgba(120,0,0,0.25)";
+        ctx.fillRect(x + titan.width * 0.12, y + titan.height * 0.12, titan.width * 0.76, titan.height * 0.26);
+
+        ctx.fillStyle = "#8b2d2d";
+        ctx.fillRect(x + 6, y + 12, titan.width - 12, 10);
+
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(x + 8, y + 22, 7, 7);
+        ctx.fillRect(x + titan.width - 15, y + 22, 7, 7);
+
+        ctx.fillStyle = titan.attackFlashTimer > 0 ? "#ffb3a8" : "#b85b4e";
+        if (titan.faceDir === 1) {
+          ctx.fillRect(x + titan.width - 3, y + titan.height * 0.45, titan.width * 0.42, 10);
+        } else {
+          ctx.fillRect(x - titan.width * 0.42 + 3, y + titan.height * 0.45, titan.width * 0.42, 10);
+        }
+
+        if (titan.bloodTimer > 0) {
+          ctx.fillStyle = "rgba(180,0,0,0.75)";
+          ctx.beginPath();
+          ctx.arc(x + titan.width / 2, y + titan.height * 0.23, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (titan.stunTimer > 0) {
+          ctx.fillStyle = "#ffd54f";
+          ctx.beginPath();
+          ctx.arc(x + titan.width / 2, y - 20, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + titan.width / 2 - 10, y - 13, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + titan.width / 2 + 10, y - 13, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const barWidth = titan.width;
+        const healthRatio = Math.max(0, titan.health / titan.maxHealth);
+
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(x, y - 12, barWidth, 6);
+
+        ctx.fillStyle = "#2ecc71";
+        ctx.fillRect(x, y - 12, barWidth * healthRatio, 6);
+      });
+    }
+
+    function drawFinish() {
+      ctx.fillStyle = "#3d8bff";
+      ctx.fillRect(finish.x - camera.x, finish.y, finish.width, finish.height);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText("HEDEF", finish.x - camera.x - 5, finish.y - 10);
+    }
+
+    function drawGrappleLine() {
+      if (!player.grappling || !player.grappleTarget) return;
+
+      const px = player.x + player.width / 2 - camera.x;
+      const py = player.y + player.height / 2;
+      const tx = player.grappleTarget.x - camera.x;
+      const ty = player.grappleTarget.y;
+
+      ctx.strokeStyle = "#e5e5e5";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+
+      ctx.fillStyle = "#9ae8ff";
+      ctx.beginPath();
+      ctx.arc(tx, ty, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawBloodEffects() {
+      for (const p of bloodEffects) {
+        ctx.fillStyle = "rgba(160,0,0,0.9)";
+        ctx.beginPath();
+        ctx.arc(p.x - camera.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawPlayer() {
+      const x = player.x - camera.x;
+      const y = player.y;
+
+      if (game.invincibleTimer > 0 && Math.floor(game.invincibleTimer / 4) % 2 === 0) {
+        ctx.globalAlpha = 0.45;
+      }
+
+      ctx.fillStyle = player.boostMode ? "#f1c40f" : "#2ecc71";
+      ctx.fillRect(x, y, player.width, player.height);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x + 6, y + 10, 5, 4);
+      ctx.fillRect(x + 17, y + 10, 5, 4);
+
+      ctx.fillStyle = "#cfd8dc";
+      if (player.facing === 1) {
+        ctx.fillRect(x + player.width, y + 18, 10, 3);
+      } else {
+        ctx.fillRect(x - 10, y + 18, 10, 3);
+      }
+
+      if (player.attackTimer > 0) {
+        const slashX = player.facing === 1 ? x + player.width + 2 : x - 28;
+        const slashY = y + 10;
+
+        ctx.strokeStyle = player.boostMode ? "rgba(0,216,255,0.95)" : "rgba(255,255,255,0.9)";
+        ctx.lineWidth = player.boostMode ? 4 : 3;
+        ctx.beginPath();
+        if (player.facing === 1) {
+          ctx.moveTo(slashX, slashY + 14);
+          ctx.lineTo(slashX + 28, slashY);
+        } else {
+          ctx.moveTo(slashX + 28, slashY + 14);
+          ctx.lineTo(slashX, slashY);
+        }
+        ctx.stroke();
+      }
+
+      if (player.hitFlashTimer > 0) {
+        ctx.strokeStyle = "rgba(255,120,120,0.9)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x + player.width / 2, y + player.height / 2, 24, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+    }
+
+    function drawHUD() {
+      scoreText.textContent = "Score: " + getTotalScore();
+
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(10, 10, 285, 185);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px Arial";
+      ctx.fillText("Kill: " + killScore, 20, 34);
+      ctx.fillText("Item: " + itemScore, 20, 58);
+      ctx.fillText("Distance: " + getDistanceScore(), 20, 82);
+
+      ctx.fillStyle = "white";
+      ctx.fillText("Can:", 20, 108);
+
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.fillRect(65, 95, 150, 16);
+
+      ctx.fillStyle = player.health > 55 ? "#2ecc71" : player.health > 25 ? "#f1c40f" : "#e74c3c";
+      ctx.fillRect(65, 95, 150 * (player.health / player.maxHealth), 16);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.strokeRect(65, 95, 150, 16);
+
+      ctx.fillStyle = "white";
+      ctx.fillText("Gaz:", 20, 138);
+
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.fillRect(65, 125, 150, 16);
+
+      ctx.fillStyle = "#66ccff";
+      ctx.fillRect(65, 125, 150 * (player.gas / player.maxGas), 16);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.strokeRect(65, 125, 150, 16);
+
+      if (player.boostMode) {
+        ctx.fillStyle = "#00d8ff";
+        ctx.fillText("ODM Boost: " + player.boostTimer, 20, 168);
+      }
+
+      if (player.gas <= 0) {
+        ctx.fillStyle = "#ff8080";
+        ctx.fillText("Gaz bitti!", 180, 138);
+      }
+    }
+
+    function drawGameMessage() {
+      if (game.state === "playing") return;
+
+      ctx.fillStyle = "rgba(0,0,0,0.62)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.font = "bold 38px Arial";
+      ctx.fillText(game.state === "win" ? "KAZANDIN!" : "OYUN BİTTİ", canvas.width / 2, 220);
+
+      ctx.font = "24px Arial";
+      ctx.fillText(game.message, canvas.width / 2, 270);
+
+      ctx.font = "22px Arial";
+      ctx.fillText("Toplam Skor: " + getTotalScore(), canvas.width / 2, 320);
+
+      ctx.font = "18px Arial";
+      ctx.fillText("Tekrar başlamak için R tuşuna bas", canvas.width / 2, 370);
+      ctx.textAlign = "start";
+    }
+
+    function update() {
+      updateTimers();
+      updatePlayer();
+      updateTitans();
+      updateItems();
+      updateFinish();
+      updateCamera();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawSky();
+      drawBuildings();
+      drawTowers();
+      drawTrees();
+      drawGround();
+      drawItems();
+      drawTitans();
+      drawFinish();
+      drawBloodEffects();
+      drawGrappleLine();
+      drawPlayer();
+      drawHUD();
+      drawGameMessage();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    resetGame();
+    gameLoop();
+  </script>
+
+</body>
+</html>
