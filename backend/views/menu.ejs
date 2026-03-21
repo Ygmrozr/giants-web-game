@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Menu</title>
+  <style>
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:#111;
+      color:white;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    .box{
+      width:420px;
+      background:rgba(255,255,255,0.08);
+      padding:40px;
+      border-radius:12px;
+      text-align:center;
+    }
+    a{
+      display:block;
+      margin:14px 0;
+      color:white;
+      text-decoration:none;
+      font-size:18px;
+      font-weight:bold;
+    }
+    a:hover{
+      color:#00d8ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Attack on Titan Game</h1>
+    <p>Welcome, <%= currentUser ? currentUser.username : "Player" %></p>
+
+    <a href="/game">Start Game</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</body>
+</html>

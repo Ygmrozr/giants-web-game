@@ -17,8 +17,8 @@ const transporter = nodemailer.createTransport({
 import path from "path"
 import { fileURLToPath } from "url"
 import bcrypt from "bcrypt"
+import session from "express-session"
 import validator from "validator"
-
 import User from "./models/User.js"
 
 const app = express()
@@ -26,17 +26,33 @@ const app = express()
 console.log(process.env.EMAIL_USER)
 console.log(process.env.EMAIL_PASS)
 
+
 // body parser
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
-// static files (resimler, css vb)
+///static files (resimler, css vb)
 app.use(express.static("public"))
+
+///session 
+app.use(session({
+  secret: process.env.SESSION_SECRET || "supersecret_session_key",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 // 1 saat
+  }
+}))
+
+
+// sonra Locals
 app.use((req,res,next)=>{
-res.locals.error=null
-res.locals.success=null
-next()
+  res.locals.error = null
+  res.locals.success = null
+  res.locals.currentUser = req.session.user || null
+  next()
 })
+
 // EJS ayarı
 app.set("view engine", "ejs")
 
@@ -66,7 +82,7 @@ app.get("/", (req,res)=>{
 
 ////////////// login sayfası
 app.get("/login",(req,res)=>{
-    res.render("login",{error:null})
+  res.render("login",{error:null, success:null})
 })
 
 /////////////// register sayfası
@@ -178,20 +194,25 @@ app.post("/login", async (req,res)=>{
     const user = await User.findOne({ username });
 
     if (!user) {
-      return res.render("login", { error: "User not found" });
+      return res.render("login", { error: "User not found", success: null });
     }
 
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
-      return res.render("login", { error: "Incorrect password" });
+      return res.render("login", { error: "Incorrect password", success: null });
     }
 
     if (!user.verified) {
-      return res.render("login", { error: "Email address not verified." });
+      return res.render("login", { error: "Email address not verified.", success: null });
     }
+    req.session.user = {
+     id: user._id,
+     username: user.username,
+     email: user.email
+}
 
-    return res.redirect(`/game?username=${encodeURIComponent(user.username)}`);
+    return res.redirect("/menu")
   } catch (err) {
     console.log("LOGIN ERROR:", err);
     return res.render("login", { error: "Something went wrong." });
@@ -298,9 +319,37 @@ app.post("/reset-password/:id", async (req, res) => {
   }
 });
 
+function requireAuth(req, res, next) {
+  if (!req.session.user) {
+    return res.redirect("/login")
+  }
+  next()
+}
+
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.log("LOGOUT ERROR:", err)
+      return res.redirect("/game")
+    }
+    res.redirect("/login")
+  })
+})
+
 /////forgot password
 app.get("/forgot-password",(req,res)=>{
 res.render("forgot",{error:null,success:null})
+})
+
+////////menu
+app.get("/menu", requireAuth, (req,res)=>{
+  console.log("MENU ROUTE CALISTI")
+  res.render("menu")
+})
+
+/////////leaderboard
+app.get("/leaderboard", requireAuth, (req,res)=>{
+  res.send("Leaderboard will be added next.")
 })
 
 ///////reset password
@@ -313,9 +362,9 @@ success:null
 })
 
 //////////game
-app.get("/game",(req,res)=>{
-    const username = req.query.username
-    res.render("game",{username})
+app.get("/game", requireAuth, (req,res)=>{
+  const username = req.session.user.username
+  res.render("game",{username})
 })
 
 

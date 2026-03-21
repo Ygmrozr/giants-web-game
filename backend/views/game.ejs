@@ -38,6 +38,25 @@
       opacity:.95;
       line-height:1.5;
     }
+    .menu-bar{
+  width:900px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:white;
+  margin-bottom:10px;
+}
+
+.menu-links a{
+  color:white;
+  text-decoration:none;
+  margin-left:16px;
+  font-weight:bold;
+}
+
+.menu-links a:hover{
+  text-decoration:underline;
+}
 
     canvas{
       background:linear-gradient(to top, #1a1a1a 0%, #101820 55%, #0a1018 100%);
@@ -49,6 +68,14 @@
   </style>
 </head>
 <body>
+  <div class="menu-bar">
+  <div>Player: <%= username %></div>
+  <div class="menu-links">
+    <a href="/game">Game</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
 
   <div class="topbar">
     <div>Oyuncu: <%= username || "Player" %></div>
