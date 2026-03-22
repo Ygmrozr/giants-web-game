@@ -108,16 +108,16 @@ app.get("/register",(req,res)=>{
   
 })
 
-////////// profile
-app.get("/profile", requireAuth, async (req,res)=>{
+////////// hesabım
+app.get("/account", requireAuth, async (req,res)=>{
   try{
-    const user = await User.findById(req.session.user.id);
-    return res.render("profile", { user });
+    const user = await User.findById(req.session.user.id)
+    return res.render("account", { user })
   }catch(err){
-    console.log("PROFILE ERROR:", err);
-    return res.redirect("/menu");
+    console.log("ACCOUNT ERROR:", err)
+    return res.redirect("/menu")
   }
-});
+})
 
 ////////// how to play
 app.get("/how-to-play", requireAuth, (req,res)=>{
@@ -145,7 +145,7 @@ app.get("/market", requireAuth, async (req,res)=>{
 
 
 //////////avatar
-app.post("/profile/avatar", requireAuth, upload.single("avatar"), async (req,res)=>{
+app.post("/account/avatar", requireAuth, upload.single("avatar"), async (req,res)=>{
   try{
     const user = await User.findById(req.session.user.id);
 
@@ -154,10 +154,10 @@ app.post("/profile/avatar", requireAuth, upload.single("avatar"), async (req,res
       await user.save();
     }
 
-    return res.redirect("/profile");
+    return res.redirect("/account");
   }catch(err){
     console.log("AVATAR UPLOAD ERROR:", err);
-    return res.redirect("/profile");
+    return res.redirect("/account");
   }
 });
 
