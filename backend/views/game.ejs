@@ -287,6 +287,7 @@
     let titanKillCount = 0;
     let itemCollectedCount = 0;
     let scoreSaved = false;
+    let lastUnlockedTitle = null;
 
     function spawnBlood(x, y, count = 10) {
       for (let i = 0; i < count; i++) {
@@ -320,25 +321,39 @@
       return getDistanceScore() + killScore + itemScore;
     }
 
-    function setLose(message) {
-      saveScoreToDatabase();
-      game.state = "lose";
-      game.message = message;
-      player.vx = 0;
-      player.vy = 0;
-      player.grappling = false;
-      player.grappleTarget = null;
-    }
+    async function setWin(message) {
+  if (game.state !== "playing") return;
 
-    function setWin(message) {
-      saveScoreToDatabase();
-      game.state = "win";
-      game.message = message;
-      player.vx = 0;
-      player.vy = 0;
-      player.grappling = false;
-      player.grappleTarget = null;
-    }
+  const result = await saveScoreToDatabase();
+
+  game.state = "win";
+  game.message = message;
+  player.vx = 0;
+  player.vy = 0;
+  player.grappling = false;
+  player.grappleTarget = null;
+
+  if(result && result.unlockedTitle){
+    game.message += " | New Title: " + result.unlockedTitle;
+  }
+}
+
+async function setLose(message) {
+  if (game.state !== "playing") return;
+
+  const result = await saveScoreToDatabase();
+
+  game.state = "lose";
+  game.message = message;
+  player.vx = 0;
+  player.vy = 0;
+  player.grappling = false;
+  player.grappleTarget = null;
+
+  if(result && result.unlockedTitle){
+    game.message += " | New Title: " + result.unlockedTitle;
+  }
+}
 
     function resetGame() {
       scoreSaved = false;
@@ -637,7 +652,7 @@
     }
 
     async function saveScoreToDatabase(){
-  if(scoreSaved) return;
+  if(scoreSaved) return { unlockedTitle: null };
   scoreSaved = true;
 
   try{
@@ -654,10 +669,15 @@
     });
 
     const data = await res.json();
-    console.log("Score saved:", data);
 
+    if(data.success && data.unlockedTitle){
+      lastUnlockedTitle = data.unlockedTitle;
+    }
+
+    return data;
   }catch(err){
     console.log("SAVE SCORE ERROR:", err);
+    return { unlockedTitle: null };
   }
 }
 
@@ -831,20 +851,20 @@
       });
     }
 
-    function updateFinish() {
-      if (game.state !== "playing") return;
+    async function updateFinish() {
+  if (game.state !== "playing") return;
 
-      const finishRect = {
-        x: finish.x,
-        y: finish.y,
-        width: finish.width,
-        height: finish.height
-      };
+  const finishRect = {
+    x: finish.x,
+    y: finish.y,
+    width: finish.width,
+    height: finish.height
+  };
 
-      if (rectsCollide(getPlayerRect(), finishRect)) {
-        setWin("Bölüm tamamlandı!");
-      }
-    }
+  if (rectsCollide(getPlayerRect(), finishRect)) {
+    await setWin("Bölüm tamamlandı!");
+  }
+}
 
     function updateCamera() {
       camera.x = player.x - canvas.width * 0.42;

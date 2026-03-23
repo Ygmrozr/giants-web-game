@@ -111,7 +111,7 @@
       </div>
     </div>
 
-    <h2>Top Scores</h2>
+    <h2>Top 3 Scores</h2>
 
     <table>
       <thead>
@@ -139,6 +139,23 @@
         <% }) %>
       </tbody>
     </table>
+
+    <div class="stat"><strong>Current Title:</strong> <%= profileUser.title %></div>
+
+<div class="stat">
+  <strong>Unlocked Titles:</strong>
+  <div style="margin-top:10px;">
+    <% if(profileUser.unlockedTitles && profileUser.unlockedTitles.length > 0){ %>
+      <% profileUser.unlockedTitles.forEach(title => { %>
+        <span style="display:inline-block; padding:6px 10px; margin:4px; border-radius:999px; background:rgba(255,255,255,0.12); font-weight:bold;">
+          <%= title %>
+        </span>
+      <% }) %>
+    <% } else { %>
+      <span>No titles yet.</span>
+    <% } %>
+  </div>
+</div>
 
     <a href="/menu">← Back to Menu</a>
   </div>

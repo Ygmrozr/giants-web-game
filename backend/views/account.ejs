@@ -101,6 +101,20 @@
     <div class="row"><strong>Selected Skin:</strong> <%= user.selectedSkin %></div>
     <div class="row"><strong>Last Login:</strong> <%= user.lastLoginAt ? user.lastLoginAt.toLocaleString() : "No data" %></div>
     <div class="row"><strong>Account Created:</strong> <%= user.createdAt ? user.createdAt.toLocaleString() : "No data" %></div>
+    <div class="row"><strong>Current Title:</strong> <%= user.title %></div>
+
+<div class="row">
+  <strong>Unlocked Titles:</strong>
+  <div style="margin-top:10px;">
+    <% if(user.unlockedTitles && user.unlockedTitles.length > 0){ %>
+      <% user.unlockedTitles.forEach(title => { %>
+        <span style="display:inline-block; padding:6px 10px; margin:4px; border-radius:999px; background:rgba(255,255,255,0.12); font-weight:bold;">
+          <%= title %>
+        </span>
+      <% }) %>
+    <% } %>
+  </div>
+</div>
 
     <a href="/menu">← Back to Menu</a>
   </div>

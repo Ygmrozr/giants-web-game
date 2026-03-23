@@ -65,5 +65,18 @@
     <a href="/leaderboard">Leaderboard</a>
     <a href="/logout">Logout</a>
   </div>
+
+  <div style="margin-bottom:18px; padding:12px; background:rgba(255,255,255,0.08); border-radius:8px;">
+  <strong>Current Title:</strong> <%= user.title %>
+</div>
+
+<% if(titleUnlocked){ %>
+  <div style="margin-bottom:18px; padding:12px; background:rgba(0,216,255,0.15); border-radius:8px; color:#8fefff; font-weight:bold;">
+    🎉 <%= titleUnlocked %>
+  </div>
+<% } %>
+  
+
+
 </body>
 </html>

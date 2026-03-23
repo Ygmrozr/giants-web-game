@@ -91,6 +91,20 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
+const titleList = [
+  { name: "Recruit", minKills: 0 },
+  { name: "Cadet", minKills: 5 },
+  { name: "Titan Hunter", minKills: 15 },
+  { name: "Scout Veteran", minKills: 30 },
+  { name: "Elite Titan Slayer", minKills: 60 },
+  { name: "Humanity’s Strongest", minKills: 100 },
+  { name: "Cadet", minKills: 150 },
+  { name: "Cadet", minKills: 200 },
+  { name: "Cadet", minKills: 250 },
+  { name: "Cadet", minKills: 300 },
+  { name: "Cadet", minKills: 500 }
+];
+
 function getTitleByKills(titanKills) {
   if (titanKills >= 500) return "Cadet";
   if (titanKills >= 300) return "Cadet";
@@ -105,19 +119,13 @@ function getTitleByKills(titanKills) {
   return "Recruit";
 }
 
-const titleList = [
-  { name: "Recruit", minKills: 0 },
-  { name: "Cadet", minKills: 5 },
-  { name: "Titan Hunter", minKills: 15 },
-  { name: "Scout Veteran", minKills: 30 },
-  { name: "Elite Titan Slayer", minKills: 60 },
-  { name: "Humanity’s Strongest", minKills: 100 },
-  { name: "Cadet", minKills: 150 },
-  { name: "Cadet", minKills: 200 },
-  { name: "Cadet", minKills: 250 },
-  { name: "Cadet", minKills: 300 },
-  { name: "Cadet", minKills: 500 }
-];
+function getUnlockedTitlesByKills(titanKills) {
+  return titleList
+    .filter(title => titanKills >= title.minKills)
+    .map(title => title.name);
+}
+
+
 
 // ---------------- ROUTES ----------------
 
@@ -183,7 +191,7 @@ app.get("/profile", requireAuth, async (req,res)=>{
 
     const scores = await Score.find({ userId: user._id })
       .sort({ score: -1 })
-      .limit(10)
+      .limit(3)
 
     return res.render("profile", {
       profileUser: user.toObject ? user.toObject() : user,
@@ -325,15 +333,25 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       user.highestScore = Number(score) || 0;
     }
 
+    user.unlockedTitles = getUnlockedTitlesByKills(user.titanKills);
+
     const newTitle = getTitleByKills(user.titanKills);
 
     await user.save();
 
-    if (oldTitle !== newTitle) {
+    let unlockedTitle = null;
+
+    if(oldTitle !== newTitle){
+      unlockedTitle = newTitle;
       req.session.titleUnlocked = `New title unlocked: ${newTitle}`;
     }
 
-    return res.json({ success:true });
+    return res.json({
+      success: true,
+      unlockedTitle,
+      totalScore: user.totalScore,
+      highestScore: user.highestScore
+    });
   }catch(err){
     console.log("SAVE SCORE ERROR:", err);
     return res.status(500).json({ success:false, message:"Could not save score" });
@@ -580,7 +598,7 @@ app.get("/menu", requireAuth, async (req,res)=>{
     req.session.titleUnlocked = null;
 
     return res.render("menu", {
-      user: user.toObject(),
+      user: user.toObject ? user.toObject() : user,
       titleList,
       titleUnlocked
     });
@@ -661,7 +679,7 @@ app.get("/user/:id", requireAuth, async (req,res)=>{
 
     const scores = await Score.find({ userId: user._id })
       .sort({ score: -1 })
-      .limit(10)
+      .limit(3)
 
     return res.render("profile", {
       profileUser: user.toObject ? user.toObject() : user,

@@ -63,16 +63,27 @@ const userSchema = new mongoose.Schema({
     default: "default"
   },
 
+  unlockedTitles: {
+  type: [String],
+  default: ["Recruit"]
+  },
 
   lastLoginAt: {
     type: Date,
     default: null
   }
+
+  
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);
 
 userSchema.virtual("title").get(function () {
+  if (this.titanKills >= 500) return "Cadet";
+  if (this.titanKills >= 300) return "Cadet";
+  if (this.titanKills >= 250) return "Cadet";
+  if (this.titanKills >= 200) return "Cadet";
+  if (this.titanKills >= 150) return "Cadet";
   if (this.titanKills >= 100) return "Humanity’s Strongest";
   if (this.titanKills >= 60) return "Elite Titan Slayer";
   if (this.titanKills >= 30) return "Scout Veteran";
