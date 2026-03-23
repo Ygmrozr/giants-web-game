@@ -63,6 +63,7 @@ const userSchema = new mongoose.Schema({
     default: "default"
   },
 
+
   lastLoginAt: {
     type: Date,
     default: null
@@ -70,3 +71,15 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);
+
+userSchema.virtual("title").get(function () {
+  if (this.titanKills >= 100) return "Humanity’s Strongest";
+  if (this.titanKills >= 60) return "Elite Titan Slayer";
+  if (this.titanKills >= 30) return "Scout Veteran";
+  if (this.titanKills >= 15) return "Titan Hunter";
+  if (this.titanKills >= 5) return "Cadet";
+  return "Recruit";
+});
+
+userSchema.set("toObject", { virtuals: true });
+userSchema.set("toJSON", { virtuals: true });

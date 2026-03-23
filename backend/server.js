@@ -90,6 +90,35 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+
+function getTitleByKills(titanKills) {
+  if (titanKills >= 500) return "Cadet";
+  if (titanKills >= 300) return "Cadet";
+  if (titanKills >= 250) return "Cadet";
+  if (titanKills >= 200) return "Cadet";
+  if (titanKills >= 150) return "Cadet";
+  if (titanKills >= 100) return "Humanity’s Strongest";
+  if (titanKills >= 60) return "Elite Titan Slayer";
+  if (titanKills >= 30) return "Scout Veteran";
+  if (titanKills >= 15) return "Titan Hunter";
+  if (titanKills >= 5) return "Cadet";
+  return "Recruit";
+}
+
+const titleList = [
+  { name: "Recruit", minKills: 0 },
+  { name: "Cadet", minKills: 5 },
+  { name: "Titan Hunter", minKills: 15 },
+  { name: "Scout Veteran", minKills: 30 },
+  { name: "Elite Titan Slayer", minKills: 60 },
+  { name: "Humanity’s Strongest", minKills: 100 },
+  { name: "Cadet", minKills: 150 },
+  { name: "Cadet", minKills: 200 },
+  { name: "Cadet", minKills: 250 },
+  { name: "Cadet", minKills: 300 },
+  { name: "Cadet", minKills: 500 }
+];
+
 // ---------------- ROUTES ----------------
 
 /////////////// ana sayfa
@@ -112,7 +141,7 @@ app.get("/register",(req,res)=>{
 app.get("/account", requireAuth, async (req,res)=>{
   try{
     const user = await User.findById(req.session.user.id)
-    return res.render("account", { user })
+    return res.render("account", { user: user.toObject() })
   }catch(err){
     console.log("ACCOUNT ERROR:", err)
     return res.redirect("/menu")
@@ -142,6 +171,29 @@ app.get("/market", requireAuth, async (req,res)=>{
     return res.redirect("/menu");
   }
 });
+
+//////////profile
+app.get("/profile", requireAuth, async (req,res)=>{
+  try{
+    const user = await User.findById(req.session.user.id)
+
+    if(!user){
+      return res.redirect("/menu")
+    }
+
+    const scores = await Score.find({ userId: user._id })
+      .sort({ score: -1 })
+      .limit(10)
+
+    return res.render("profile", {
+      profileUser: user.toObject ? user.toObject() : user,
+      scores
+    })
+  }catch(err){
+    console.log("PROFILE ERROR:", err)
+    return res.redirect("/menu")
+  }
+})
 
 
 //////////avatar
@@ -220,6 +272,7 @@ app.post("/market/select/:itemKey", requireAuth, async (req,res)=>{
   }
 });
 
+///////// verify
 app.get("/verify/:id", async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
@@ -245,13 +298,15 @@ app.get("/verify/:id", async (req, res) => {
 ////////// save score
 app.post("/save-score", requireAuth, async (req,res)=>{
   try{
-    const { score, titanKills, itemsCollected } = req.body
+    const { score, titanKills, itemsCollected } = req.body;
 
-    const user = await User.findById(req.session.user.id)
+    const user = await User.findById(req.session.user.id);
 
     if(!user){
-      return res.status(404).json({ success:false, message:"User not found" })
+      return res.status(404).json({ success:false, message:"User not found" });
     }
+
+    const oldTitle = getTitleByKills(user.titanKills);
 
     await Score.create({
       userId: user._id,
@@ -259,25 +314,31 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       score,
       titanKills,
       itemsCollected
-    })
+    });
 
-    user.totalScore += Number(score) || 0
-    user.titanKills += Number(titanKills) || 0
-    user.itemsCollected += Number(itemsCollected) || 0
-    user.coins += Math.floor((Number(score) || 0) / 10)
+    user.totalScore += Number(score) || 0;
+    user.titanKills += Number(titanKills) || 0;
+    user.itemsCollected += Number(itemsCollected) || 0;
+    user.coins += Math.floor((Number(score) || 0) / 10);
 
     if((Number(score) || 0) > user.highestScore){
-      user.highestScore = Number(score) || 0
+      user.highestScore = Number(score) || 0;
     }
 
-    await user.save()
+    const newTitle = getTitleByKills(user.titanKills);
 
-    return res.json({ success:true })
+    await user.save();
+
+    if (oldTitle !== newTitle) {
+      req.session.titleUnlocked = `New title unlocked: ${newTitle}`;
+    }
+
+    return res.json({ success:true });
   }catch(err){
-    console.log("SAVE SCORE ERROR:", err)
-    return res.status(500).json({ success:false, message:"Could not save score" })
+    console.log("SAVE SCORE ERROR:", err);
+    return res.status(500).json({ success:false, message:"Could not save score" });
   }
-})
+});
 
 ////////////////// register işlemi
 app.post("/register", async (req,res)=>{
@@ -511,11 +572,39 @@ res.render("forgot",{error:null,success:null})
 })
 
 ////////menu
-app.get("/menu", requireAuth, (req,res)=>{
-  console.log("MENU ROUTE CALISTI")
-  res.render("menu")
-})
+app.get("/menu", requireAuth, async (req,res)=>{
+  try{
+    const user = await User.findById(req.session.user.id);
 
+    const titleUnlocked = req.session.titleUnlocked || null;
+    req.session.titleUnlocked = null;
+
+    return res.render("menu", {
+      user: user.toObject(),
+      titleList,
+      titleUnlocked
+    });
+  }catch(err){
+    console.log("MENU ERROR:", err);
+    return res.redirect("/login");
+  }
+});
+
+
+///// titles
+app.get("/titles", requireAuth, async (req,res)=>{
+  try{
+    const user = await User.findById(req.session.user.id);
+
+    return res.render("titles", {
+      user: user.toObject(),
+      titleList
+    });
+  }catch(err){
+    console.log("TITLES PAGE ERROR:", err);
+    return res.redirect("/menu");
+  }
+});
 
 ////////// leaderboard
 app.get("/leaderboard", requireAuth, async (req,res)=>{
@@ -533,14 +622,30 @@ app.get("/leaderboard", requireAuth, async (req,res)=>{
       },
       { $sort: { score: -1 } },
       { $limit: 10 }
-    ])
+    ]);
 
-    return res.render("leaderboard", { topScores })
+    const topScoresWithTitles = topScores.map(entry => {
+      let title = "Recruit";
+
+      if (entry.titanKills >= 100) title = "Humanity’s Strongest";
+      else if (entry.titanKills >= 60) title = "Elite Titan Slayer";
+      else if (entry.titanKills >= 30) title = "Scout Veteran";
+      else if (entry.titanKills >= 15) title = "Titan Hunter";
+      else if (entry.titanKills >= 5) title = "Cadet";
+
+      return {
+        ...entry,
+        title
+      };
+    });
+
+    return res.render("leaderboard", { topScores: topScoresWithTitles });
   }catch(err){
-    console.log("LEADERBOARD ERROR:", err)
-    return res.redirect("/menu")
+    console.log("LEADERBOARD ERROR:", err);
+    return res.redirect("/menu");
   }
-})
+});
+
 ////////// public user profile
 app.get("/user/:id", requireAuth, async (req,res)=>{
   try{
@@ -558,8 +663,8 @@ app.get("/user/:id", requireAuth, async (req,res)=>{
       .sort({ score: -1 })
       .limit(10)
 
-    return res.render("public-profile", {
-      profileUser: user,
+    return res.render("profile", {
+      profileUser: user.toObject ? user.toObject() : user,
       scores
     })
   }catch(err){
