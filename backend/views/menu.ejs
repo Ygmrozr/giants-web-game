@@ -3,130 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <title>Attack on Titan Map Menu</title>
+
   <style>
-  *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, Helvetica, sans-serif;
-  }
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, Helvetica, sans-serif;
+    }
 
-  body{
-    height:100vh;
-    overflow:hidden;
-  }
+    body{
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+    }
 
-  .map-container{
-    position:relative;
-    width:100vw;
-    height:100vh;
+    .map-container{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      background:url("/images/map-menu.png") no-repeat center center;
+      background-size:cover;
+    }
 
-    background:url("/images/map-menu.png") no-repeat center center;
-    background-size:cover; /* 🔥 en önemli satır */
-  }
+    .panel{
+      position:absolute;
+      background:rgba(0,0,0,0.6);
+      color:white;
+      padding:15px;
+      border-radius:12px;
+    }
 
-  .hotspot{
-    position:absolute;
-    border-radius:12px;
-    background:rgba(255,255,255,0.08);
-    transition:0.25s;
-    text-decoration:none;
-  }
+    .welcome-panel{
+      top:20px;
+      left:20px;
+      width:260px;
+    }
 
-  .hotspot:hover{
-    background:rgba(0,216,255,0.18);
-    outline:2px solid rgba(255,255,255,0.45);
-  }
+    .title-panel{
+      top:20px;
+      right:20px;
+      text-align:right;
+      min-width:200px;
+    }
 
-  .label{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%, -50%);
-    color:white;
-    font-weight:bold;
-    text-shadow:0 2px 6px rgba(0,0,0,0.8);
-    pointer-events:none;
-    font-size:18px;
-  }
+    .level{
+      font-size:18px;
+      font-weight:bold;
+      margin-bottom:8px;
+    }
 
-  .welcome{
-    position:absolute;
-    top:20px;
-    left:20px;
-    background:rgba(0,0,0,0.5);
-    color:white;
-    padding:12px 18px;
-    border-radius:10px;
-  }
+    .progress-bar{
+      width:100%;
+      height:10px;
+      background:rgba(255,255,255,0.2);
+      border-radius:6px;
+      overflow:hidden;
+      margin-bottom:6px;
+    }
 
-  .title-box{
-    position:absolute;
-    top:20px;
-    right:20px;
-    background:rgba(0,0,0,0.5);
-    color:white;
-    padding:12px 18px;
-    border-radius:10px;
-  }
+    .progress{
+      height:100%;
+      background:#00d8ff;
+      transition:width 0.4s;
+    }
 
-</style>
+    .score-text{
+      font-size:12px;
+      opacity:0.8;
+    }
+
+    .hotspot{
+      position:absolute;
+      text-decoration:none;
+    }
+
+    .label{
+      color:white;
+      font-weight:bold;
+      text-shadow:0 2px 6px rgba(0,0,0,0.8);
+    }
+
+  </style>
 </head>
+
 <body>
 
-  <div class="map-container">
-    <div class="welcome">Welcome, <%= user.username %></div>
-    <div class="title-box">
-      <div>Current Title</div>
-      <strong><%= user.title %></strong>
+<%
+  const safeProgress = isNaN(progress) ? 0 : progress;
+  const progressPercent = Math.max(0, Math.min(100, safeProgress * 100)).toFixed(2);
+%>
+
+<div class="map-container">
+
+  <!-- SOL ÜST PANEL -->
+  <div class="panel welcome-panel">
+
+    <div style="font-weight:bold; margin-bottom:8px;">
+      Welcome, <%= user.username %>
     </div>
 
-    <% if(titleUnlocked){ %>
-      <div style="position:absolute; top:80px; left:20px; background:rgba(0,216,255,0.2); color:white; padding:12px 18px; border-radius:10px; font-weight:bold;">
-        🎉 <%= titleUnlocked %>
-      </div>
-    <% } %>
+    <div class="level">
+      Level: <%= level %>
+    </div>
 
-    <!-- START GAME - Shiganshina -->
-    <a class="hotspot" href="/game" style="left:240px; top:550px; width:180px; height:90px;">
-      <span class="label">Start Game</span>
-    </a>
+    <div class="progress-bar">
+      <div class="progress" style="width:<%= progressPercent %>%"></div>
+    </div>
 
-    <!-- LEADERBOARD - merkez -->
-    <a class="hotspot" href="/leaderboard" style="left:390px; top:250px; width:190px; height:110px;">
-      <span class="label">Leaderboard</span>
-    </a>
+    <div class="score-text">
+      <%= user.totalScore %> / <%= nextLevel %>
+    </div>
 
-    <!-- PROFILE - Stohess -->
-    <a class="hotspot" href="/profile" style="left:900px; top:220px; width:170px; height:80px;">
-      <span class="label">My Profile</span>
-    </a>
-
-    <!-- ACCOUNT -->
-    <a class="hotspot" href="/account" style="left:760px; top:420px; width:170px; height:80px;">
-      <span class="label">My Account</span>
-    </a>
-
-    <!-- HOW TO PLAY - Trost -->
-    <a class="hotspot" href="/how-to-play" style="left:470px; top:410px; width:170px; height:80px;">
-      <span class="label">How to Play</span>
-    </a>
-
-    <!-- MARKET - Karanese -->
-    <a class="hotspot" href="/market" style="left:500px; top:300px; width:180px; height:90px;">
-      <span class="label">Market</span>
-    </a>
-
-    <!-- TITLES -->
-    <a class="hotspot" href="/titles" style="left:700px; top:170px; width:150px; height:75px;">
-      <span class="label">Titles</span>
-    </a>
-
-    <!-- LOGOUT -->
-    <a class="hotspot" href="/logout" style="left:1170px; top:650px; width:140px; height:70px;">
-      <span class="label">Logout</span>
-    </a>
   </div>
+
+  <!-- SAĞ ÜST -->
+  <div class="panel title-panel">
+    <div>Current Title</div>
+    <div style="font-size:18px; font-weight:bold;">
+      <%= user.title %>
+    </div>
+  </div>
+
+  <!-- LEVEL UP -->
+  <% if(titleUnlocked){ %>
+    <div style="
+      position:absolute;
+      top:120px;
+      left:20px;
+      background:rgba(0,216,255,0.3);
+      padding:10px 15px;
+      border-radius:10px;
+      color:white;
+      font-weight:bold;
+    ">
+      🎉 <%= titleUnlocked %>
+    </div>
+  <% } %>
+
+  <!-- HOTSPOTS -->
+
+  <a class="hotspot" href="/game" style="left:30%; top:70%;">
+    <span class="label">Start Game</span>
+  </a>
+
+  <a class="hotspot" href="/leaderboard" style="left:45%; top:36%;">
+    <span class="label">Leaderboard</span>
+  </a>
+
+  <a class="hotspot" href="/profile" style="left:60%; top:28%;">
+    <span class="label">My Profile</span>
+  </a>
+
+  <a class="hotspot" href="/account" style="left:53%; top:52%;">
+    <span class="label">My Account</span>
+  </a>
+
+  <a class="hotspot" href="/how-to-play" style="left:44%; top:61%;">
+    <span class="label">How to Play</span>
+  </a>
+
+  <a class="hotspot" href="/market" style="left:72%; top:40%;">
+    <span class="label">Market</span>
+  </a>
+
+  <a class="hotspot" href="/titles" style="left:50%; top:22%;">
+    <span class="label">Titles</span>
+  </a>
+
+  <a class="hotspot" href="/logout" style="left:85%; top:83%;">
+    <span class="label">Logout</span>
+  </a>
+
+</div>
 
 </body>
 </html>

@@ -53,7 +53,10 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
 
-  
+  level: { 
+    type: Number, 
+    default: 1 
+  },
 
   ownedSkins: {
     type: [String],
@@ -69,6 +72,16 @@ const userSchema = new mongoose.Schema({
   type: [String],
   default: ["Recruit"]
   },
+
+  unlockedCharacters: {
+  type: [String],
+  default: ["eren"]
+},
+
+unlockedCharacters: {
+  type: [String],
+  default: ["eren"]
+},
 
   lastLoginAt: {
     type: Date,

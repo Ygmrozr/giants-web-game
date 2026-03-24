@@ -105,6 +105,54 @@ const titleList = [
   { name: "Cadet", minKills: 500 }
 ];
 
+
+function getLevelFromScore(score){
+  if(score >= 12000) return 10;
+  if(score >= 9000) return 9;
+  if(score >= 7500) return 8;
+  if(score >= 6200) return 7;
+  if(score >= 5000) return 6;
+  if(score >= 4000) return 5;
+  if(score >= 3000) return 4;
+  if(score >= 2000) return 3;
+  if(score >= 1000) return 2;
+  return 1;
+}
+
+function getLevelMinScore(level){
+  const levelTable = {
+    1: 0,
+    2: 1000,
+    3: 2000,
+    4: 3000,
+    5: 4000,
+    6: 5000,
+    7: 6200,
+    8: 7500,
+    9: 9000,
+    10: 12000
+  };
+
+  return levelTable[level] || 12000;
+}
+
+function getNextLevelScore(level){
+  const levelTable = {
+    1: 1000,
+    2: 2000,
+    3: 3000,
+    4: 4000,
+    5: 5000,
+    6: 6200,
+    7: 7500,
+    8: 9000,
+    9: 12000,
+    10: 14000
+  };
+
+  return levelTable[level] || 14000;
+}
+
 function getTitleByKills(titanKills) {
   if (titanKills >= 500) return "Cadet";
   if (titanKills >= 300) return "Cadet";
@@ -148,13 +196,20 @@ app.get("/register",(req,res)=>{
 ////////// hesabım
 app.get("/account", requireAuth, async (req,res)=>{
   try{
-    const user = await User.findById(req.session.user.id)
-    return res.render("account", { user: user.toObject() })
+    const user = await User.findById(req.session.user.id);
+
+    const level = getLevelFromScore(user.totalScore);
+
+    return res.render("account", {
+      user: user.toObject ? user.toObject() : user,
+      level
+    });
+
   }catch(err){
-    console.log("ACCOUNT ERROR:", err)
-    return res.redirect("/menu")
+    console.log("ACCOUNT ERROR:", err);
+    return res.redirect("/menu");
   }
-})
+});
 
 ////////// how to play
 app.get("/how-to-play", requireAuth, (req,res)=>{
@@ -314,14 +369,23 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       return res.status(404).json({ success:false, message:"User not found" });
     }
 
-    const oldTitle = getTitleByKills(user.titanKills);
+    if (!Array.isArray(user.unlockedCharacters)) {
+      user.unlockedCharacters = ["eren"];
+    }
+
+    if (!Array.isArray(user.unlockedTitles)) {
+      user.unlockedTitles = ["Recruit"];
+    }
+
+    const oldLevel = user.level || 1;
+    const oldTitle = getTitleByKills(user.titanKills || 0);
 
     await Score.create({
       userId: user._id,
       username: user.username,
-      score,
-      titanKills,
-      itemsCollected
+      score: Number(score) || 0,
+      titanKills: Number(titanKills) || 0,
+      itemsCollected: Number(itemsCollected) || 0
     });
 
     user.totalScore += Number(score) || 0;
@@ -329,19 +393,33 @@ app.post("/save-score", requireAuth, async (req,res)=>{
     user.itemsCollected += Number(itemsCollected) || 0;
     user.coins += Math.floor((Number(score) || 0) / 10);
 
-    if((Number(score) || 0) > user.highestScore){
+    if ((Number(score) || 0) > user.highestScore) {
       user.highestScore = Number(score) || 0;
     }
 
-    user.unlockedTitles = getUnlockedTitlesByKills(user.titanKills);
+    const newLevel = getLevelFromScore(user.totalScore);
+    user.level = newLevel;
 
+    if (newLevel > oldLevel) {
+      req.session.levelUp = `Level Up! Level ${newLevel}`;
+    }
+
+    if (user.level >= 5 && !user.unlockedCharacters.includes("armin")) {
+      user.unlockedCharacters.push("armin");
+    }
+
+    if (user.level >= 10 && !user.unlockedCharacters.includes("mikasa")) {
+      user.unlockedCharacters.push("mikasa");
+    }
+
+    user.unlockedTitles = getUnlockedTitlesByKills(user.titanKills);
     const newTitle = getTitleByKills(user.titanKills);
 
     await user.save();
 
     let unlockedTitle = null;
 
-    if(oldTitle !== newTitle){
+    if (oldTitle !== newTitle) {
       unlockedTitle = newTitle;
       req.session.titleUnlocked = `New title unlocked: ${newTitle}`;
     }
@@ -350,13 +428,17 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       success: true,
       unlockedTitle,
       totalScore: user.totalScore,
-      highestScore: user.highestScore
+      highestScore: user.highestScore,
+      level: user.level,
+      unlockedCharacters: user.unlockedCharacters
     });
+
   }catch(err){
     console.log("SAVE SCORE ERROR:", err);
     return res.status(500).json({ success:false, message:"Could not save score" });
   }
 });
+
 
 ////////////////// register işlemi
 app.post("/register", async (req,res)=>{
@@ -594,14 +676,24 @@ app.get("/menu", requireAuth, async (req,res)=>{
   try{
     const user = await User.findById(req.session.user.id);
 
+    const level = getLevelFromScore(user.totalScore);
+    const currentMin = getLevelMinScore(level);
+    const nextLevel = getNextLevelScore(level);
+
+    const progress =
+      (user.totalScore - currentMin) / (nextLevel - currentMin);
+
     const titleUnlocked = req.session.titleUnlocked || null;
     req.session.titleUnlocked = null;
 
     return res.render("menu", {
       user: user.toObject ? user.toObject() : user,
-      titleList,
+      level,
+      progress,
+      nextLevel,
       titleUnlocked
     });
+
   }catch(err){
     console.log("MENU ERROR:", err);
     return res.redirect("/login");

@@ -1146,45 +1146,45 @@ async function setLose(message) {
     }
 
     function drawHUD() {
-      scoreText.textContent = "Score: " + getTotalScore();
+  scoreText.textContent = "Score: " + getTotalScore();
 
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.fillRect(10, 10, 285, 185);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(10, 10, 320, 210);
 
-      ctx.fillStyle = "#fff";
-      ctx.font = "16px Arial";
-      ctx.fillText("Kill: " + killScore, 20, 34);
-      ctx.fillText("Item: " + itemScore, 20, 58);
-      ctx.fillText("Distance: " + getDistanceScore(), 20, 82);
+  ctx.fillStyle = "#fff";
+  ctx.font = "16px Arial";
+  ctx.fillText("Kill: " + killScore, 20, 34);
+  ctx.fillText("Item: " + itemScore, 20, 58);
+  ctx.fillText("Distance: " + getDistanceScore(), 20, 82);
 
-      ctx.fillStyle = "white";
-      ctx.fillText("Can:", 20, 108);
+  ctx.fillStyle = "white";
+  ctx.fillText("Can:", 20, 115);
 
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.fillRect(65, 95, 150, 16);
+  ctx.fillStyle = "rgba(255,255,255,0.2)";
+  ctx.fillRect(65, 102, 150, 16);
 
-      ctx.fillStyle = player.health > 55 ? "#2ecc71" : player.health > 25 ? "#f1c40f" : "#e74c3c";
-      ctx.fillRect(65, 95, 150 * (player.health / player.maxHealth), 16);
+  ctx.fillStyle = player.health > 55 ? "#2ecc71" : player.health > 25 ? "#f1c40f" : "#e74c3c";
+  ctx.fillRect(65, 102, 150 * (player.health / player.maxHealth), 16);
 
-      ctx.strokeStyle = "rgba(255,255,255,0.7)";
-      ctx.strokeRect(65, 95, 150, 16);
+  ctx.strokeStyle = "rgba(255,255,255,0.7)";
+  ctx.strokeRect(65, 102, 150, 16);
 
-      ctx.fillStyle = "white";
-      ctx.fillText("Gaz:", 20, 138);
+  ctx.fillStyle = "white";
+  ctx.fillText("Gaz:", 20, 145);
 
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.fillRect(65, 125, 150, 16);
+  ctx.fillStyle = "rgba(255,255,255,0.2)";
+  ctx.fillRect(65, 132, 150, 16);
 
-      ctx.fillStyle = "#66ccff";
-      ctx.fillRect(65, 125, 150 * (player.gas / player.maxGas), 16);
+  ctx.fillStyle = "#66ccff";
+  ctx.fillRect(65, 132, 150 * (player.gas / player.maxGas), 16);
 
-      ctx.strokeStyle = "rgba(255,255,255,0.7)";
-      ctx.strokeRect(65, 125, 150, 16);
+  ctx.strokeStyle = "rgba(255,255,255,0.7)";
+  ctx.strokeRect(65, 132, 150, 16);
 
-      if (player.boostMode) {
-        ctx.fillStyle = "#00d8ff";
-        ctx.fillText("ODM Boost: " + player.boostTimer, 20, 168);
-      }
+  if (player.boostMode) {
+    ctx.fillStyle = "#00d8ff";
+    ctx.fillText("ODM Boost: " + player.boostTimer, 20, 176);
+  }
 
       if (player.gas <= 0) {
         ctx.fillStyle = "#ff8080";
