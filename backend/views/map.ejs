@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Level Map</title>
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      background:#111;
+    }
+
+    .map-container{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      background:url("/images/map-menu.png") no-repeat center center;
+      background-size:cover;
+    }
+
+    .panel{
+      position:absolute;
+      background:rgba(0,0,0,0.62);
+      color:white;
+      padding:16px 18px;
+      border-radius:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.35);
+      backdrop-filter:blur(2px);
+    }
+
+    .left-info{
+      top:20px;
+      left:20px;
+      width:290px;
+    }
+
+    .title-panel{
+      top:20px;
+      right:20px;
+      min-width:220px;
+      text-align:right;
+    }
+
+    .welcome{
+      font-size:18px;
+      font-weight:bold;
+      margin-bottom:10px;
+    }
+
+    .level{
+      font-size:18px;
+      font-weight:bold;
+      margin-bottom:8px;
+    }
+
+    .progress-bar{
+      width:100%;
+      height:12px;
+      background:rgba(255,255,255,0.2);
+      border-radius:999px;
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+
+    .progress{
+      height:100%;
+      background:linear-gradient(90deg, #00d8ff, #4facfe);
+      transition:width 0.4s ease;
+    }
+
+    .score-text{
+      font-size:13px;
+      opacity:0.9;
+      margin-bottom:10px;
+    }
+
+    .sub-info{
+      font-size:14px;
+      opacity:0.92;
+      line-height:1.5;
+    }
+
+    .title-label{
+      font-size:14px;
+      opacity:0.9;
+      margin-bottom:6px;
+    }
+
+    .title-name{
+      font-size:20px;
+      font-weight:bold;
+      color:#8fefff;
+    }
+
+    .back-btn{
+      position:absolute;
+      top:110px;
+      right:20px;
+      background:rgba(0,0,0,0.62);
+      color:white;
+      padding:12px 16px;
+      border-radius:10px;
+      text-decoration:none;
+      font-weight:bold;
+      box-shadow:0 8px 22px rgba(0,0,0,0.25);
+      transition:0.25s ease;
+    }
+
+    .back-btn:hover{
+      background:rgba(0,216,255,0.2);
+    }
+
+    .hotspot{
+      position:absolute;
+      display:block;
+      width:150px;
+      height:78px;
+      text-decoration:none;
+      border-radius:14px;
+      transition:0.25s ease;
+      overflow:visible;
+    }
+
+    .hotspot.open{
+      background:rgba(0,216,255,0.16);
+      outline:2px solid rgba(255,255,255,0.2);
+    }
+
+    .hotspot.open:hover{
+      background:rgba(0,216,255,0.3);
+      transform:scale(1.04);
+    }
+
+    .hotspot.locked{
+      background:rgba(0,0,0,0.5);
+      outline:2px solid rgba(255,255,255,0.12);
+      cursor:not-allowed;
+    }
+
+    .label{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      color:white;
+      font-weight:bold;
+      text-shadow:0 2px 8px rgba(0,0,0,0.85);
+      white-space:nowrap;
+      text-align:center;
+      pointer-events:none;
+      line-height:1.3;
+    }
+
+    .lock-icon{
+      position:absolute;
+      top:8px;
+      right:10px;
+      font-size:20px;
+      pointer-events:none;
+    }
+
+    .tooltip{
+      position:absolute;
+      left:50%;
+      bottom:90px;
+      transform:translateX(-50%);
+      width:240px;
+      background:rgba(0,0,0,0.86);
+      color:white;
+      padding:12px;
+      border-radius:10px;
+      font-size:12px;
+      line-height:1.5;
+      opacity:0;
+      transition:0.25s ease;
+      pointer-events:none;
+      box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    .tooltip strong{
+      display:block;
+      margin-bottom:6px;
+      color:#8fefff;
+      font-size:13px;
+    }
+
+    .hotspot:hover .tooltip{
+      opacity:1;
+      bottom:96px;
+    }
+  </style>
+</head>
+<body>
+
+<%
+  const safeProgress = isNaN(progress) ? 0 : progress;
+  const progressPercent = Math.max(0, Math.min(100, safeProgress * 100)).toFixed(2);
+
+  const s1 = stageData[0];
+  const s2 = stageData[1];
+  const s3 = stageData[2];
+  const s4 = stageData[3];
+  const s5 = stageData[4];
+%>
+
+<div class="map-container">
+
+  <div class="panel left-info">
+    <div class="welcome">
+      Welcome, <%= user.username %>
+    </div>
+
+    <div class="level">
+      Level: <%= level %>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress" style="width:<%= progressPercent %>%;"></div>
+    </div>
+
+    <div class="score-text">
+      <%= user.totalScore %> / <%= nextLevel %> score
+    </div>
+
+    <div class="sub-info">Unlocked Stage: <%= unlockedStage %> / 5</div>
+  </div>
+
+  <div class="panel title-panel">
+    <div class="title-label">Current Title</div>
+    <div class="title-name"><%= user.title %></div>
+  </div>
+
+  <a class="back-btn" href="/menu">← Back to Menu</a>
+
+  <!-- LEVEL 1 -->
+  <a class="hotspot open" href="/game?stage=1" style="left:38%; top:58%;">
+    <span class="label">Level 1</span>
+    <div class="tooltip">
+      <strong><%= s1.name %></strong>
+      <%= s1.story %>
+    </div>
+  </a>
+
+  <!-- LEVEL 2 -->
+  <% if(unlockedStage >= 2){ %>
+    <a class="hotspot open" href="/game?stage=2" style="left:62%; top:39%;">
+      <span class="label">Level 2</span>
+      <div class="tooltip">
+        <strong><%= s2.name %></strong>
+        <%= s2.story %>
+      </div>
+    </a>
+  <% } else { %>
+    <div class="hotspot locked" style="left:62%; top:39%;">
+      <span class="lock-icon">🔒</span>
+      <span class="label">Level 2</span>
+      <div class="tooltip">
+        <strong><%= s2.name %></strong>
+        Açılma şartı: Level <%= s2.requiredLevel %> olmalısın.<br>
+        <%= s2.story %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- LEVEL 3 -->
+  <% if(unlockedStage >= 3){ %>
+    <a class="hotspot open" href="/game?stage=3" style="left:53%; top:29%;">
+      <span class="label">Level 3</span>
+      <div class="tooltip">
+        <strong><%= s3.name %></strong>
+        <%= s3.story %>
+      </div>
+    </a>
+  <% } else { %>
+    <div class="hotspot locked" style="left:53%; top:29%;">
+      <span class="lock-icon">🔒</span>
+      <span class="label">Level 3</span>
+      <div class="tooltip">
+        <strong><%= s3.name %></strong>
+        Açılma şartı: Level <%= s3.requiredLevel %> olmalısın.<br>
+        <%= s3.story %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- LEVEL 4 -->
+  <% if(unlockedStage >= 4){ %>
+    <a class="hotspot open" href="/game?stage=4" style="left:31%; top:40%;">
+      <span class="label">Level 4</span>
+      <div class="tooltip">
+        <strong><%= s4.name %></strong>
+        <%= s4.story %>
+      </div>
+    </a>
+  <% } else { %>
+    <div class="hotspot locked" style="left:31%; top:40%;">
+      <span class="lock-icon">🔒</span>
+      <span class="label">Level 4</span>
+      <div class="tooltip">
+        <strong><%= s4.name %></strong>
+        Açılma şartı: Level <%= s4.requiredLevel %> olmalısın.<br>
+        <%= s4.story %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- LEVEL 5 -->
+  <% if(unlockedStage >= 5){ %>
+    <a class="hotspot open" href="/game?stage=5" style="left:33%; top:80%;">
+      <span class="label">Level 5</span>
+      <div class="tooltip">
+        <strong><%= s5.name %></strong>
+        <%= s5.story %>
+      </div>
+    </a>
+  <% } else { %>
+    <div class="hotspot locked" style="left:33%; top:80%;">
+      <span class="lock-icon">🔒</span>
+      <span class="label">Level 5</span>
+      <div class="tooltip">
+        <strong><%= s5.name %></strong>
+        Açılma şartı: Level <%= s5.requiredLevel %> olmalısın.<br>
+        <%= s5.story %>
+      </div>
+    </div>
+  <% } %>
+
+</div>
+
+</body>
+</html>

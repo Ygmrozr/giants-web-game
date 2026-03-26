@@ -90,6 +90,39 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+const stageData = [
+  {
+    id: 1,
+    name: "Trost",
+    requiredLevel: 1,
+    story: "Eren'in yolculuğu burada başlıyor. İlk hedefin duvarların içindeki tehlikeyi öğrenmek ve hayatta kalmak."
+  },
+  {
+    id: 2,
+    name: "Karanese",
+    requiredLevel: 2,
+    story: "Titan tehdidi büyüyor. Daha fazla titanla karşılaşacak ve hareket kabiliyetini daha iyi kullanman gerekecek."
+  },
+  {
+    id: 3,
+    name: "Stohess",
+    requiredLevel: 3,
+    story: "Şehir içi çatışmalar yoğunlaşıyor. ODM kullanımın ve doğru zamanlama burada çok önemli."
+  },
+  {
+    id: 4,
+    name: "Castle Utgard",
+    requiredLevel: 4,
+    story: "Düşmanlar daha güçlü. Daha dikkatli ilerlemeli ve kaynaklarını iyi kullanmalısın."
+  },
+  {
+    id: 5,
+    name: "Shiganshina",
+    requiredLevel: 10,
+    story: "Son mücadeleye geldin. Bu bölümde en iyi performansını göstermen gerekiyor."
+  }
+];
+
 
 const titleList = [
   { name: "Recruit", minKills: 0 },
@@ -154,15 +187,15 @@ function getNextLevelScore(level){
 }
 
 function getTitleByKills(titanKills) {
-  if (titanKills >= 500) return "Cadet";
-  if (titanKills >= 300) return "Cadet";
-  if (titanKills >= 250) return "Cadet";
-  if (titanKills >= 200) return "Cadet";
-  if (titanKills >= 150) return "Cadet";
-  if (titanKills >= 100) return "Humanity’s Strongest";
-  if (titanKills >= 60) return "Elite Titan Slayer";
+  if (titanKills >= 500) return "Humanity's Strongest";
+  if (titanKills >= 300) return "Titan Reaper";
+  if (titanKills >= 250) return "Humanity's Wrath";
+  if (titanKills >= 200) return "Blade Master";
+  if (titanKills >= 150) return "Eternal Scout";
+  if (titanKills >= 100) return "Elite Titan Slayer";
+  if (titanKills >= 60) return "Abnormal Hunter";
   if (titanKills >= 30) return "Scout Veteran";
-  if (titanKills >= 15) return "Titan Hunter";
+  if (titanKills >= 15) return "Titan Slayer";
   if (titanKills >= 5) return "Cadet";
   return "Recruit";
 }
@@ -679,19 +712,21 @@ app.get("/menu", requireAuth, async (req,res)=>{
     const level = getLevelFromScore(user.totalScore);
     const currentMin = getLevelMinScore(level);
     const nextLevel = getNextLevelScore(level);
-
-    const progress =
-      (user.totalScore - currentMin) / (nextLevel - currentMin);
+    const progress = (user.totalScore - currentMin) / (nextLevel - currentMin);
 
     const titleUnlocked = req.session.titleUnlocked || null;
+    const levelUp = req.session.levelUp || null;
+
     req.session.titleUnlocked = null;
+    req.session.levelUp = null;
 
     return res.render("menu", {
       user: user.toObject ? user.toObject() : user,
       level,
       progress,
       nextLevel,
-      titleUnlocked
+      titleUnlocked,
+      levelUp
     });
 
   }catch(err){
@@ -700,6 +735,44 @@ app.get("/menu", requireAuth, async (req,res)=>{
   }
 });
 
+
+////////map
+app.get("/map", requireAuth, async (req,res)=>{
+  try{
+    const user = await User.findById(req.session.user.id);
+
+    const level = getLevelFromScore(user.totalScore);
+    const currentMin = getLevelMinScore(level);
+    const nextLevel = getNextLevelScore(level);
+
+    const progress =
+      (user.totalScore - currentMin) / (nextLevel - currentMin);
+
+    const titleUnlocked = req.session.titleUnlocked || null;
+    req.session.titleUnlocked = null;
+    
+    let unlockedStage = 1;
+
+    if(level >= 2) unlockedStage = 2;
+    if(level >= 3) unlockedStage = 3;
+    if(level >= 4) unlockedStage = 4;
+    if(level >= 10) unlockedStage = 5;
+
+    return res.render("map", {
+      user: user.toObject ? user.toObject() : user,
+      level,
+      progress,
+      nextLevel,
+      titleUnlocked,
+      unlockedStage,
+      stageData
+    });
+
+  }catch(err){
+    console.log("MAP ERROR:", err);
+    return res.redirect("/menu");
+  }
+});
 
 ///// titles
 app.get("/titles", requireAuth, async (req,res)=>{
