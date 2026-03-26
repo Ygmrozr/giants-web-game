@@ -100,6 +100,28 @@
       color:#8fefff;
     }
 
+    .progress-wrapper{
+  position:relative;
+}
+
+.progress-tooltip{
+  position:absolute;
+  left:0;
+  top:-120px;
+  width:220px;
+  background:rgba(0,0,0,0.9);
+  padding:12px;
+  border-radius:10px;
+  font-size:12px;
+  opacity:0;
+  transition:0.25s;
+  pointer-events:none;
+}
+
+.progress-wrapper:hover .progress-tooltip{
+  opacity:1;
+}
+
     .unlock-panel{
       position:absolute;
       top:160px;
@@ -123,6 +145,27 @@
       font-weight:bold;
       box-shadow:0 8px 22px rgba(0,0,0,0.25);
     }
+
+    .reward-popup{
+  position:absolute;
+  top:260px;
+  left:20px;
+  background:rgba(255,215,0,0.2);
+  padding:14px;
+  border-radius:12px;
+  font-weight:bold;
+  color:white;
+}
+
+.gift-icon{
+  font-size:22px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.gift-icon:hover{
+  transform:scale(1.2);
+}
 
     .right-menu h2{
       margin-bottom:18px;
@@ -168,9 +211,35 @@
       Level: <%= level %>
     </div>
 
-    <div class="progress-bar">
-      <div class="progress" style="width:<%= progressPercent %>%;"></div>
+    <div class="progress-wrapper">
+
+<div style="display:flex; align-items:center; gap:10px;">
+  <div class="progress-bar">
+    <div class="progress" style="width:<%= progressPercent %>%;"></div>
+  </div>
+  
+  <div class="gift-icon">🎁</div>
+
+    <div class="progress-tooltip">
+  <strong>Next Level Rewards:</strong><br>
+
+  <% nextLevelRewards.forEach(r => { %>
+    • <%= r %><br>
+  <% }) %>
+</div>
+
+  </div>
+<div class="score-text">
+      <%= user.totalScore %> / <%= nextLevel %> score
     </div>
+
+  </div>
+</div>
+
+
+</div>
+
+</div>
 
     <div class="score-text">
       <%= user.totalScore %> / <%= nextLevel %> score
@@ -196,6 +265,14 @@
       ⭐ <%= levelUp %>
     </div>
   <% } %>
+
+  <div class="progress-tooltip">
+  <strong>Next Level Rewards:</strong><br>
+
+  <% nextLevelRewards.forEach(r => { %>
+    • <%= r %><br>
+  <% }) %>
+</div>
 
   <!-- SAĞ ORTA MENÜ -->
   <div class="panel right-menu">

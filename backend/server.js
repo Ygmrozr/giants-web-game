@@ -206,6 +206,27 @@ function getUnlockedTitlesByKills(titanKills) {
     .map(title => title.name);
 }
 
+function getLevelRewards(level){
+  const rewards = [];
+
+  // her level coin
+  rewards.push(`${level * 50} coins`);
+
+  if(level === 3){
+    rewards.push("New Title: Titan's Nightmare");
+  }
+
+  if(level === 5){
+    rewards.push("Character Unlocked: Armin");
+  }
+
+  if(level === 10){
+    rewards.push("Character Unlocked: Mikasa");
+  }
+
+  return rewards;
+}
+
 
 
 // ---------------- ROUTES ----------------
@@ -402,11 +423,11 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       return res.status(404).json({ success:false, message:"User not found" });
     }
 
-    if (!Array.isArray(user.unlockedCharacters)) {
+    if(!Array.isArray(user.unlockedCharacters)){
       user.unlockedCharacters = ["eren"];
     }
 
-    if (!Array.isArray(user.unlockedTitles)) {
+    if(!Array.isArray(user.unlockedTitles)){
       user.unlockedTitles = ["Recruit"];
     }
 
@@ -426,44 +447,48 @@ app.post("/save-score", requireAuth, async (req,res)=>{
     user.itemsCollected += Number(itemsCollected) || 0;
     user.coins += Math.floor((Number(score) || 0) / 10);
 
-    if ((Number(score) || 0) > user.highestScore) {
+    if((Number(score) || 0) > user.highestScore){
       user.highestScore = Number(score) || 0;
     }
 
     const newLevel = getLevelFromScore(user.totalScore);
     user.level = newLevel;
 
-    if (newLevel > oldLevel) {
+    let unlockedCharacter = null;
+
+    if(newLevel > oldLevel){
       req.session.levelUp = `Level Up! Level ${newLevel}`;
+      req.session.levelRewards = getLevelRewards(newLevel);
     }
 
-    if (user.level >= 5 && !user.unlockedCharacters.includes("armin")) {
+    if(user.level >= 5 && !user.unlockedCharacters.includes("armin")){
       user.unlockedCharacters.push("armin");
+      unlockedCharacter = "armin";
     }
 
-    if (user.level >= 10 && !user.unlockedCharacters.includes("mikasa")) {
+    if(user.level >= 10 && !user.unlockedCharacters.includes("mikasa")){
       user.unlockedCharacters.push("mikasa");
+      unlockedCharacter = "mikasa";
     }
 
     user.unlockedTitles = getUnlockedTitlesByKills(user.titanKills);
     const newTitle = getTitleByKills(user.titanKills);
 
-    await user.save();
-
     let unlockedTitle = null;
-
-    if (oldTitle !== newTitle) {
+    if(oldTitle !== newTitle){
       unlockedTitle = newTitle;
       req.session.titleUnlocked = `New title unlocked: ${newTitle}`;
     }
 
+    await user.save();
+
     return res.json({
       success: true,
       unlockedTitle,
+      unlockedCharacter,
       totalScore: user.totalScore,
       highestScore: user.highestScore,
-      level: user.level,
-      unlockedCharacters: user.unlockedCharacters
+      level: user.level
     });
 
   }catch(err){
@@ -716,17 +741,23 @@ app.get("/menu", requireAuth, async (req,res)=>{
 
     const titleUnlocked = req.session.titleUnlocked || null;
     const levelUp = req.session.levelUp || null;
+    const levelRewards = req.session.levelRewards || null;
+
+    const nextLevelRewards = getLevelRewards(level + 1);
 
     req.session.titleUnlocked = null;
     req.session.levelUp = null;
+    req.session.levelRewards = null;
 
     return res.render("menu", {
-      user: user.toObject ? user.toObject() : user,
+      user: user.toObject(),
       level,
       progress,
       nextLevel,
       titleUnlocked,
-      levelUp
+      levelUp,
+      levelRewards,
+      nextLevelRewards
     });
 
   }catch(err){
@@ -734,7 +765,6 @@ app.get("/menu", requireAuth, async (req,res)=>{
     return res.redirect("/login");
   }
 });
-
 
 ////////map
 app.get("/map", requireAuth, async (req,res)=>{
