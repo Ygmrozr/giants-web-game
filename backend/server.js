@@ -94,15 +94,15 @@ const upload = multer({ storage });
 const titleList = [
   { name: "Recruit", minKills: 0 },
   { name: "Cadet", minKills: 5 },
-  { name: "Titan Hunter", minKills: 15 },
+  { name: "Titan Slayer ", minKills: 15 },
   { name: "Scout Veteran", minKills: 30 },
-  { name: "Elite Titan Slayer", minKills: 60 },
-  { name: "Humanity’s Strongest", minKills: 100 },
-  { name: "Cadet", minKills: 150 },
-  { name: "Cadet", minKills: 200 },
-  { name: "Cadet", minKills: 250 },
-  { name: "Cadet", minKills: 300 },
-  { name: "Cadet", minKills: 500 }
+  { name: "Abnormal Hunter", minKills: 60 },
+  { name: "Elite Titan Slayer", minKills: 100 },
+  { name: "Eternal Scout", minKills: 150 },
+  { name: "Blade Master", minKills: 200 },
+  { name: "Humanity's Wrath", minKills: 250 },
+  { name: "Titan Reaper", minKills: 300 },
+  { name: "Humanity's Strongest", minKills: 500 }
 ];
 
 
