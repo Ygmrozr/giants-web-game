@@ -78,10 +78,6 @@ const userSchema = new mongoose.Schema({
   default: ["eren"]
 },
 
-unlockedCharacters: {
-  type: [String],
-  default: ["eren"]
-},
 
   lastLoginAt: {
     type: Date,

@@ -19,7 +19,9 @@ router.post("/register", async (req, res) => {
 
     const saved = await newUser.save();
     res.status(201).json({ message: "Kullanıcı oluşturuldu!", user: saved });
+
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Kayıt başarısız!", details: err });
   }
 });
@@ -28,18 +30,23 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı!" });
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) return res.status(400).json({ error: "Şifre yanlış!" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({ message: "Giriş başarılı!", token, user });
+
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Giriş başarısız!" });
   }
 });
