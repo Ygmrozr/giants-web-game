@@ -26,11 +26,11 @@ Users can create an account, log in and play the game.
 
 Clone the repository:
 
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+git clone https://github.com/Ygmrozr/titan-web-game.git
 
 Go to the project folder:
 
-cd YOUR_REPO_NAME
+cd titan-web-game
 
 Install dependencies:
 
