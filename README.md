@@ -1,4 +1,4 @@
-# Titan Canvas Game
+# Giants Canvas Game
 
 This project is a web-based game developed as a Computer Engineering graduation project.
 
@@ -26,11 +26,11 @@ Users can create an account, log in and play the game.
 
 Clone the repository:
 
-git clone https://github.com/Ygmrozr/titan-web-game.git
+git clone https://github.com/Ygmrozr/giants-web-game.git
 
 Go to the project folder:
 
-cd titan-web-game
+cd giants-web-game
 
 Install dependencies:
 
