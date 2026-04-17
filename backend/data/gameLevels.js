@@ -11,13 +11,14 @@ const gameLevels = {
       },
       2: {
         objectiveType: "collect",
-        objectiveText: "Collect 2 supplies",
+        objectiveText: "Collect 2 gas canisters",
+        itemTarget: 2,
         enemyCount: 4,
         reward: 60
       },
       3: {
-        objectiveType: "reach",
-        objectiveText: "Reach the checkpoint",
+        objectiveType: "kill",
+        objectiveText: "Defeat 4 giants",
         enemyCount: 5,
         reward: 70
       },
@@ -34,14 +35,14 @@ const gameLevels = {
         reward: 90
       },
       6: {
-        objectiveType: "protect",
-        objectiveText: "Protect the gate",
+        objectiveType: "kill",
+        objectiveText: "Defeat 6 giants",
         enemyCount: 6,
         reward: 100
       },
       7: {
         objectiveType: "kill",
-        objectiveText: "Defeat the wave",
+        objectiveText: "Defeat 7 giants",
         enemyCount: 7,
         reward: 110
       },
@@ -53,13 +54,13 @@ const gameLevels = {
       },
       9: {
         objectionType: "kill",
-        objectiveText: "Defeat elite giant",
+        objectiveText: "Defeat 8 giants",
         enemyCount: 8,
         reward: 140
       },
       10: {
         objectiveType: "kill",
-        objectiveText: "Clear the district",
+        objectiveText: "Defeat the boss giant",
         enemyCount: 10,
         reward: 200
       }

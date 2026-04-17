@@ -70,13 +70,16 @@
 <body>
   <div 
   id="gameMeta"
-  data-target-kill-count="<%= sectorData.enemyCount %>"
+  data-objective-type="<%= sectorData.objectiveType %>"
+  data-target-kill-count="<%= sectorData.enemyCount || 0 %>"
+  data-target-item-count="<%= sectorData.itemTarget || 0 %>"
+
 ></div>
 
   <div class="objective-hud">
   <div>Level <%= level %> - Sector <%= sector %></div>
   <div><%= sectorData.objectiveText %></div>
-  <div id="objectiveProgress">0 / <%= sectorData.enemyCount %></div>
+  <div id="objectiveProgress">0 / <%= sectorData.itemTarget || sectorData.enemyCount %></div>
 </div>
 
 
@@ -337,6 +340,7 @@
     const bloodEffects = [];
     let titanKillCount = 0;
     let itemCollectedCount = 0;
+    let collectedSupplyCount = 0;
     let scoreSaved = false;
     let lastUnlockedTitle = null;
 
@@ -427,6 +431,9 @@ async function setLose(message) {
       camera.x = 0;
       killScore = 0;
       itemScore = 0;
+      titanKillCount = 0;
+      itemCollectedCount = 0;
+      collectedSupplyCount = 0;
       game.maxProgressX = 80;
       game.state = "playing";
       game.message = "";
@@ -444,6 +451,8 @@ async function setLose(message) {
       );
 
       items.forEach(i => i.collected = false);
+
+      document.getElementById("completeSectorBtn").style.display = "none";
     }
 
     function getAnchorPoints() {
@@ -888,6 +897,12 @@ async function setLose(message) {
           item.collected = true;
           itemScore += item.score;
           itemCollectedCount++;
+          if (item.kind === "gas") {
+            collectedSupplyCount++;
+          }
+
+          updateObjectiveProgress();
+
 
           if (item.kind === "boost") {
             player.boostMode = true;
@@ -1298,31 +1313,39 @@ async function setLose(message) {
       requestAnimationFrame(gameLoop);
     }
 
-    resetGame();
-    gameLoop();
-
-
     const gameMeta = document.getElementById("gameMeta");
-const targetKillCount = Number(gameMeta.dataset.targetKillCount || 0);
+    const objectiveType = gameMeta.dataset.objectiveType || "kill";
+    const targetKillCount = Number(gameMeta.dataset.targetKillCount || 0);
+    const targetItemCount = Number(gameMeta.dataset.targetItemCount || 0);
 
-function updateObjectiveProgress() {
+    function updateObjectiveProgress() {
   const progressEl = document.getElementById("objectiveProgress");
+  const completeBtn = document.getElementById("completeSectorBtn");
 
-  if (!progressEl) return;
+  if (!progressEl || !completeBtn) return;
 
-  progressEl.textContent = `${titanKillCount} / ${targetKillCount}`;
+  if (objectiveType === "kill") {
+    progressEl.textContent = `${titanKillCount} / ${targetKillCount}`;
 
-  if (titanKillCount >= targetKillCount) {
-    // görev tamamlandı
-    progressEl.textContent = "COMPLETED";
+    if (titanKillCount >= targetKillCount) {
+      progressEl.textContent = "COMPLETED";
+      completeBtn.style.display = "block";
+    }
+  }
+  
+  else if (objectiveType === "collect") {
+    progressEl.textContent = `${collectedSupplyCount} / ${targetItemCount}`;
 
-    // butonu göster
-    document.getElementById("completeSectorBtn").style.display = "block";
+    if (collectedSupplyCount >= targetItemCount) {
+      progressEl.textContent = "COMPLETED";
+      completeBtn.style.display = "block";
+}
   }
 }
 
-
+    resetGame();
     updateObjectiveProgress();
+    gameLoop();
   </script>
 
 <script>
