@@ -8,11 +8,11 @@ const gameLevels = {
       2: { objectiveType: "collect", objectiveText: "Collect 2 gasses", itemTarget: 2, enemyCount: 4, reward: 60},
       3: { objectiveType: "kill", objectiveText: "Defeat 4 giants", enemyCount: 4, reward: 70},
       4: { objectiveType: "kill", objectiveText: "Defeat 5 giants", enemyCount: 5, reward: 80},
-      5: { objectiveType: "collect", objectiveText: "Collect 3 supplies", enemyCount: 6, reward: 90},
+      5: { objectiveType: "collect", objectiveText: "Collect 3 gasses", enemyCount: 6, reward: 90},
       6: { objectiveType: "kill", objectiveText: "Defeat 6 giants", enemyCount: 6, reward: 100},
       7: { objectiveType: "kill", objectiveText: "Defeat 7 giants", enemyCount: 7, reward: 110},
-      8: { objectionType: "reach", objectiveText: "Reach the inner district", enemyCount: 7, reward: 120},
-      9: { objectionType: "kill", objectiveText: "Defeat 8 giants", enemyCount: 8, reward: 140},
+      8: { objectiveType: "reach", objectiveText: "Reach the inner district", enemyCount: 7, reward: 120},
+      9: { objectiveType: "kill", objectiveText: "Defeat 8 giants", enemyCount: 8, reward: 140},
       10: { objectiveType: "kill", objectiveText: "Defeat the boss giant", enemyCount: 10, reward: 200}
 
     }

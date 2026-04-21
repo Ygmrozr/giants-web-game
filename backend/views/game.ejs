@@ -80,8 +80,6 @@
   <div>Level <%= level %> - Sector <%= sector %></div>
   <div><%= sectorData.objectiveText %></div>
 
-  <div id="objectiveProgress">0 / <%= sectorData.itemTarget || sectorData.enemyCount %></div>
-=======
   <div id="objectiveProgress">
   <% if (sectorData.objectiveType === "reach") { %>
     NOT REACHED
@@ -340,9 +338,9 @@
 
     const finish = {
       x: 3820,
-      y: 380,
-      width: 44,
-      height: 110
+      y: 330,
+      width: 60,
+      height: 160
     };
 
     let killScore = 0;
@@ -939,21 +937,20 @@ async function setLose(message) {
   };
 
   if (rectsCollide(getPlayerRect(), finishRect)) {
-    if (objectiveType === "reach") {
-      const progressEl = document.getElementById("objectiveProgress");
-      const completeBtn = document.getElementById("completeSectorBtn");
+  if (objectiveType === "reach") {
+    const progressEl = document.getElementById("objectiveProgress");
+    const completeBtn = document.getElementById("completeSectorBtn");
 
-      if (progressEl) {
-        progressEl.textContent = "COMPLETED";
-      }
+    if (progressEl) {
+      progressEl.textContent = "COMPLETED";
+    }
 
-      if (completeBtn) {
-        completeBtn.style.display = "block";
-      }
+    if (completeBtn) {
+      completeBtn.style.display = "block";
     }
   }
 }
-
+}
     function updateCamera() {
       camera.x = player.x - canvas.width * 0.42;
       camera.x = clamp(camera.x, 0, WORLD.width - canvas.width);
@@ -1147,13 +1144,31 @@ async function setLose(message) {
     function drawFinish() {
   if (objectiveType !== "reach") return;
 
-  ctx.fillStyle = "#3d8bff";
-  ctx.fillRect(finish.x - camera.x, finish.y, finish.width, finish.height);
+  const drawX = finish.x - camera.x;
+  const drawY = finish.y;
 
+  // Ana kolon
+  ctx.fillStyle = "#00bfff";
+  ctx.fillRect(drawX, drawY, finish.width, finish.height);
+
+  // Parlayan dış çizgi
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(drawX, drawY, finish.width, finish.height);
+
+  // Üst işaret
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 14px Arial";
-  ctx.fillText("HEDEF", finish.x - camera.x - 5, finish.y - 10);
+  ctx.font = "bold 16px Arial";
+  ctx.fillText("Inner Wall", drawX - 8, drawY - 10);
+
+  // Hedef halkası
+  ctx.beginPath();
+  ctx.arc(drawX + finish.width / 2, drawY + finish.height / 2, 35, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(0,255,150,0.8)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
 }
+
 
     function drawGrappleLine() {
       if (!player.grappling || !player.grappleTarget) return;
@@ -1355,16 +1370,6 @@ async function setLose(message) {
       completeBtn.style.display = "block";
     }
   }
-<<<<<<< HEAD
-  
-  else if (objectiveType === "collect") {
-    progressEl.textContent = `${collectedSupplyCount} / ${targetItemCount}`;
-
-    if (collectedSupplyCount >= targetItemCount) {
-      progressEl.textContent = "COMPLETED";
-      completeBtn.style.display = "block";
-}
-=======
 
   else if (objectiveType === "collect") {
     progressEl.textContent = `${collectedSupplyCount} / ${targetItemCount}`;
@@ -1377,7 +1382,6 @@ async function setLose(message) {
 
   else if (objectiveType === "reach") {
     progressEl.textContent = "NOT REACHED";
->>>>>>> 35fd5de (#30 Fix CI Pipeline Working Directory)
   }
 }
 
