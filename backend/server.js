@@ -345,16 +345,20 @@ app.get("/game/:level/:sector", async (req, res) => {
       return res.status(404).send("Level or sector not found.");
     }
 
-    const sectorKey = `${level}-${sector}`;
-    const isUnlocked =
-      user.unlockedLevels.includes(level) ||
-      user.completedSectors.includes(sectorKey);
+    const currentLevel = Number(user.currentLevel || 1);
+const currentSector = Number(user.currentSector || 1);
+
+const isUnlocked =
+  user.isAdmin ||
+  level < currentLevel ||
+  (level === currentLevel && sector <= currentSector) ||
+  (level === 1 && sector === 1);
 
     const canBypass = devMode && user.isAdmin;
 
     if (!isUnlocked && !canBypass) {
-      return res.status(403).send("This sector is locked.");
-    }
+  return res.redirect("/map");
+}
 
     res.render("game", {
       user,
