@@ -188,8 +188,8 @@ levelBackground.src = "/images/levels/trost.png";
     const player = {
       x: 80,
       y: ground.y - 46,
-      width: 28,
-      height: 46,
+      width: 120,
+      height: 180,
       vx: 0,
       vy: 0,
 
@@ -221,6 +221,13 @@ levelBackground.src = "/images/levels/trost.png";
       attackCooldown: 0,
       hitFlashTimer: 0
     };
+    
+    const playerImg = new Image();
+    playerImg.src = "/images/sprites/player.png";
+    
+
+let frameIndex = 0;
+
 
     const keys = {};
 
@@ -1202,55 +1209,80 @@ document.addEventListener("mouseup", () => {
     }
 
     function drawPlayer() {
-      const x = player.x - camera.x;
-      const y = player.y;
+  const x = player.x - camera.x;
+  const y = player.y;
 
-      if (game.invincibleTimer > 0 && Math.floor(game.invincibleTimer / 4) % 2 === 0) {
-        ctx.globalAlpha = 0.45;
-      }
+  let frameIndex = 4; // idle
 
-      ctx.fillStyle = player.boostMode ? "#f1c40f" : "#2ecc71";
-      ctx.fillRect(x, y, player.width, player.height);
+  if (!player.onGround) {
+    frameIndex = 1; // jump
+  } else if (player.attackTimer > 0) {
+    frameIndex = 0; // attack
+  } else if (Math.abs(player.vx) > 0.5) {
+    frameIndex = (Math.floor(Date.now() / 150) % 2) + 2; // run frames 2-3
+  } else {
+    frameIndex = 4; // idle
+  }
 
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x + 6, y + 10, 5, 4);
-      ctx.fillRect(x + 17, y + 10, 5, 4);
+  if (playerImg.complete && playerImg.naturalWidth > 0) {
+    const frameCount = 5;
+    const frameWidth = playerImg.width / frameCount;
+    const frameHeight = playerImg.height;
 
-      ctx.fillStyle = "#cfd8dc";
-      if (player.facing === 1) {
-        ctx.fillRect(x + player.width, y + 18, 10, 3);
-      } else {
-        ctx.fillRect(x - 10, y + 18, 10, 3);
-      }
+    ctx.save();
 
-      if (player.attackTimer > 0) {
-        const slashX = player.facing === 1 ? x + player.width + 2 : x - 28;
-        const slashY = y + 10;
-
-        ctx.strokeStyle = player.boostMode ? "rgba(0,216,255,0.95)" : "rgba(255,255,255,0.9)";
-        ctx.lineWidth = player.boostMode ? 4 : 3;
-        ctx.beginPath();
-        if (player.facing === 1) {
-          ctx.moveTo(slashX, slashY + 14);
-          ctx.lineTo(slashX + 28, slashY);
-        } else {
-          ctx.moveTo(slashX + 28, slashY + 14);
-          ctx.lineTo(slashX, slashY);
-        }
-        ctx.stroke();
-      }
-
-      if (player.hitFlashTimer > 0) {
-        ctx.strokeStyle = "rgba(255,120,120,0.9)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x + player.width / 2, y + player.height / 2, 24, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      ctx.globalAlpha = 1;
+    if (player.facing === -1) {
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        playerImg,
+        frameIndex * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+        -(x + player.width),
+        y,
+        player.width,
+        player.height
+      );
+    } else {
+      ctx.drawImage(
+        playerImg,
+        frameIndex * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+        x,
+        y,
+        player.width,
+        player.height
+      );
     }
 
+    ctx.restore();
+  } else {
+    ctx.fillStyle = "#2ecc71";
+    ctx.fillRect(x, y, player.width, player.height);
+  }
+
+  if (player.attackTimer > 0) {
+    const slashX = player.facing === 1 ? x + player.width + 2 : x - 28;
+    const slashY = y + 30;
+
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+
+    if (player.facing === 1) {
+      ctx.moveTo(slashX, slashY + 14);
+      ctx.lineTo(slashX + 28, slashY);
+    } else {
+      ctx.moveTo(slashX + 28, slashY + 14);
+      ctx.lineTo(slashX, slashY);
+    }
+
+    ctx.stroke();
+  }
+}
     function drawHUD() {
   scoreText.textContent = "Score: " + getTotalScore();
 
