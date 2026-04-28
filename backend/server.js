@@ -357,8 +357,8 @@ const isUnlocked =
     const canBypass = devMode && user.isAdmin;
 
     if (!isUnlocked && !canBypass) {
-  return res.redirect("/map");
-}
+      return res.redirect("/map");
+    }
 
     res.render("game", {
       user,

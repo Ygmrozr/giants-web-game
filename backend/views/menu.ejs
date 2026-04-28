@@ -894,7 +894,7 @@
 
         <div class="progress-wrapper">
           <div class="progress-bar">
-            <div class="progress" style="width:<%= progressPercent %>%;"></div>
+            <div class="progress" style="width:<%= Math.max(0, Math.min(100, progress * 100)) %>%"></div>
           </div>
         </div>
 
