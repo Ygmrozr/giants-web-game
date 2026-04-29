@@ -188,8 +188,8 @@ levelBackground.src = "/images/levels/trost.png";
     const player = {
       x: 80,
       y: ground.y - 46,
-      width: 120,
-      height: 180,
+      width: 100,
+      height: 150,
       vx: 0,
       vy: 0,
 
@@ -663,6 +663,18 @@ async function setLose(message) {
       }
     }
 
+    const bg1 = new Image();
+bg1.src = "/images/parallax/1.png";
+
+const bg2 = new Image();
+bg2.src = "/images/parallax/2.png";
+
+const bg3 = new Image();
+bg3.src = "/images/parallax/3.png";
+
+const bg4 = new Image();
+bg4.src = "/images/parallax/4.png";
+
     function titanCanAttackPlayer(titan) {
       const playerCenterX = player.x + player.width / 2;
       const playerCenterY = player.y + player.height / 2;
@@ -1000,25 +1012,65 @@ document.addEventListener("mouseup", () => {
       camera.x = clamp(camera.x, 0, WORLD.width - canvas.width);
     }
 
-    function drawSky() {
-  if (levelBackground.complete && levelBackground.naturalWidth > 0) {
-    const parallax = 1.0;
+  
+  
+      function drawLayer(img, speed, targetHeight, bottomAlign = true) {
+  if (!img.complete) return;
 
+  const scale = targetHeight / img.height;
+  const width = img.width * scale;
+  const x = -camera.x * speed;
+  const y = bottomAlign ? canvas.height - targetHeight : 0;
+
+  // ana
+  ctx.drawImage(img, x, y, width, targetHeight);
+
+  // sağa kopya
+  ctx.drawImage(img, x + width, y, width, targetHeight);
+
+  // sola kopya
+  ctx.drawImage(img, x - width, y, width, targetHeight);
+}
+      
+function drawParallax() {
+
+  // Layer 1 - Sky (çok yavaş)
+  if (bg1.complete) {
     ctx.drawImage(
-      levelBackground,
-      -camera.x * parallax,
-      0,
-      WORLD.width,
-      canvas.height
+      bg1,
+      -camera.x * 0.1,
+      -50,
+  
     );
-
-    ctx.fillStyle = "rgba(0,0,0,0.20)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    return;
   }
 
-  ctx.fillStyle = "#0a1018";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Layer 2 - Wall
+  if (bg2.complete) {
+    ctx.drawImage(
+      bg2,
+      -camera.x * 0.20,
+      -50,
+    );
+  }
+
+  // Layer 3 - Houses
+  if (bg3.complete) {
+    ctx.drawImage(
+      bg3,
+      -camera.x * 0.3,
+      183,
+
+    );
+  }
+
+  // Layer 4 - Foreground (en hızlı)
+  if (bg4.complete) {
+    ctx.drawImage(
+      bg4,
+      -camera.x * 0.5,
+      300,
+    );
+  }
 }
 
     function drawGround() {
@@ -1363,7 +1415,7 @@ document.addEventListener("mouseup", () => {
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawSky();
+      drawParallax();
       drawPlatforms();
       drawGround();
       drawItems();
@@ -1474,10 +1526,7 @@ document.addEventListener("mouseup", () => {
   
   }
 
-
 </script>
-
-
 
 </body>
 </html>
