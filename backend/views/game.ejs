@@ -1376,7 +1376,7 @@ function drawGround() {
       const medkitImg = itemSprites.medkit;
 
       if (medkitImg && medkitImg.complete && medkitImg.naturalWidth > 0) {
-        const medkitDrawWidth = 35;
+        const medkitDrawWidth = 40;
         const medkitDrawHeight = medkitDrawWidth * (medkitImg.naturalHeight / medkitImg.naturalWidth);
 
         ctx.drawImage(
@@ -1476,7 +1476,7 @@ function getTitanDrawRect(titan) {
 
   if (img && img.complete && img.naturalWidth > 0) {
     if (!titan.alive || titan.state === "dead") {
-      drawWidth = titan.height * 0.55;
+      drawWidth = titan.height * 1.30;
       drawHeight = drawWidth * (img.naturalHeight / img.naturalWidth);
     } else {
       const TITAN_DRAW_SCALE = 1.22;
