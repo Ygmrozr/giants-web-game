@@ -349,11 +349,13 @@ const titanWalkFrames = [
 
 const itemSprites = {
   gas: new Image(),
-  coin: new Image()
+  coin: new Image(),
+  medkit: new Image()
 };
 
 itemSprites.gas.src = "/images/items/gas.png";
 itemSprites.coin.src = "/images/items/coin.png";
+itemSprites.medkit.src = "/images/items/medkit.png";
 
 
     const keys = {};
@@ -1340,76 +1342,87 @@ function drawGround() {
 }
     
 
-
     function drawItems() {
-      items.forEach(item => {
-        if (item.collected) return;
+  items.forEach(item => {
+    if (item.collected) return;
 
-        const drawX = item.x - camera.x;
-        const drawY = item.y;
+    const drawX = item.x - camera.x;
+    const drawY = item.y;
 
-        if (item.kind === "boost") {
-          ctx.fillStyle = "#00d8ff";
-          ctx.beginPath();
-          ctx.arc(drawX + 9, drawY + 9, 9, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (item.kind === "medkit") {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(drawX, drawY, 18, 18);
-          ctx.fillStyle = "#e74c3c";
-          ctx.fillRect(drawX + 7, drawY + 3, 4, 12);
-          ctx.fillRect(drawX + 3, drawY + 7, 12, 4);
-        } else if (item.kind === "gas") {
-          const gasImg = itemSprites.gas;
+    if (item.kind === "boost") {
+      ctx.fillStyle = "#00d8ff";
+      ctx.beginPath();
+      ctx.arc(drawX + 9, drawY + 9, 9, 0, Math.PI * 2);
+      ctx.fill();
 
-          if (gasImg && gasImg.complete && gasImg.naturalWidth > 0) {
-            const gasDrawWidth = 42;
-            const gasDrawHeight = gasDrawWidth * (gasImg.naturalHeight / gasImg.naturalWidth);
+    } else if (item.kind === "medkit") {
+      const medkitImg = itemSprites.medkit;
 
-            ctx.drawImage(
-              gasImg,
-              drawX + item.width / 2 - gasDrawWidth / 2,
-              drawY + item.height / 2 - gasDrawHeight / 2,
-              gasDrawWidth,
-              gasDrawHeight
-            );
-          } else {
-            ctx.fillStyle = "#bfc7cf";
-            ctx.fillRect(drawX + 4, drawY + 2, 10, 14);
-            ctx.fillStyle = "#6f7a84";
-            ctx.fillRect(drawX + 6, drawY, 6, 4);
-            ctx.strokeStyle = "#ffffff";
-            ctx.strokeRect(drawX + 4, drawY + 2, 10, 14);
-          }
-        } else {
-  const coinImg = itemSprites.coin;
+      if (medkitImg && medkitImg.complete && medkitImg.naturalWidth > 0) {
+        const medkitDrawWidth = 24;
+        const medkitDrawHeight = medkitDrawWidth * (medkitImg.naturalHeight / medkitImg.naturalWidth);
 
-  if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
-    const coinDrawWidth = 34;
-    const coinDrawHeight = coinDrawWidth * (coinImg.naturalHeight / coinImg.naturalWidth);
+        ctx.drawImage(
+          medkitImg,
+          drawX + item.width / 2 - medkitDrawWidth / 2,
+          drawY + item.height / 2 - medkitDrawHeight / 2,
+          medkitDrawWidth,
+          medkitDrawHeight
+        );
+      } else {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(drawX, drawY, 18, 18);
+        ctx.fillStyle = "#e74c3c";
+        ctx.fillRect(drawX + 7, drawY + 3, 4, 12);
+        ctx.fillRect(drawX + 3, drawY + 7, 12, 4);
+      }
 
-    ctx.drawImage(
-      coinImg,
-      drawX + item.width / 2 - coinDrawWidth / 2,
-      drawY + item.height / 2 - coinDrawHeight / 2,
-      coinDrawWidth,
-      coinDrawHeight
-    );
-  } else {
-    ctx.fillStyle = "#f1c40f";
-    ctx.beginPath();
-    ctx.arc(drawX + 9, drawY + 9, 8, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
+    } else if (item.kind === "gas") {
+      const gasImg = itemSprites.gas;
 
-        if (item.kind !== "gas" && item.kind !== "score") {
-          ctx.strokeStyle = "rgba(255,255,255,0.8)";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(drawX - 1, drawY - 1, 20, 20);
-        }
-      });
+      if (gasImg && gasImg.complete && gasImg.naturalWidth > 0) {
+        const gasDrawWidth = 42;
+        const gasDrawHeight = gasDrawWidth * (gasImg.naturalHeight / gasImg.naturalWidth);
+
+        ctx.drawImage(
+          gasImg,
+          drawX + item.width / 2 - gasDrawWidth / 2,
+          drawY + item.height / 2 - gasDrawHeight / 2,
+          gasDrawWidth,
+          gasDrawHeight
+        );
+      } else {
+        ctx.fillStyle = "#bfc7cf";
+        ctx.fillRect(drawX + 4, drawY + 2, 10, 14);
+        ctx.fillStyle = "#6f7a84";
+        ctx.fillRect(drawX + 6, drawY, 6, 4);
+        ctx.strokeStyle = "#ffffff";
+        ctx.strokeRect(drawX + 4, drawY + 2, 10, 14);
+      }
+
+    } else {
+      const coinImg = itemSprites.coin;
+
+      if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+        const coinDrawWidth = 26;
+        const coinDrawHeight = coinDrawWidth * (coinImg.naturalHeight / coinImg.naturalWidth);
+
+        ctx.drawImage(
+          coinImg,
+          drawX + item.width / 2 - coinDrawWidth / 2,
+          drawY + item.height / 2 - coinDrawHeight / 2,
+          coinDrawWidth,
+          coinDrawHeight
+        );
+      } else {
+        ctx.fillStyle = "#f1c40f";
+        ctx.beginPath();
+        ctx.arc(drawX + 9, drawY + 9, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
+  });
+}
 
     function getTitanImage(titan) {
   if (!titan.alive || titan.state === "dead") {
