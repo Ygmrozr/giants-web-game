@@ -347,6 +347,14 @@ const titanWalkFrames = [
   titanSprites.walk5
 ];
 
+const itemSprites = {
+  gas: new Image()
+};
+
+itemSprites.gas.src = "/images/items/gas.png";
+itemSprites.coin.src = "/images/items/coin.png";
+
+
     const keys = {};
 
     function rand(min, max) {
@@ -1351,22 +1359,54 @@ function drawGround() {
           ctx.fillRect(drawX + 7, drawY + 3, 4, 12);
           ctx.fillRect(drawX + 3, drawY + 7, 12, 4);
         } else if (item.kind === "gas") {
-          ctx.fillStyle = "#bfc7cf";
-          ctx.fillRect(drawX + 4, drawY + 2, 10, 14);
-          ctx.fillStyle = "#6f7a84";
-          ctx.fillRect(drawX + 6, drawY, 6, 4);
-          ctx.strokeStyle = "#ffffff";
-          ctx.strokeRect(drawX + 4, drawY + 2, 10, 14);
-        } else {
-          ctx.fillStyle = "#f1c40f";
-          ctx.beginPath();
-          ctx.arc(drawX + 9, drawY + 9, 8, 0, Math.PI * 2);
-          ctx.fill();
-        }
+          const gasImg = itemSprites.gas;
 
-        ctx.strokeStyle = "rgba(255,255,255,0.8)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(drawX - 1, drawY - 1, 20, 20);
+          if (gasImg && gasImg.complete && gasImg.naturalWidth > 0) {
+            const gasDrawWidth = 42;
+            const gasDrawHeight = gasDrawWidth * (gasImg.naturalHeight / gasImg.naturalWidth);
+
+            ctx.drawImage(
+              gasImg,
+              drawX + item.width / 2 - gasDrawWidth / 2,
+              drawY + item.height / 2 - gasDrawHeight / 2,
+              gasDrawWidth,
+              gasDrawHeight
+            );
+          } else {
+            ctx.fillStyle = "#bfc7cf";
+            ctx.fillRect(drawX + 4, drawY + 2, 10, 14);
+            ctx.fillStyle = "#6f7a84";
+            ctx.fillRect(drawX + 6, drawY, 6, 4);
+            ctx.strokeStyle = "#ffffff";
+            ctx.strokeRect(drawX + 4, drawY + 2, 10, 14);
+          }
+        } else {
+  const coinImg = itemSprites.coin;
+
+  if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
+    const coinDrawWidth = 28;
+    const coinDrawHeight = coinDrawWidth * (coinImg.naturalHeight / coinImg.naturalWidth);
+
+    ctx.drawImage(
+      coinImg,
+      drawX + item.width / 2 - coinDrawWidth / 2,
+      drawY + item.height / 2 - coinDrawHeight / 2,
+      coinDrawWidth,
+      coinDrawHeight
+    );
+  } else {
+    ctx.fillStyle = "#f1c40f";
+    ctx.beginPath();
+    ctx.arc(drawX + 9, drawY + 9, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+        if (item.kind !== "gas") {
+          ctx.strokeStyle = "rgba(255,255,255,0.8)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(drawX - 1, drawY - 1, 20, 20);
+        }
       });
     }
 
