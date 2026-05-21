@@ -350,12 +350,14 @@ const titanWalkFrames = [
 const itemSprites = {
   gas: new Image(),
   coin: new Image(),
-  medkit: new Image()
+  medkit: new Image(),
+  boost: new Image()
 };
 
 itemSprites.gas.src = "/images/items/gas.png";
 itemSprites.coin.src = "/images/items/coin.png";
 itemSprites.medkit.src = "/images/items/medkit.png";
+itemSprites.boost.src = "/images/items/boost.png";
 
 
     const keys = {};
@@ -1350,16 +1352,31 @@ function drawGround() {
     const drawY = item.y;
 
     if (item.kind === "boost") {
-      ctx.fillStyle = "#00d8ff";
-      ctx.beginPath();
-      ctx.arc(drawX + 9, drawY + 9, 9, 0, Math.PI * 2);
-      ctx.fill();
+  const boostImg = itemSprites.boost;
+
+  if (boostImg && boostImg.complete && boostImg.naturalWidth > 0) {
+    const boostDrawWidth = 55;
+    const boostDrawHeight = boostDrawWidth * (boostImg.naturalHeight / boostImg.naturalWidth);
+
+    ctx.drawImage(
+      boostImg,
+      drawX + item.width / 2 - boostDrawWidth / 2,
+      drawY + item.height / 2 - boostDrawHeight / 2,
+      boostDrawWidth,
+      boostDrawHeight
+    );
+  } else {
+    ctx.fillStyle = "#00d8ff";
+    ctx.beginPath();
+    ctx.arc(drawX + 9, drawY + 9, 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
     } else if (item.kind === "medkit") {
       const medkitImg = itemSprites.medkit;
 
       if (medkitImg && medkitImg.complete && medkitImg.naturalWidth > 0) {
-        const medkitDrawWidth = 24;
+        const medkitDrawWidth = 35;
         const medkitDrawHeight = medkitDrawWidth * (medkitImg.naturalHeight / medkitImg.naturalWidth);
 
         ctx.drawImage(
@@ -1381,7 +1398,7 @@ function drawGround() {
       const gasImg = itemSprites.gas;
 
       if (gasImg && gasImg.complete && gasImg.naturalWidth > 0) {
-        const gasDrawWidth = 42;
+        const gasDrawWidth = 50;
         const gasDrawHeight = gasDrawWidth * (gasImg.naturalHeight / gasImg.naturalWidth);
 
         ctx.drawImage(
@@ -1404,7 +1421,7 @@ function drawGround() {
       const coinImg = itemSprites.coin;
 
       if (coinImg && coinImg.complete && coinImg.naturalWidth > 0) {
-        const coinDrawWidth = 26;
+        const coinDrawWidth = 24;
         const coinDrawHeight = coinDrawWidth * (coinImg.naturalHeight / coinImg.naturalWidth);
 
         ctx.drawImage(
