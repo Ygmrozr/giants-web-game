@@ -1449,8 +1449,8 @@ function getTitanDrawRect(titan) {
       drawWidth = titan.height * 0.55;
       drawHeight = drawWidth * (img.naturalHeight / img.naturalWidth);
     } else {
-      const TITAN_SCALE = 1.18;
-      drawHeight = titan.height * TITAN_SCALE;
+      const TITAN_DRAW_SCALE = 1.22;
+drawHeight = titan.height * TITAN_DRAW_SCALE;
       drawWidth = drawHeight * (img.naturalWidth / img.naturalHeight);
     }
   }
@@ -1469,31 +1469,23 @@ function getTitanDrawRect(titan) {
 
 
     function drawTitans() {
-      const TITAN_SCALE = 1.22;
   titans.forEach(titan => {
     const shouldDrawDead = !titan.alive && titan.deadTimer > 0;
 
     if (!titan.alive && !shouldDrawDead && !titan.drawDead) return;
 
-    const img = getTitanImage(titan);
+    const rect = getTitanDrawRect(titan);
+    const img = rect.img;
 
     const hitboxX = titan.x - camera.x;
     const hitboxY = titan.y;
 
-    let drawHeight = titan.height;
-let drawWidth = titan.width;
+    const drawX = rect.x - camera.x;
+    const drawY = rect.y;
+    const drawWidth = rect.width;
+    const drawHeight = rect.height;
 
-if (img && img.complete && img.naturalWidth > 0) {
-  if (!titan.alive || titan.state === "dead") {
-    drawWidth = titan.height * 0.55;
-    drawHeight = drawWidth * (img.naturalHeight / img.naturalWidth);
-  } else {
-    drawHeight = titan.height * TITAN_SCALE;
-    drawWidth = drawHeight * (img.naturalWidth / img.naturalHeight);
-  }
-
-  const drawX = hitboxX + titan.width / 2 - drawWidth / 2;
-  const drawY = hitboxY + titan.height - drawHeight;
+    if (img && img.complete && img.naturalWidth > 0) {
       ctx.save();
 
       if (titan.faceDir === -1) {
@@ -1525,8 +1517,8 @@ if (img && img.complete && img.naturalWidth > 0) {
       ctx.fillStyle = "rgba(180,0,0,0.75)";
       ctx.beginPath();
       ctx.arc(
-        hitboxX + titan.width / 2,
-        hitboxY + titan.height * 0.23,
+        drawX + drawWidth / 2,
+        drawY + drawHeight * 0.23,
         7,
         0,
         Math.PI * 2
@@ -1538,39 +1530,49 @@ if (img && img.complete && img.naturalWidth > 0) {
       ctx.fillStyle = "#ffd54f";
 
       ctx.beginPath();
-      ctx.arc(hitboxX + titan.width / 2, hitboxY - 20, 4, 0, Math.PI * 2);
+      ctx.arc(drawX + drawWidth / 2, drawY - 18, 4, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(hitboxX + titan.width / 2 - 10, hitboxY - 13, 4, 0, Math.PI * 2);
+      ctx.arc(drawX + drawWidth / 2 - 10, drawY - 11, 4, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(hitboxX + titan.width / 2 + 10, hitboxY - 13, 4, 0, Math.PI * 2);
+      ctx.arc(drawX + drawWidth / 2 + 10, drawY - 11, 4, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    if (titan.alive) {
-      const barWidth = Math.max(42, titan.width);
-      const healthRatio = Math.max(0, titan.health / titan.maxHealth);
-      const barX = hitboxX + titan.width / 2 - barWidth / 2;
-      const barY = hitboxY - 12;
+   
+  if (titan.alive) {
+  const barWidth = titan.isBoss ? 90 : 70;
+  const barHeight = 7;
+  const healthRatio = Math.max(0, titan.health / titan.maxHealth);
 
-      ctx.fillStyle = "rgba(0,0,0,0.45)";
-      ctx.fillRect(barX, barY, barWidth, 6);
+  // Can barı hitbox'a göre değil, görünen sprite'a göre ortalanacak.
+  const spriteCenterX = drawX + drawWidth / 2;
+  const barX = spriteCenterX - barWidth / 2;
+  const barY = drawY - 5;
 
-      ctx.fillStyle = "#2ecc71";
-      ctx.fillRect(barX, barY, barWidth * healthRatio, 6);
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(barX, barY, barWidth, barHeight);
 
-      if (titan.isBoss) {
-        ctx.fillStyle = "#f1c40f";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText("BOSS", barX, barY - 8);
-      }
-    }
+  ctx.fillStyle = healthRatio > 0.5 ? "#2ecc71" : healthRatio > 0.25 ? "#f1c40f" : "#e74c3c";
+  ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+  if (titan.isBoss) {
+    ctx.fillStyle = "#f1c40f";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("BOSS", barX + barWidth / 2, barY - 6);
+    ctx.textAlign = "left";
+  }
+}
   });
 }
-
 
 function drawTitanNapeDebug() {
   titans.forEach(titan => {
