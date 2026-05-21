@@ -285,11 +285,31 @@ app.get("/market", requireAuth, async (req,res)=>{
     const user = await User.findById(req.session.user.id);
 
     const marketItems = [
-      { key: "default", name: "Default Skin", price: 0 },
-      { key: "survey-corps", name: "Survey Corps Skin", price: 200 },
-      { key: "black-cape", name: "Black Cape Skin", price: 300 },
-      { key: "elite-mode", name: "Elite Mode Skin", price: 500 }
-    ];
+  {
+    key: "default",
+    name: "Default Skin",
+    price: 0,
+    preview: "/images/player_skins/default/07_idle.png"
+  },
+  {
+    key: "eren",
+    name: "Eren Jaeger",
+    price: 200,
+    preview: "/images/player_skins/eren/07_idle.png"
+  },
+  {
+    key: "mikasa",
+    name: "Mikasa Ackerman",
+    price: 300,
+    preview: "/images/player_skins/mikasa/07_idle.png"
+  },
+  {
+    key: "armin",
+    name: "Armin Arlert",
+    price: 500,
+    preview: "/images/player_skins/armin/07_idle.png"
+  }
+];
 
     return res.render("market", { user, marketItems });
   }catch(err){
@@ -401,9 +421,9 @@ app.post("/market/buy/:itemKey", requireAuth, async (req,res)=>{
 
     const prices = {
       "default": 0,
-      "survey-corps": 200,
-      "black-cape": 300,
-      "elite-mode": 500
+      "eren": 200,
+      "mikasa": 300,
+      "armin": 500
     };
 
     const price = prices[itemKey];

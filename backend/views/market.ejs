@@ -41,6 +41,7 @@
       display:flex;
       justify-content:space-between;
       align-items:center;
+      gap:14px;
       background:rgba(255,255,255,0.08);
       border-radius:10px;
       padding:14px 16px;
@@ -82,6 +83,16 @@
       text-decoration:none;
       font-weight:bold;
     }
+    
+    .skin-preview{
+  width:70px;
+  height:90px;
+  object-fit:contain;
+  margin-right:14px;
+  background:rgba(0,0,0,0.25);
+  border:1px solid rgba(255,255,255,0.35);
+  border-radius:4px;
+}
   </style>
 </head>
 <body>
@@ -89,32 +100,45 @@
     <h1>Market</h1>
     <div class="coins">Coins: <%= user.coins %></div>
 
-    <% marketItems.forEach(item => { %>
-      <div class="item">
-        <div>
-          <div><strong><%= item.name %></strong></div>
-          <div>Price: <%= item.price %></div>
-          <% if(user.ownedSkins.includes(item.key)){ %>
-            <div class="owned">Owned</div>
-          <% } %>
-          <% if(user.selectedSkin === item.key){ %>
-            <div class="owned">Selected</div>
-          <% } %>
-        </div>
 
-        <div class="actions">
-          <% if(!user.ownedSkins.includes(item.key)){ %>
-            <form action="/market/buy/<%= item.key %>" method="POST">
-              <button class="buy" type="submit">Buy</button>
-            </form>
-          <% } else if(user.selectedSkin !== item.key) { %>
-            <form action="/market/select/<%= item.key %>" method="POST">
-              <button class="select" type="submit">Select</button>
-            </form>
-          <% } %>
-        </div>
-      </div>
-    <% }) %>
+    <% marketItems.forEach(item => { %>
+  <div class="item">
+    
+    <% if(item.preview){ %>
+      <img src="<%= item.preview %>" style="
+        width:70px;
+        height:90px;
+        object-fit:contain;
+        margin-right:14px;
+      ">
+    <% } %>
+
+    <div style="flex:1;">
+      <div><strong><%= item.name %></strong></div>
+      <div>Price: <%= item.price %></div>
+
+      <% if(user.ownedSkins.includes(item.key)){ %>
+        <div class="owned">Owned</div>
+      <% } %>
+
+      <% if(user.selectedSkin === item.key){ %>
+        <div class="owned">Selected</div>
+      <% } %>
+    </div>
+
+    <div class="actions">
+      <% if(!user.ownedSkins.includes(item.key)){ %>
+        <form action="/market/buy/<%= item.key %>" method="POST">
+          <button class="buy" type="submit">Buy</button>
+        </form>
+      <% } else if(user.selectedSkin !== item.key) { %>
+        <form action="/market/select/<%= item.key %>" method="POST">
+          <button class="select" type="submit">Select</button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+<% }) %>
 
     <a href="/menu">← Back to Menu</a>
   </div>

@@ -260,10 +260,10 @@ levelBackground.src = "/images/levels/trost.png";
       vx: 0,
       vy: 0,
 
-      speed: 3.0,
-      maxRunSpeed: 4.4,
+      speed: 5.8,
+      maxRunSpeed: 6.1,
       gravity: 0.58,
-      jumpPower: -5.8,
+      jumpPower: -5.5,
 
       onGround: false,
       facing: 1,
@@ -300,15 +300,21 @@ levelBackground.src = "/images/levels/trost.png";
   dead: new Image()
 };
 
-playerSprites.attack.src = "/images/player/01_attack.png";
-playerSprites.jump.src = "/images/player/02_jump.png";
-playerSprites.run1.src = "/images/player/03_run_1.png";
-playerSprites.run2.src = "/images/player/04_run_2.png";
-playerSprites.run3.src = "/images/player/05_run_3.png";
-playerSprites.run4.src = "/images/player/06_run_4.png";
-playerSprites.idle.src = "/images/player/07_idle.png";
-playerSprites.dead.src = "/images/player/dead.png";
+const selectedSkin = "<%= user.selectedSkin || 'default' %>";
 
+const playerSkinBase =
+  selectedSkin === "default"
+    ? "/images/player_skins/default"
+    : `/images/player_skins/${selectedSkin}`;
+
+playerSprites.attack.src = `${playerSkinBase}/01_attack.png`;
+playerSprites.jump.src = `${playerSkinBase}/02_jump.png`;
+playerSprites.run1.src = `${playerSkinBase}/03_run_1.png`;
+playerSprites.run2.src = `${playerSkinBase}/04_run_2.png`;
+playerSprites.run3.src = `${playerSkinBase}/05_run_3.png`;
+playerSprites.run4.src = `${playerSkinBase}/06_run_4.png`;
+playerSprites.idle.src = `${playerSkinBase}/07_idle.png`;
+playerSprites.dead.src = `${playerSkinBase}/dead.png`;
     const titanSprites = {
   idle1: new Image(),
   walk1: new Image(),
@@ -395,7 +401,7 @@ const titanWalkFrames = [
         dir,
         minX,
         maxX,
-        moveSpeed: rand(0.25, 0.45),
+        moveSpeed: rand(0.34, 0.54),
         maxHealth: hp,
         health: hp,
         hitCooldown: 0,
@@ -442,7 +448,7 @@ const titanWalkFrames = [
       boss.maxHealth = 12 + currentBattle * 3;
       boss.health = boss.maxHealth;
       boss.damage = 25 + currentBattle * 3;
-      boss.moveSpeed = 0.7 + currentBattle * 0.08;
+      boss.moveSpeed = 0.55 + currentBattle * 0.06;
       boss.isBoss = true;
 
       return boss;
@@ -694,80 +700,123 @@ async function setLose(message) {
     }
 
     function getSlashHitbox() {
-      const width = 52;
-      const height = 28;
-      const x = player.facing === 1 ? player.x + player.width - 4 : player.x - width + 4;
-      const y = player.y + 8;
-      return { x, y, width, height };
-    }
+  const width = 46;
+  const height = 34;
+
+  const x = player.facing === 1
+    ? player.x + player.width - 8
+    : player.x - width + 8;
+
+  const y = player.y + player.height * 0.12;
+
+  return { x, y, width, height };
+}
+
+
+    function getTitanNapeZone(titan) {
+  const rect = getTitanDrawRect(titan);
+
+  const zoneW = rect.width * 0.22;
+  const zoneH = rect.height * 0.17;
+  const zoneY = rect.y + rect.height * 0.13;
+
+  let zoneX;
+
+  // Titan sağa bakıyorsa ensesi sprite'ın sol-üst/arka boyun tarafıdır.
+  if (titan.faceDir === 1) {
+    zoneX = rect.x + rect.width * 0.34;
+  } else {
+    zoneX = rect.x + rect.width * 0.44;
+  }
+
+  return {
+    x: zoneX,
+    y: zoneY,
+    width: zoneW,
+    height: zoneH
+  };
+}
 
     function attackTitanIfPossible(titan) {
-      if (!titan.alive || titan.hitCooldown > 0 || player.attackTimer <= 0) return false;
+  if (!titan.alive || titan.hitCooldown > 0 || player.attackTimer <= 0) return false;
 
-      const slash = getSlashHitbox();
+  const slash = getSlashHitbox();
+  const nape = getTitanNapeZone(titan);
 
-      const nape = {
-        x: titan.x + titan.width * 0.08,
-        y: titan.y + titan.height * 0.10,
-        width: titan.width * 0.84,
-        height: titan.height * 0.34
-      };
+  const playerCenterX = player.x + player.width / 2;
+  const playerCenterY = player.y + player.height / 2;
+  const titanCenterX = titan.x + titan.width / 2;
 
-      const playerCenterX = player.x + player.width / 2;
-      const playerCenterY = player.y + player.height / 2;
-      const titanCenterX = titan.x + titan.width / 2;
-      const titanCenterY = titan.y + titan.height / 2;
+  const playerBehindTitan =
+    (titan.faceDir === 1 && playerCenterX < titanCenterX - titan.width * 0.10) ||
+    (titan.faceDir === -1 && playerCenterX > titanCenterX + titan.width * 0.10);
 
-      const behindTitan =
-        (titan.faceDir === 1 && playerCenterX < titanCenterX + titan.width * 0.38) ||
-        (titan.faceDir === -1 && playerCenterX > titanCenterX - titan.width * 0.38);
+  const playerFacingTitan =
+    (playerCenterX < titanCenterX && player.facing === 1) ||
+    (playerCenterX > titanCenterX && player.facing === -1);
 
-      const highEnough = playerCenterY < titanCenterY + titan.height * 0.18;
-      const closeEnough = dist(playerCenterX, playerCenterY, titanCenterX, titanCenterY) < 135;
+  // Yerden devin beline/sırtına vurunca hasar gitmesin.
+  // Oyuncunun saldırı yüksekliği ensenin yakınında olmalı.
+  const attackHighEnough =
+    slash.y + slash.height / 2 < titan.y + titan.height * 0.32;
 
-      if (rectsCollide(slash, nape) && behindTitan && highEnough && closeEnough) {
-        let damage = 1;
-        if (player.boostMode) {
-          damage = 2;
-        } else if (Math.abs(player.vx) > 4.8 || Math.abs(player.vy) > 5.2) {
-          damage = 2;
-        }
+  const closeEnough = dist(
+  playerCenterX,
+  playerCenterY,
+  nape.x + nape.width / 2,
+  nape.y + nape.height / 2
+) < 115;
 
-        titan.health -= damage;
-        titan.hitCooldown = 16;
-        titan.bloodTimer = 14;
-        titan.stunTimer = 28;
+  if (
+    rectsCollide(slash, nape) &&
+    playerBehindTitan &&
+    playerFacingTitan &&
+    attackHighEnough &&
+    closeEnough
+  ) {
+    let damage = 1;
 
-        const bloodX = titan.x + titan.width / 2;
-        const bloodY = titan.y + titan.height * 0.22;
-        spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 12);
-
-        // vurduğu tarafta kalsın
-        if (playerCenterX < titanCenterX) {
-          player.x = Math.min(player.x, titan.x - player.width - 2);
-        } else {
-          player.x = Math.max(player.x, titan.x + titan.width + 2);
-        }
-
-        player.vx *= 0.35;
-        player.vy = Math.min(player.vy, -2.8);
-
-        if (titan.health <= 0) {
-          titan.alive = false;
-          titan.state = "dead";
-          titan.deadTimer = 90;
-          titan.drawDead = true;
-          killScore += titan.maxHealth * 140;
-          spawnBlood(bloodX, bloodY, 22);
-          titanKillCount++;
-          updateObjectiveProgress();
-        }
-
-        return true;
-      }
-
-      return false;
+    if (player.boostMode) {
+      damage = 2;
+    } else if (Math.abs(player.vx) > 4.8 || Math.abs(player.vy) > 5.2) {
+      damage = 2;
     }
+
+    titan.health -= damage;
+    titan.hitCooldown = 16;
+    titan.bloodTimer = 14;
+    titan.stunTimer = 28;
+    titan.state = "hurt";
+
+    const bloodX = nape.x + nape.width / 2;
+    const bloodY = nape.y + nape.height / 2;
+    spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 12);
+
+    if (playerCenterX < titanCenterX) {
+      player.x = Math.min(player.x, titan.x - player.width - 2);
+    } else {
+      player.x = Math.max(player.x, titan.x + titan.width + 2);
+    }
+
+    player.vx *= 0.35;
+    player.vy = Math.min(player.vy, -2.8);
+
+    if (titan.health <= 0) {
+      titan.alive = false;
+      titan.state = "dead";
+      titan.deadTimer = 90;
+      titan.drawDead = true;
+      killScore += titan.maxHealth * 140;
+      spawnBlood(bloodX, bloodY, 22);
+      titanKillCount++;
+      updateObjectiveProgress();
+    }
+
+    return true;
+  }
+
+  return false;
+}
 
     function damagePlayer(amount, titanX) {
       if (game.invincibleTimer > 0 || game.state !== "playing") return;
@@ -1058,7 +1107,7 @@ document.addEventListener("mouseup", () => {
   titan.state = "walk";
   titan.frameTimer++;
 
-  if (titan.frameTimer >= 35) {
+  if (titan.frameTimer >= 30) {
     titan.frameTimer = 0;
     titan.frame = (titan.frame + 1) % titanWalkFrames.length;
   }
@@ -1227,9 +1276,9 @@ const parallaxSettings = {
 
   4: [
     { img: bg1, speed: 0.10, x: 0, y: -30 },
-  { img: bg2, speed: 0.20, x: 0, y: 75 },
-  { img: bg3, speed: 0.30, x: 0, y: 100 },
-  { img: bg4, speed: 0.50, x: 0, y: 218 }
+  { img: bg2, speed: 0.20, x: 0, y: 80 },
+  { img: bg3, speed: 0.30, x: 0, y: 180 },
+  { img: bg4, speed: 0.50, x: 0, y: 260 }
 ],
 
   5: [
@@ -1345,9 +1394,41 @@ function drawGround() {
   return titanSprites.idle1;
 }
 
+function getTitanDrawRect(titan) {
+  const img = getTitanImage(titan);
+
+  const hitboxX = titan.x;
+  const hitboxY = titan.y;
+
+  let drawHeight = titan.height;
+  let drawWidth = titan.width;
+
+  if (img && img.complete && img.naturalWidth > 0) {
+    if (!titan.alive || titan.state === "dead") {
+      drawWidth = titan.height * 0.55;
+      drawHeight = drawWidth * (img.naturalHeight / img.naturalWidth);
+    } else {
+      const TITAN_SCALE = 1.18;
+      drawHeight = titan.height * TITAN_SCALE;
+      drawWidth = drawHeight * (img.naturalWidth / img.naturalHeight);
+    }
+  }
+
+  const drawX = hitboxX + titan.width / 2 - drawWidth / 2;
+  const drawY = hitboxY + titan.height - drawHeight;
+
+  return {
+    x: drawX,
+    y: drawY,
+    width: drawWidth,
+    height: drawHeight,
+    img
+  };
+}
 
 
     function drawTitans() {
+      const TITAN_SCALE = 1.22;
   titans.forEach(titan => {
     const shouldDrawDead = !titan.alive && titan.deadTimer > 0;
 
@@ -1363,17 +1444,15 @@ let drawWidth = titan.width;
 
 if (img && img.complete && img.naturalWidth > 0) {
   if (!titan.alive || titan.state === "dead") {
-    // Ölü titan yatay olduğu için genişlikten ölçekliyoruz.
-    // 0.80 değeri büyük gelirse 0.70 yapabilirsin.
-    drawWidth = titan.height * 0.95;
+    drawWidth = titan.height * 0.55;
     drawHeight = drawWidth * (img.naturalHeight / img.naturalWidth);
   } else {
-    drawHeight = titan.height;
+    drawHeight = titan.height * TITAN_SCALE;
     drawWidth = drawHeight * (img.naturalWidth / img.naturalHeight);
   }
 
   const drawX = hitboxX + titan.width / 2 - drawWidth / 2;
-  const drawY = hitboxY + titan.height - drawHeight + 6;
+  const drawY = hitboxY + titan.height - drawHeight;
       ctx.save();
 
       if (titan.faceDir === -1) {
@@ -1451,7 +1530,28 @@ if (img && img.complete && img.naturalWidth > 0) {
   });
 }
 
-    function drawFinish() {
+
+function drawTitanNapeDebug() {
+  titans.forEach(titan => {
+    if (!titan.alive) return;
+
+    const nape = getTitanNapeZone(titan);
+
+    ctx.save();
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      nape.x - camera.x,
+      nape.y,
+      nape.width,
+      nape.height
+    );
+    ctx.restore();
+  });
+}
+   
+
+function drawFinish() {
   if (objectiveType !== "reach") return;
 
   const drawX = finish.x - camera.x;
@@ -1565,12 +1665,13 @@ function drawPlayerSprite(img, drawX, drawY, drawWidth, drawHeight, facing) {
 
 function drawPlayer() {
   const img = getPlayerImage();
+  const PLAYER_SCALE = 0.84;
 
   const hitboxX = player.x - camera.x;
   const hitboxY = player.y;
 
   if (img && img.complete && img.naturalWidth > 0) {
-    const drawHeight = player.height;
+    const drawHeight = player.height * PLAYER_SCALE;
     const drawWidth = drawHeight * (img.naturalWidth / img.naturalHeight);
 
     const drawX = hitboxX + player.width / 2 - drawWidth / 2;
@@ -1676,7 +1777,12 @@ function drawPlayer() {
       drawGround();
       drawItems();
       drawTitans();
-      drawFinish();
+
+<% if (devMode) { %>
+drawTitanNapeDebug();
+<% } %>
+
+drawFinish();
       drawBloodEffects();
       drawGrappleLine();
       drawPlayer();
