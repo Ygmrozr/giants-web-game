@@ -142,6 +142,29 @@
       </tbody>
     </table>
 
+    <h2>Rozet Koleksiyonu</h2>
+
+<% if(!ownedBadgeItems || ownedBadgeItems.length === 0){ %>
+  <p>Henüz rozetin yok. Sandık açarak rozet kazanabilirsin.</p>
+<% } else { %>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;">
+    <% ownedBadgeItems.forEach(badge => { %>
+      <div style="
+        width:120px;
+        background:rgba(255,255,255,0.08);
+        border:1px solid rgba(255,255,255,0.18);
+        border-radius:10px;
+        padding:12px;
+        text-align:center;
+      ">
+        <img src="<%= badge.icon %>" style="width:70px;height:70px;object-fit:contain;">
+        <div style="font-weight:bold;margin-top:8px;"><%= badge.name %></div>
+        <div style="font-size:12px;opacity:.8;text-transform:uppercase;"><%= badge.rarity %></div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
     <div class="stat"><strong>Current Title:</strong> <%= profileUser.title %></div>
 
 <div class="stat">

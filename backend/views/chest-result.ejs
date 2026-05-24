@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Sandık Sonucu</title>
+
+  <style>
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      background:#0b0b0b;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+    }
+
+    .box{
+      width:520px;
+      background:rgba(0,0,0,0.78);
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:18px;
+      padding:36px;
+      box-shadow:0 0 30px rgba(0,0,0,0.45);
+    }
+
+    h1{
+      margin-bottom:18px;
+      font-size:34px;
+    }
+
+    h2{
+      margin-top:12px;
+      margin-bottom:8px;
+    }
+
+    .reward-img{
+      width:140px;
+      height:140px;
+      object-fit:contain;
+      display:block;
+      margin:20px auto;
+    }
+
+    .rarity{
+      display:inline-block;
+      margin:10px 0 16px;
+      padding:6px 14px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:bold;
+      text-transform:uppercase;
+    }
+
+    .common{
+      color:#ddd;
+      background:rgba(180,180,180,.18);
+      border:1px solid rgba(220,220,220,.35);
+    }
+
+    .rare{
+      color:#74c7ff;
+      background:rgba(52,152,219,.22);
+      border:1px solid rgba(116,199,255,.45);
+    }
+
+    .epic{
+      color:#d89cff;
+      background:rgba(155,89,182,.24);
+      border:1px solid rgba(216,156,255,.45);
+    }
+
+    .legendary{
+      color:#ffd84d;
+      background:rgba(241,196,15,.24);
+      border:1px solid rgba(255,216,77,.55);
+    }
+
+    .links{
+      display:flex;
+      justify-content:center;
+      gap:14px;
+      margin-top:26px;
+    }
+
+    a{
+      color:white;
+      text-decoration:none;
+      font-weight:bold;
+      background:#2ecc71;
+      padding:10px 14px;
+      border-radius:8px;
+    }
+
+    a.secondary{
+      background:#3498db;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>Sandık Açıldı!</h1>
+
+    <% if(result.type === "coins"){ %>
+      <h2>+<%= result.coinsGained %> Keşif Madalyonu</h2>
+      <div class="rarity <%= result.rarity %>">
+        <%= result.rarity %>
+      </div>
+
+      <p>Sandıktan Keşif Madalyonu kazandın.</p>
+    <% } %>
+
+    <% if(result.type === "badge" && result.badge){ %>
+      <img 
+        class="reward-img" 
+        src="<%= result.badge.icon %>" 
+        alt="<%= result.badge.name %>"
+      >
+
+      <h2><%= result.badge.name %></h2>
+
+      <div class="rarity <%= result.badge.rarity %>">
+        <%= result.badge.rarity %>
+      </div>
+
+      <% if(result.duplicate){ %>
+        <p>Bu rozet zaten sende vardı.</p>
+        <p>Telafi ödülü: +<%= result.coinsGained %> Keşif Madalyonu</p>
+      <% } else { %>
+        <p>Yeni rozet koleksiyonuna eklendi!</p>
+      <% } %>
+    <% } %>
+
+    <div class="links">
+      <a href="/market">Markete Dön</a>
+      <a class="secondary" href="/profile">Profilde Gör</a>
+    </div>
+  </div>
+</body>
+</html>

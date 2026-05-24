@@ -99,6 +99,15 @@ isAdmin: {
   default: false
 },
 
+selectedBadge: {
+  type: String,
+  default: null
+},
+
+ownedBadges: {
+  type: [String],
+  default: []
+},
 
   lastLoginAt: {
     type: Date,

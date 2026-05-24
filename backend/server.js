@@ -140,6 +140,94 @@ const titleList = [
   { name: "Humanity's Strongest", minKills: 500 }
 ];
 
+const chestRewards = [
+  {
+    type: "coins",
+    amount: 50,
+    rarity: "common",
+    weight: 35
+  },
+  {
+    type: "coins",
+    amount: 75,
+    rarity: "common",
+    weight: 25
+  },
+  {
+    type: "badge",
+    badgeKey: "armin_scout",
+    rarity: "rare",
+    weight: 15
+  },
+  {
+    type: "badge",
+    badgeKey: "sasha_potato",
+    rarity: "rare",
+    weight: 15
+  },
+  {
+    type: "badge",
+    badgeKey: "historia_queen",
+    rarity: "epic",
+    weight: 5
+  },
+  {
+    type: "badge",
+    badgeKey: "mikasa_scarf",
+    rarity: "epic",
+    weight: 4
+  },
+  {
+    type: "badge",
+    badgeKey: "mikasa_elite",
+    rarity: "legendary",
+    weight: 0.7
+  },
+  {
+    type: "badge",
+    badgeKey: "wings_gold",
+    rarity: "legendary",
+    weight: 0.3
+  }
+];
+    const badgePool = [
+  {
+    key: "armin_scout",
+    name: "Armin Scout Rozeti",
+    rarity: "rare",
+    icon: "/images/badges/armin_scout.png"
+  },
+  {
+    key: "sasha_potato",
+    name: "Sasha Potato Rozeti",
+    rarity: "rare",
+    icon: "/images/badges/sasha_potato.png"
+  },
+  {
+    key: "historia_queen",
+    name: "Historia Queen Rozeti",
+    rarity: "epic",
+    icon: "/images/badges/historia_queen.png"
+  },
+  {
+    key: "mikasa_scarf",
+    name: "Mikasa Scarf Rozeti",
+    rarity: "epic",
+    icon: "/images/badges/mikasa_scarf.png"
+  },
+  {
+    key: "mikasa_elite",
+    name: "Elite Mikasa Rozeti",
+    rarity: "legendary",
+    icon: "/images/badges/mikasa_elite.png"
+  },
+  {
+    key: "wings_gold",
+    name: "Golden Wings Rozeti",
+    rarity: "legendary",
+    icon: "/images/badges/wings_gold.png"
+  }
+];
 
 function getLevelFromScore(score){
   if(score >= 12000) return 10;
@@ -206,6 +294,25 @@ function getUnlockedTitlesByKills(titanKills) {
   return titleList
     .filter(title => titanKills >= title.minKills)
     .map(title => title.name);
+}
+
+function getRandomChestReward() {
+  const totalWeight = chestRewards.reduce((sum, reward) => sum + reward.weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const reward of chestRewards) {
+    roll -= reward.weight;
+
+    if (roll <= 0) {
+      return reward;
+    }
+  }
+
+  return chestRewards[0];
+}
+
+function getBadgeByKey(key) {
+  return badgePool.find(badge => badge.key === key);
 }
 
 function getLevelRewards(level){
@@ -333,25 +440,31 @@ app.get("/market", requireAuth, async (req,res)=>{
 //////////profile
 app.get("/profile", requireAuth, async (req,res)=>{
   try{
-    const user = await User.findById(req.session.user.id)
+    const user = await User.findById(req.session.user.id);
 
     if(!user){
-      return res.redirect("/menu")
+      return res.redirect("/menu");
     }
 
     const scores = await Score.find({ userId: user._id })
       .sort({ score: -1 })
-      .limit(3)
+      .limit(3);
+
+    const ownedBadgeItems = badgePool.filter(badge =>
+      user.ownedBadges && user.ownedBadges.includes(badge.key)
+    );
 
     return res.render("profile", {
       profileUser: user.toObject ? user.toObject() : user,
-      scores
-    })
+      scores,
+      ownedBadgeItems
+    });
+
   }catch(err){
-    console.log("PROFILE ERROR:", err)
-    return res.redirect("/menu")
+    console.log("PROFILE ERROR:", err);
+    return res.redirect("/menu");
   }
-})
+});
 
 
 app.get("/game/:level/:sector", async (req, res) => {
@@ -407,7 +520,87 @@ const isUnlocked =
   }
 });
 
+app.post("/chest/open", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
 
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Login gerekli."
+      });
+    }
+
+    const chestPrice = 250;
+
+    if ((user.coins || 0) < chestPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Yeterli Keşif Madalyonu yok."
+      });
+    }
+
+    if (!Array.isArray(user.ownedBadges)) {
+      user.ownedBadges = [];
+    }
+
+    user.coins -= chestPrice;
+
+    const reward = getRandomChestReward();
+
+    const result = {
+      type: reward.type,
+      rarity: reward.rarity,
+      duplicate: false,
+      coinsGained: 0,
+      badge: null
+    };
+
+    if (reward.type === "coins") {
+      user.coins += reward.amount;
+      result.coinsGained = reward.amount;
+    }
+
+    if (reward.type === "badge") {
+      const badge = getBadgeByKey(reward.badgeKey);
+
+      if (badge) {
+        result.badge = badge;
+
+        if (user.ownedBadges.includes(badge.key)) {
+          result.duplicate = true;
+
+          const duplicateReward =
+            badge.rarity === "legendary" ? 250 :
+            badge.rarity === "epic" ? 150 :
+            badge.rarity === "rare" ? 90 :
+            50;
+
+          user.coins += duplicateReward;
+          result.coinsGained = duplicateReward;
+        } else {
+          user.ownedBadges.push(badge.key);
+        }
+      }
+    }
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      result,
+      coins: user.coins
+    });
+
+  } catch (err) {
+    console.log("CHEST OPEN ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Sandık açılamadı."
+    });
+  }
+});
 //////////avatar
 app.post("/account/avatar", requireAuth, upload.single("avatar"), async (req,res)=>{
   try{
