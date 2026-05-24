@@ -308,6 +308,12 @@ app.get("/market", requireAuth, async (req,res)=>{
     name: "Armin Arlert",
     price: 500,
     preview: "/images/player_skins/armin/07_idle.png"
+  },
+  {
+    key: "sasha",
+    name: "Sasha Braus",
+    price: 700,
+    preview: "/images/player_skins/sasha/07_idle.png"
   }
 ];
 
@@ -423,7 +429,8 @@ app.post("/market/buy/:itemKey", requireAuth, async (req,res)=>{
       "default": 0,
       "eren": 200,
       "mikasa": 300,
-      "armin": 500
+      "armin": 500,
+      "sasha": 700
     };
 
     const price = prices[itemKey];
