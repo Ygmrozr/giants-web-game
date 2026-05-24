@@ -314,6 +314,12 @@ app.get("/market", requireAuth, async (req,res)=>{
     name: "Sasha Braus",
     price: 700,
     preview: "/images/player_skins/sasha/07_idle.png"
+  },
+  {
+    key: "historia",
+    name: "Historia Reiss",
+    price: 700,
+    preview: "/images/player_skins/historia/07_idle.png"
   }
 ];
 
@@ -430,7 +436,8 @@ app.post("/market/buy/:itemKey", requireAuth, async (req,res)=>{
       "eren": 200,
       "mikasa": 300,
       "armin": 500,
-      "sasha": 700
+      "sasha": 700,
+      "historia": 700
     };
 
     const price = prices[itemKey];
