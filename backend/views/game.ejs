@@ -847,9 +847,18 @@ async function setLose(message) {
       spawnBlood(player.x + player.width / 2, player.y + player.height / 2, 8);
 
       if (player.health <= 0) {
-        player.health = 0;
-        setLose("Canın bitti!");
-      }
+  player.health = 0;
+
+  // Ölünce karakter havada kalmasın, zemine otursun.
+  player.y = ground.y - player.height;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = true;
+  player.grappling = false;
+  player.grappleTarget = null;
+
+  setLose("Canın bitti!");
+}
     }
 
     const bg1 = new Image();
