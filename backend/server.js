@@ -96,31 +96,26 @@ const stageData = [
   {
     id: 1,
     name: "Trost",
-    requiredLevel: 1,
     story: "The walls are breached. Stand your ground, eliminate the threat, and help reclaim the city from the Titans."
   },
   {
     id: 2,
     name: "Karanese",
-    requiredLevel: 2,
     story: "Karanese District — Advance from Karanese into the forest of giant trees. Navigate the terrain, avoid danger, and complete your mission."
   },
   {
     id: 3,
     name: "Stohess",
-    requiredLevel: 3,
     story: "A hidden threat emerges within the walls. Uncover the truth and confront the enemy lurking among humanity."
   },
   {
     id: 4,
     name: "Castle Utgard",
-    requiredLevel: 4,
     story: "Surrounded and outnumbered, you must fight through the night. Hold your position and survive against overwhelming odds."
   },
   {
     id: 5,
     name: "Shiganshina",
-    requiredLevel: 10,
     story: "The decisive battle begins. Face the strongest Titans and fight to reclaim what humanity has lost."
   }
 ];
@@ -271,6 +266,37 @@ const chestConfigs = {
     icon: "/images/badges/wings_gold.png"
   }
 ];
+
+
+function getBadgeScore(user) {
+  if (!Array.isArray(user.ownedBadges)) return 0;
+
+  return user.ownedBadges.reduce((total, badgeKey) => {
+    const badge = getBadgeByKey(badgeKey);
+    if (!badge) return total;
+
+    if (badge.rarity === "legendary") return total + 500;
+    if (badge.rarity === "epic") return total + 250;
+    if (badge.rarity === "rare") return total + 100;
+
+    return total + 50;
+  }, 0);
+}
+
+function getLeaderboardPower(user) {
+  const completedSectorCount = Array.isArray(user.completedSectors)
+    ? user.completedSectors.length
+    : 0;
+
+  return (
+    completedSectorCount * 1000 +
+    (user.titanKills || 0) * 20 +
+    getBadgeScore(user) +
+    (user.coins || 0)
+  );
+}
+
+
 
 function getLevelFromScore(score){
   if(score >= 12000) return 10;
@@ -515,11 +541,19 @@ app.get("/profile", requireAuth, async (req,res)=>{
       user.ownedBadges && user.ownedBadges.includes(badge.key)
     );
 
+    const completedSectorCount = Array.isArray(user.completedSectors)
+  ? user.completedSectors.length
+  : 0;
+
+const badgeScore = getBadgeScore(user);
+
     return res.render("profile", {
-      profileUser: user.toObject ? user.toObject() : user,
-      scores,
-      ownedBadgeItems
-    });
+  profileUser: user.toObject ? user.toObject() : user,
+  scores,
+  ownedBadgeItems,
+  completedSectorCount,
+  badgeScore
+});
 
   }catch(err){
     console.log("PROFILE ERROR:", err);
@@ -1312,37 +1346,33 @@ app.get("/titles", requireAuth, async (req,res)=>{
 ////////// leaderboard
 app.get("/leaderboard", requireAuth, async (req,res)=>{
   try{
-    const topScores = await Score.aggregate([
-      { $sort: { score: -1, createdAt: 1 } },
-      {
-        $group: {
-          _id: "$userId",
-          username: { $first: "$username" },
-          score: { $first: "$score" },
-          titanKills: { $first: "$titanKills" },
-          itemsCollected: { $first: "$itemsCollected" }
-        }
-      },
-      { $sort: { score: -1 } },
-      { $limit: 10 }
-    ]);
+    const users = await User.find({}).lean();
 
-    const topScoresWithTitles = topScores.map(entry => {
-      let title = "Recruit";
+    const leaderboardUsers = users
+      .map(user => {
+        const completedSectorCount = Array.isArray(user.completedSectors)
+          ? user.completedSectors.length
+          : 0;
 
-      if (entry.titanKills >= 100) title = "Humanity’s Strongest";
-      else if (entry.titanKills >= 60) title = "Elite Titan Slayer";
-      else if (entry.titanKills >= 30) title = "Scout Veteran";
-      else if (entry.titanKills >= 15) title = "Titan Hunter";
-      else if (entry.titanKills >= 5) title = "Cadet";
+        const badgeScore = getBadgeScore(user);
+        const leaderboardPower = getLeaderboardPower(user);
 
-      return {
-        ...entry,
-        title
-      };
-    });
+        return {
+          _id: user._id,
+          username: user.username,
+          titanKills: user.titanKills || 0,
+          coins: user.coins || 0,
+          completedSectorCount,
+          badgeCount: Array.isArray(user.ownedBadges) ? user.ownedBadges.length : 0,
+          badgeScore,
+          leaderboardPower,
+          level: user.level || 1,
+        };
+      })
+      .sort((a, b) => b.leaderboardPower - a.leaderboardPower)
+      .slice(0, 10);
 
-    return res.render("leaderboard", { topScores: topScoresWithTitles });
+    return res.render("leaderboard", { topScores: leaderboardUsers });
   }catch(err){
     console.log("LEADERBOARD ERROR:", err);
     return res.redirect("/menu");

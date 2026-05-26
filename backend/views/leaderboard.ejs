@@ -20,7 +20,8 @@
     }
 
     .box{
-      width:760px;
+      width:980px;
+      max-width:92vw;
       background:rgba(0,0,0,0.75);
       padding:40px;
       border-radius:12px;
@@ -36,6 +37,7 @@
       border-collapse:collapse;
       background:rgba(255,255,255,0.08);
       overflow:hidden;
+      border-radius:10px;
     }
 
     th, td{
@@ -46,6 +48,11 @@
 
     th{
       background:rgba(255,255,255,0.12);
+      font-size:14px;
+    }
+
+    tr:hover{
+      background:rgba(255,255,255,0.07);
     }
 
     a{
@@ -57,17 +64,31 @@
     }
 
     td a{
-     color:white;
-     text-decoration:none;
-     font-weight:bold;
+      color:white;
+      text-decoration:none;
+      font-weight:bold;
+      margin-top:0;
     }
 
     td a:hover{
-     text-decoration:underline;
-    color:#00d8ff;
+      text-decoration:underline;
+      color:#00d8ff;
     }
 
-    
+    .power{
+      font-weight:bold;
+      color:#ffd166;
+    }
+
+    .rank{
+      font-weight:bold;
+      font-size:16px;
+    }
+
+    .empty-row td{
+      opacity:.85;
+      padding:22px;
+    }
   </style>
 </head>
 <body>
@@ -77,39 +98,47 @@
     <table>
       <thead>
         <tr>
-          <th>Title</th>
           <th>Rank</th>
           <th>Username</th>
-          <th>Score</th>
+          <th>Level</th>
+          <th>Güç Puanı</th>
+          <th>Tamamlanan Sector</th>
           <th>Titan Kills</th>
-          <th>Items</th>
+          <th>Rozet</th>
+          <th>Keşif Madalyonu</th>
         </tr>
       </thead>
+
       <tbody>
-        <% if(topScores.length === 0){ %>
-          <tr>
-            <td colspan="5">No scores yet.</td>
+        <% if(!topScores || topScores.length === 0){ %>
+          <tr class="empty-row">
+            <td colspan="7">No scores yet.</td>
           </tr>
         <% } %>
 
         <% topScores.forEach((entry, index) => { %>
           <tr>
-            <td>
+            <td class="rank">
               <% if(index === 0){ %>🥇<% } %>
               <% if(index === 1){ %>🥈<% } %>
               <% if(index === 2){ %>🥉<% } %>
               <%= index + 1 %>
             </td>
+
             <td>
-        <% if(entry._id){ %>
-          <a href="/user/<%= entry._id %>"><%= entry.username %></a>
-        <% } else { %>
-          <span><%= entry.username %></span>
-        <% } %>
+              <% if(entry._id){ %>
+                <a href="/user/<%= entry._id %>"><%= entry.username %></a>
+              <% } else { %>
+                <span><%= entry.username %></span>
+              <% } %>
             </td>
-            <td><%= entry.score %></td>
-            <td><%= entry.titanKills %></td>
-            <td><%= entry.itemsCollected %></td>
+
+            <td><%= entry.level || 1 %></td>
+            <td class="power"><%= entry.leaderboardPower || 0 %></td>
+            <td><%= entry.completedSectorCount || 0 %></td>
+            <td><%= entry.titanKills || 0 %></td>
+            <td><%= entry.badgeCount || 0 %> adet / <%= entry.badgeScore || 0 %> puan</td>
+            <td><%= entry.coins || 0 %></td>
           </tr>
         <% }) %>
       </tbody>

@@ -194,7 +194,7 @@
 
   <div class="topbar">
     <div>Oyuncu: <%= user.username || "Player" %></div>
-    <div id="scoreText">Score: 0</div>
+    <div id="scoreText">Keşif Madalyonu: 0</div>
   </div>
 
   <div class="help">
@@ -1817,54 +1817,56 @@ function drawPlayer() {
 }
 
 
-    function drawHUD() {
-  scoreText.textContent = "Score: " + getTotalScore();
+
+function drawHUD() {
+  scoreText.textContent = "Keşif Madalyonu: " + collectedMedalCount;
 
   ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(10, 10, 320, 210);
+  ctx.fillRect(10, 10, 340, 210);
 
   ctx.fillStyle = "#fff";
   ctx.font = "16px Arial";
-  ctx.fillText("Kill: " + killScore, 20, 34);
-  ctx.fillText("Item: " + itemScore, 20, 58);
-  ctx.fillText("Keşif Madalyonu: " + collectedMedalCount, 20, 200);
-  ctx.fillText("Distance: " + getDistanceScore(), 20, 82);
+
+  ctx.fillText("Battle: " + currentBattle + " / Sector: " + currentSectorNumber, 20, 34);
+  ctx.fillText("Görev: " + objectiveType.toUpperCase(), 20, 58);
+  ctx.fillText("Titan Kill: " + titanKillCount + " / " + targetKillCount, 20, 82);
+  ctx.fillText("Keşif Madalyonu: " + collectedMedalCount, 20, 106);
 
   ctx.fillStyle = "white";
-  ctx.fillText("Can:", 20, 115);
+  ctx.fillText("Can:", 20, 135);
 
   ctx.fillStyle = "rgba(255,255,255,0.2)";
-  ctx.fillRect(65, 102, 150, 16);
+  ctx.fillRect(65, 122, 150, 16);
 
   ctx.fillStyle = player.health > 55 ? "#2ecc71" : player.health > 25 ? "#f1c40f" : "#e74c3c";
-  ctx.fillRect(65, 102, 150 * (player.health / player.maxHealth), 16);
+  ctx.fillRect(65, 122, 150 * (player.health / player.maxHealth), 16);
 
   ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.strokeRect(65, 102, 150, 16);
+  ctx.strokeRect(65, 122, 150, 16);
 
   ctx.fillStyle = "white";
-  ctx.fillText("Gaz:", 20, 145);
+  ctx.fillText("Gaz:", 20, 165);
 
   ctx.fillStyle = "rgba(255,255,255,0.2)";
-  ctx.fillRect(65, 132, 150, 16);
+  ctx.fillRect(65, 152, 150, 16);
 
   ctx.fillStyle = "#66ccff";
-  ctx.fillRect(65, 132, 150 * (player.gas / player.maxGas), 16);
+  ctx.fillRect(65, 152, 150 * (player.gas / player.maxGas), 16);
 
   ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.strokeRect(65, 132, 150, 16);
+  ctx.strokeRect(65, 152, 150, 16);
 
   if (player.boostMode) {
     ctx.fillStyle = "#00d8ff";
-    ctx.fillText("ODM Boost: " + player.boostTimer, 20, 176);
+    ctx.fillText("ODM Boost: " + player.boostTimer, 20, 195);
   }
 
-      if (player.gas <= 0) {
-        ctx.fillStyle = "#ff8080";
-        ctx.fillText("Gaz bitti!", 180, 138);
-      }
-    }
-
+  if (player.gas <= 0) {
+    ctx.fillStyle = "#ff8080";
+    ctx.fillText("Gaz bitti!", 230, 165);
+  }
+}
+   
     function drawGameMessage() {
       if (game.state === "playing") return;
 
@@ -1880,7 +1882,7 @@ function drawPlayer() {
       ctx.fillText(game.message, canvas.width / 2, 270);
 
       ctx.font = "22px Arial";
-      ctx.fillText("Toplam Skor: " + getTotalScore(), canvas.width / 2, 320);
+      ctx.fillText("Toplanan Keşif Madalyonu: " + collectedMedalCount, canvas.width / 2, 320);
 
       ctx.font = "18px Arial";
       ctx.fillText("Tekrar başlamak için R tuşuna bas", canvas.width / 2, 370);
