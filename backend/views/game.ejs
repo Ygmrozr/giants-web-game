@@ -438,17 +438,29 @@ itemSprites.boost.src = "/images/items/boost.png";
     ];
 
     const itemSlots = [
-      { x: 250, y: 344 },
-      { x: 610, y: 264 },
-      { x: 1035, y: 234 },
-      { x: 1515, y: 254 },
-      { x: 2030, y: 214 },
-      { x: 2310, y: 274 },
-      { x: 2570, y: 229 },
-      { x: 3125, y: 244 },
-      { x: 3375, y: 294 },
-      { x: 3575, y: 249 }
-    ];
+  { x: 250, y: 570, type: "ground" },
+  { x: 430, y: 570, type: "ground" },
+
+  { x: 610, y: 360, type: "platform" },
+  { x: 820, y: 570, type: "ground" },
+
+  { x: 1035, y: 220, type: "platform" },
+  { x: 1250, y: 570, type: "ground" },
+
+  { x: 1515, y: 250, type: "platform" },
+  { x: 1740, y: 570, type: "ground" },
+
+  { x: 2030, y: 300, type: "platform" },
+  { x: 2310, y: 290, type: "platform" },
+  { x: 2570, y: 240, type: "platform" },
+
+  { x: 2820, y: 570, type: "ground" },
+
+  { x: 3125, y: 330, type: "platform" },
+  { x: 3375, y: 280, type: "platform" },
+  { x: 3575, y: 345, type: "platform" }
+];
+
 
     function createBossTitan() {
       const boss = createTitan(3450, 3300, 3650, -1);
@@ -476,7 +488,9 @@ itemSprites.boost.src = "/images/items/boost.png";
       }
 
       for (let i = 0; i < spawnEnemyCount; i++) {
-        const x = titanSpawnSlots[i] || 650 + i * 290;
+        const sectorOffset = ((currentBattle * 70) + (currentSectorNumber * 45)) % 180;
+        const x = (titanSpawnSlots[i] || 650 + i * 290) + sectorOffset;
+
         const minX = Math.max(500, x - 90);
         const maxX = Math.min(WORLD.width - 120, x + 120);
         const dir = i % 2 === 0 ? 1 : -1;
@@ -515,7 +529,8 @@ itemSprites.boost.src = "/images/items/boost.png";
     }
 
     function createItem(kind, slotIndex) {
-      const slot = itemSlots[slotIndex % itemSlots.length];
+  const offset = (currentBattle * 2 + currentSectorNumber * 3) % itemSlots.length;
+  const slot = itemSlots[(slotIndex + offset) % itemSlots.length];
 
       const base = {
         x: slot.x,
@@ -538,27 +553,42 @@ itemSprites.boost.src = "/images/items/boost.png";
         return { ...base, score: 180 };
       }
 
-      return { ...base, score: 50 };
+      return { ...base, score: 50, medals: 1 };
     }
+
 
     function spawnItemsBySector() {
-      items.length = 0;
+  items.length = 0;
 
-      let slotIndex = 0;
-      const gasCount = objectiveType === "collect" ? spawnGasCount : 2;
+  let slotIndex = 0;
+  const gasCount = objectiveType === "collect" ? spawnGasCount : 2;
 
-      for (let i = 0; i < gasCount; i++) {
-        items.push(createItem("gas", slotIndex++));
-      }
+  for (let i = 0; i < gasCount; i++) {
+    items.push(createItem("gas", slotIndex++));
+  }
 
-      items.push(createItem("medkit", slotIndex++));
-      items.push(createItem("boost", slotIndex++));
+if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
+  items.push(createItem("medkit", slotIndex++));
+}
 
-      if (objectiveType !== "collect") {
-        items.push(createItem("score", slotIndex++));
-        items.push(createItem("score", slotIndex++));
-      }
+  if (currentSectorNumber % 3 === 0 || currentSectorNumber === 10) {
+  items.push(createItem("boost", slotIndex++));
+}
+
+  if (objectiveType === "collect") {
+    for (let i = 0; i < 4; i++) {
+      items.push(createItem("score", slotIndex++));
     }
+  }
+
+  if (objectiveType !== "collect") {
+    const coinCount = 4 + currentBattle + Math.floor(currentSectorNumber / 3);
+
+    for (let i = 0; i < coinCount; i++) {
+      items.push(createItem("score", slotIndex++));
+    }
+  }
+}
 
     function setupSectorContent() {
       spawnTitansBySector();
@@ -583,6 +613,7 @@ itemSprites.boost.src = "/images/items/boost.png";
     let titanKillCount = 0;
     let itemCollectedCount = 0;
     let collectedSupplyCount = 0;
+    let collectedMedalCount = 0;
     let scoreSaved = false;
     let lastUnlockedTitle = null;
 
@@ -676,6 +707,7 @@ async function setLose(message) {
       titanKillCount = 0;
       itemCollectedCount = 0;
       collectedSupplyCount = 0;
+      collectedMedalCount = 0;
       game.maxProgressX = 80;
       game.state = "playing";
       game.message = "";
@@ -985,9 +1017,11 @@ document.addEventListener("mouseup", () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        score: getTotalScore(),
-        titanKills: titanKillCount,
-        itemsCollected: itemCollectedCount
+  score: getTotalScore(),
+  titanKills: titanKillCount,
+  itemsCollected: itemCollectedCount,
+  medals: collectedMedalCount
+
       })
     });
 
@@ -1079,12 +1113,14 @@ document.addEventListener("mouseup", () => {
         player.onGround = true;
       }
 
-      const standables = itemSlots.map(slot => ({
-  x: slot.x - 25,
-  y: slot.y + 18,
-  width: 70,
-  height: 12
-}));
+      const standables = itemSlots
+  .filter(slot => slot.type === "platform")
+  .map(slot => ({
+    x: slot.x - 25,
+    y: slot.y + 18,
+    width: 70,
+    height: 12
+  }));
 
       for (const s of standables) {
         const playerRect = getPlayerRect();
@@ -1196,9 +1232,14 @@ document.addEventListener("mouseup", () => {
           item.collected = true;
           itemScore += item.score;
           itemCollectedCount++;
+
           if (item.kind === "gas") {
             collectedSupplyCount++;
           }
+
+          if (item.kind === "score") {
+  collectedMedalCount += item.medals || 1;
+}
 
           updateObjectiveProgress();
 
@@ -1338,6 +1379,8 @@ function drawGround() {
 
     function drawPlatforms() {
   itemSlots.forEach(slot => {
+    if (slot.type !== "platform") return;
+
     const x = slot.x - camera.x - 25;
     const y = slot.y + 22;
 
@@ -1784,6 +1827,7 @@ function drawPlayer() {
   ctx.font = "16px Arial";
   ctx.fillText("Kill: " + killScore, 20, 34);
   ctx.fillText("Item: " + itemScore, 20, 58);
+  ctx.fillText("Keşif Madalyonu: " + collectedMedalCount, 20, 200);
   ctx.fillText("Distance: " + getDistanceScore(), 20, 82);
 
   ctx.fillStyle = "white";
@@ -1938,9 +1982,10 @@ drawFinish();
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    score: getTotalScore(),
-    titanKills: titanKillCount,
-    itemsCollected: itemCollectedCount
+  score: getTotalScore(),
+  titanKills: titanKillCount,
+  itemsCollected: itemCollectedCount,
+  medals: collectedMedalCount
   })
 });
 

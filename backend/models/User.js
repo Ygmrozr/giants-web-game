@@ -112,7 +112,13 @@ ownedBadges: {
   lastLoginAt: {
     type: Date,
     default: null
-  }
+  },
+
+  gasKits: { type: Number, default: 0 },
+medkits: { type: Number, default: 0 },
+boostCores: { type: Number, default: 0 },
+reviveTokens: { type: Number, default: 0 }
+  
 
   
 }, { timestamps: true });

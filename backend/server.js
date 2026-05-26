@@ -190,6 +190,49 @@ const chestRewards = [
     weight: 0.3
   }
 ];
+
+const chestConfigs = {
+  scout: {
+    name: "Scout Chest",
+    price: 1,
+    rewards: [
+      { type: "coins", amount: 50, rarity: "common", weight: 35 },
+      { type: "coins", amount: 100, rarity: "common", weight: 20 },
+      { type: "gasKit", amount: 1, rarity: "common", weight: 18 },
+      { type: "medkit", amount: 1, rarity: "rare", weight: 12 },
+      { type: "badge", badgeKey: "armin_scout", rarity: "rare", weight: 8 },
+      { type: "badge", badgeKey: "sasha_potato", rarity: "rare", weight: 7 }
+    ]
+  },
+
+  elite: {
+    name: "Elite Chest",
+    price: 3,
+    rewards: [
+      { type: "coins", amount: 200, rarity: "common", weight: 25 },
+      { type: "gasKit", amount: 2, rarity: "rare", weight: 18 },
+      { type: "medkit", amount: 2, rarity: "rare", weight: 16 },
+      { type: "boostCore", amount: 1, rarity: "epic", weight: 14 },
+      { type: "badge", badgeKey: "historia_queen", rarity: "epic", weight: 12 },
+      { type: "badge", badgeKey: "mikasa_scarf", rarity: "epic", weight: 10 },
+      { type: "coins", amount: 500, rarity: "epic", weight: 5 }
+    ]
+  },
+
+  legend: {
+    name: "Legend Chest",
+    price: 3,
+    rewards: [
+      { type: "coins", amount: 500, rarity: "rare", weight: 25 },
+      { type: "gasKit", amount: 3, rarity: "rare", weight: 18 },
+      { type: "medkit", amount: 3, rarity: "rare", weight: 16 },
+      { type: "boostCore", amount: 2, rarity: "epic", weight: 14 },
+      { type: "reviveToken", amount: 1, rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "mikasa_elite", rarity: "legendary", weight: 9 },
+      { type: "badge", badgeKey: "wings_gold", rarity: "legendary", weight: 8 }
+    ]
+  }
+};
     const badgePool = [
   {
     key: "armin_scout",
@@ -309,6 +352,24 @@ function getRandomChestReward() {
   }
 
   return chestRewards[0];
+}
+
+function getRandomWeightedReward(rewards) {
+  const totalWeight = rewards.reduce((sum, reward) => {
+    return sum + reward.weight;
+  }, 0);
+
+  let roll = Math.random() * totalWeight;
+
+  for (const reward of rewards) {
+    roll -= reward.weight;
+
+    if (roll <= 0) {
+      return reward;
+    }
+  }
+
+  return rewards[0];
 }
 
 function getBadgeByKey(key) {
@@ -520,9 +581,19 @@ const isUnlocked =
   }
 });
 
-app.post("/chest/open", requireAuth, async (req, res) => {
+
+app.post("/chest/open/:type", requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
+ const chest = chestConfigs[req.params.type];
+
+
+ if (!chest) {
+  return res.status(400).json({
+    success: false,
+    message: "Sandık bulunamadı."
+  });
+}
 
     if (!user) {
       return res.status(401).json({
@@ -531,7 +602,7 @@ app.post("/chest/open", requireAuth, async (req, res) => {
       });
     }
 
-    const chestPrice = 250;
+const chestPrice = chest.price;
 
     if ((user.coins || 0) < chestPrice) {
       return res.status(400).json({
@@ -546,7 +617,7 @@ app.post("/chest/open", requireAuth, async (req, res) => {
 
     user.coins -= chestPrice;
 
-    const reward = getRandomChestReward();
+    const reward = getRandomWeightedReward(chest.rewards);
 
     const result = {
       type: reward.type,
@@ -735,7 +806,7 @@ app.post("/save-score", requireAuth, async (req,res)=>{
     user.totalScore += Number(score) || 0;
     user.titanKills += Number(titanKills) || 0;
     user.itemsCollected += Number(itemsCollected) || 0;
-    user.coins += Math.floor((Number(score) || 0) / 10);
+    //user.coins += Math.floor((Number(score) || 0) / 10);
 
     if((Number(score) || 0) > user.highestScore){
       user.highestScore = Number(score) || 0;
@@ -1128,7 +1199,12 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
     const sector = Number(req.params.sector);
     const userId = req.session.user.id;
 
-    const { score = 0, titanKills = 0, itemsCollected = 0 } = req.body;
+    const {
+  score = 0,
+  titanKills = 0,
+  itemsCollected = 0,
+  medals = 0
+} = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -1149,6 +1225,7 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
     if (!alreadyCompleted) {
       user.completedSectors.push(sectorKey);
       user.coins = (user.coins || 0) + (sectorData.reward || 0);
+      user.coins += Number(medals || 0) * 10;
 
       user.totalScore = (user.totalScore || 0) + Number(score || 0);
       user.titanKills = (user.titanKills || 0) + Number(titanKills || 0);
