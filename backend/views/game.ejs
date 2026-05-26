@@ -286,7 +286,15 @@ levelBackground.src = "/images/levels/trost.png";
 
       attackTimer: 0,
       attackCooldown: 0,
-      hitFlashTimer: 0
+      hitFlashTimer: 0,
+
+      grabbed: false,
+      grabbedBy: null,
+      escapeProgress: 0,
+      escapeTimer: 0,
+thrown: false,
+throwTimer: 0
+      
     };
     
     const playerSprites = {
@@ -702,6 +710,10 @@ async function setLose(message) {
       player.attackTimer = 0;
       player.attackCooldown = 0;
       player.hitFlashTimer = 0;
+      player.grabbed = false;
+player.grabbedBy = null;
+player.escapeProgress = 0;
+player.escapeTimer = 0;
 
       camera.x = 0;
       killScore = 0;
@@ -760,7 +772,7 @@ async function setLose(message) {
 }
 
 
-    function getTitanNapeZone(titan) {
+function getTitanNapeZone(titan) {
   const rect = getTitanDrawRect(titan);
 
   const zoneW = rect.width * 0.22;
@@ -769,7 +781,6 @@ async function setLose(message) {
 
   let zoneX;
 
-  // Titan sağa bakıyorsa ensesi sprite'ın sol-üst/arka boyun tarafıdır.
   if (titan.faceDir === 1) {
     zoneX = rect.x + rect.width * 0.34;
   } else {
@@ -783,8 +794,6 @@ async function setLose(message) {
     height: zoneH
   };
 }
-
-
 
 
 function attackTitanIfPossible(titan) {
@@ -810,7 +819,7 @@ const playerBehindTitan =
   (titan.faceDir === 1 && playerCenterX < titanCenterX) ||
   (titan.faceDir === -1 && playerCenterX > titanCenterX);
 
-const validNapeKill = hitNape && playerBehindTitan;
+  const validNapeKill = hitNape && playerBehindTitan;
 
 
   if (!hitBody && !hitNape) return false;
@@ -960,6 +969,11 @@ function loadBattleParallaxBackgrounds() {
       const key = e.key.toLowerCase();
       keys[key] = true;
 
+      if (player.grabbed && e.code === "Space") {
+  player.escapeProgress += 25;
+  return;
+}
+
       const jumpPressed = (key === "w" || e.key === "ArrowUp");
       const attackPressed = (e.code === "Space");
 
@@ -1018,6 +1032,13 @@ document.addEventListener("mouseup", () => {
       if (player.attackCooldown > 0) player.attackCooldown--;
       if (player.hitFlashTimer > 0) player.hitFlashTimer--;
       if (game.invincibleTimer > 0) game.invincibleTimer--;
+      if (player.throwTimer > 0) {
+  player.throwTimer--;
+
+  if (player.throwTimer <= 0) {
+    player.thrown = false;
+  }
+}
 
       titans.forEach(t => {
         if (t.hitCooldown > 0) t.hitCooldown--;
@@ -1065,6 +1086,57 @@ document.addEventListener("mouseup", () => {
 
     function updatePlayer() {
       if (game.state !== "playing") return;
+
+      if (player.grabbed) {
+  player.vx = 0;
+  player.vy = 0;
+
+  if (player.grabbedBy) {
+    player.x = player.grabbedBy.x + player.grabbedBy.width / 2 - player.width / 2;
+    player.y = player.grabbedBy.y + player.grabbedBy.height * 0.35;
+  }
+
+  player.escapeTimer--;
+
+  if (player.escapeProgress >= 100) {
+  player.grabbed = false;
+  player.grabbedBy = null;
+  player.escapeProgress = 0;
+  player.escapeTimer = 0;
+
+  game.invincibleTimer = 120;
+  player.hitFlashTimer = 120;
+
+  player.vx = -player.facing * 8;
+  player.vy = -7;
+  player.onGround = false;
+
+  return;
+}
+
+  if (player.escapeTimer <= 0) {
+  const titanX = player.grabbedBy
+    ? player.grabbedBy.x + player.grabbedBy.width / 2
+    : player.x;
+
+    const throwDir = Math.random() < 0.5 ? -1 : 1;
+
+  player.grabbed = false;
+  player.grabbedBy = null;
+  player.escapeProgress = 0;
+  player.escapeTimer = 0;
+
+  damagePlayer(45, titanX);
+
+  player.vx = throwDir * rand(35, 48);
+player.vy = -rand(16, 24);
+player.thrown = true;
+player.throwTimer = 45;
+
+  return;
+}
+  return;
+}
 
       const moveLeft = keys["a"] || keys["arrowleft"];
       const moveRight = keys["d"] || keys["arrowright"];
@@ -1114,8 +1186,10 @@ document.addEventListener("mouseup", () => {
       }
 
       player.vy += player.gravity;
-      player.vx = clamp(player.vx, -11, 11);
-      player.vy = clamp(player.vy, -16, 15);
+      if (!player.thrown) {
+  player.vx = clamp(player.vx, -11, 11);
+  player.vy = clamp(player.vy, -16, 15);
+}
 
       const prevY = player.y;
       player.x += player.vx;
@@ -1220,6 +1294,24 @@ document.addEventListener("mouseup", () => {
     titan.faceDir = titan.dir;
 
     titan.x += titan.dir * titan.moveSpeed * 2.4;
+    const closeEnoughToGrab = Math.abs(playerCenterX - titanCenterX) < 95;
+
+if (
+  titan.isBoss &&
+  closeEnoughToGrab &&
+  titan.attackCooldown <= 0 &&
+  !player.grabbed &&
+  Math.random() < 0.35
+) {
+  player.grabbed = true;
+  player.grabbedBy = titan;
+  player.escapeProgress = 0;
+  player.escapeTimer = 120;
+
+  titan.attackCooldown = 80;
+  titan.attackFlashTimer = 20;
+}
+
   } else {
     titan.x += titan.dir * titan.moveSpeed;
 
@@ -1681,7 +1773,7 @@ drawHeight = titan.height * TITAN_DRAW_SCALE;
   ctx.fillStyle = "#ff4444";
   ctx.font = "bold 11px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("KILL!", barX + barWidth / 2, barY + 9);
+  ctx.fillText("FINAL STRIKE!", barX + barWidth / 2, barY + 9);
   ctx.textAlign = "left";
 } else {
   ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -1915,6 +2007,27 @@ function drawHUD() {
     ctx.fillStyle = "#ff8080";
     ctx.fillText("Gaz bitti!", 230, 165);
   }
+
+  if (player.grabbed) {
+  ctx.fillStyle = "rgba(0,0,0,0.75)";
+  ctx.fillRect(380, 20, 440, 90);
+
+  ctx.fillStyle = "#ff4444";
+  ctx.font = "bold 22px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("GRABBED! PRESS SPACE TO ESCAPE", 600, 52);
+
+  ctx.fillStyle = "rgba(255,255,255,0.25)";
+  ctx.fillRect(460, 70, 280, 18);
+
+  ctx.fillStyle = "#2ecc71";
+  ctx.fillRect(460, 70, 280 * Math.min(player.escapeProgress / 100, 1), 18);
+
+  ctx.strokeStyle = "white";
+  ctx.strokeRect(460, 70, 280, 18);
+
+  ctx.textAlign = "left";
+}
 }
    
     function drawGameMessage() {
