@@ -428,7 +428,9 @@ itemSprites.boost.src = "/images/items/boost.png";
     frameTimer: 0,
     deadTimer: 0,
     drawDead: false,
-    faceDir: dir
+    faceDir: dir,
+bodyHitCount: 0,
+rageTimer: 0
       };
     }
 
@@ -782,85 +784,107 @@ async function setLose(message) {
   };
 }
 
-    function attackTitanIfPossible(titan) {
+
+
+
+function attackTitanIfPossible(titan) {
   if (!titan.alive || titan.hitCooldown > 0 || player.attackTimer <= 0) return false;
 
   const slash = getSlashHitbox();
   const nape = getTitanNapeZone(titan);
 
+  const titanBody = {
+    x: titan.x,
+    y: titan.y,
+    width: titan.width,
+    height: titan.height
+  };
+
+  const hitBody = rectsCollide(slash, titanBody);
+  const hitNape = rectsCollide(slash, nape);
+
   const playerCenterX = player.x + player.width / 2;
-  const playerCenterY = player.y + player.height / 2;
-  const titanCenterX = titan.x + titan.width / 2;
+const titanCenterX = titan.x + titan.width / 2;
 
-  const playerBehindTitan =
-    (titan.faceDir === 1 && playerCenterX < titanCenterX - titan.width * 0.10) ||
-    (titan.faceDir === -1 && playerCenterX > titanCenterX + titan.width * 0.10);
+const playerBehindTitan =
+  (titan.faceDir === 1 && playerCenterX < titanCenterX) ||
+  (titan.faceDir === -1 && playerCenterX > titanCenterX);
 
-  const playerFacingTitan =
-    (playerCenterX < titanCenterX && player.facing === 1) ||
-    (playerCenterX > titanCenterX && player.facing === -1);
+const validNapeKill = hitNape && playerBehindTitan;
 
-  // Yerden devin beline/sırtına vurunca hasar gitmesin.
-  // Oyuncunun saldırı yüksekliği ensenin yakınında olmalı.
-  const attackHighEnough =
-    slash.y + slash.height / 2 < titan.y + titan.height * 0.32;
 
-  const closeEnough = dist(
-  playerCenterX,
-  playerCenterY,
-  nape.x + nape.width / 2,
-  nape.y + nape.height / 2
-) < 115;
+  if (!hitBody && !hitNape) return false;
 
-  if (
-    rectsCollide(slash, nape) &&
-    playerBehindTitan &&
-    playerFacingTitan &&
-    attackHighEnough &&
-    closeEnough
-  ) {
-    let damage = 1;
+  let damage = 1;
 
-    if (player.boostMode) {
-      damage = 2;
-    } else if (Math.abs(player.vx) > 4.8 || Math.abs(player.vy) > 5.2) {
-      damage = 2;
-    }
-
-    titan.health -= damage;
-    titan.hitCooldown = 16;
-    titan.bloodTimer = 14;
-    titan.stunTimer = 28;
-    titan.state = "hurt";
-
-    const bloodX = nape.x + nape.width / 2;
-    const bloodY = nape.y + nape.height / 2;
-    spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 12);
-
-    if (playerCenterX < titanCenterX) {
-      player.x = Math.min(player.x, titan.x - player.width - 2);
-    } else {
-      player.x = Math.max(player.x, titan.x + titan.width + 2);
-    }
-
-    player.vx *= 0.35;
-    player.vy = Math.min(player.vy, -2.8);
-
-    if (titan.health <= 0) {
-      titan.alive = false;
-      titan.state = "dead";
-      titan.deadTimer = 90;
-      titan.drawDead = true;
-      killScore += titan.maxHealth * 140;
-      spawnBlood(bloodX, bloodY, 22);
-      titanKillCount++;
-      updateObjectiveProgress();
-    }
-
-    return true;
+  if (player.boostMode) {
+    damage = 2;
+  } else if (Math.abs(player.vx) > 4.8 || Math.abs(player.vy) > 5.2) {
+    damage = 2;
   }
 
-  return false;
+  if (!hitNape) {
+    damage = 0.5;
+    titan.bodyHitCount++;
+
+    if (titan.bodyHitCount >= 3) {
+      titan.rageTimer = 95;
+      titan.bodyHitCount = 0;
+      titan.attackCooldown = 0;
+      titan.attackFlashTimer = 18;
+      titan.stunTimer = 0;
+      titan.state = "attack";
+
+      const playerCenterX = player.x + player.width / 2;
+      const titanCenterX = titan.x + titan.width / 2;
+      titan.faceDir = playerCenterX < titanCenterX ? -1 : 1;
+      titan.dir = titan.faceDir;
+
+      if (Math.abs(playerCenterX - titanCenterX) < 180) {
+        damagePlayer(titan.damage, titan.x + titan.width / 2);
+      }
+    }
+  } else {
+    titan.bodyHitCount = 0;
+  }
+
+  titan.health -= damage;
+
+  if (titan.health <= 0 && !validNapeKill) {
+    titan.health = 1;
+  }
+
+  titan.hitCooldown = hitNape ? 16 : 8;
+  titan.bloodTimer = 10;
+
+  if (hitNape) {
+    titan.stunTimer = 20;
+    titan.state = "hurt";
+  } else if (titan.rageTimer <= 0) {
+    titan.stunTimer = 0;
+    titan.state = "walk";
+  }
+
+  const bloodX = hitNape ? nape.x + nape.width / 2 : slash.x + slash.width / 2;
+  const bloodY = hitNape ? nape.y + nape.height / 2 : slash.y + slash.height / 2;
+
+  spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 10);
+
+  player.vx *= 0.35;
+  player.vy = Math.min(player.vy, -2.8);
+
+  if (titan.health <= 0 && validNapeKill) {
+    titan.alive = false;
+    titan.state = "dead";
+    titan.deadTimer = 90;
+    titan.drawDead = true;
+    killScore += titan.maxHealth * 140;
+    spawnBlood(bloodX, bloodY, 22);
+    titanKillCount++;
+    updateObjectiveProgress();
+  }
+
+  return true;
 }
 
     function damagePlayer(amount, titanX) {
@@ -1001,6 +1025,7 @@ document.addEventListener("mouseup", () => {
         if (t.attackFlashTimer > 0) t.attackFlashTimer--;
         if (t.bloodTimer > 0) t.bloodTimer--;
         if (t.stunTimer > 0) t.stunTimer--;
+        if (t.rageTimer > 0) t.rageTimer--;
       });
 
       updateBloodEffects();
@@ -1157,7 +1182,7 @@ document.addEventListener("mouseup", () => {
     return;
   }
 
-  if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28) {
+  if (titan.rageTimer > 0 || titan.attackFlashTimer > 0 || titan.attackCooldown > 28) {
     titan.state = "attack";
     return;
   }
@@ -1187,10 +1212,21 @@ document.addEventListener("mouseup", () => {
         updateTitanAnimation(titan);
 
         if (titan.stunTimer <= 0) {
-          titan.x += titan.dir * titan.moveSpeed;
-          if (titan.x <= titan.minX) titan.dir = 1;
-          if (titan.x >= titan.maxX) titan.dir = -1;
-        }
+  if (titan.rageTimer > 0) {
+    const playerCenterX = player.x + player.width / 2;
+    const titanCenterX = titan.x + titan.width / 2;
+
+    titan.dir = playerCenterX < titanCenterX ? -1 : 1;
+    titan.faceDir = titan.dir;
+
+    titan.x += titan.dir * titan.moveSpeed * 2.4;
+  } else {
+    titan.x += titan.dir * titan.moveSpeed;
+
+    if (titan.x <= titan.minX) titan.dir = 1;
+    if (titan.x >= titan.maxX) titan.dir = -1;
+  }
+}
 
         titan.faceDir = titan.dir;
 
@@ -1630,11 +1666,24 @@ drawHeight = titan.height * TITAN_DRAW_SCALE;
   const barHeight = 7;
   const healthRatio = Math.max(0, titan.health / titan.maxHealth);
 
+  const needsNapeFinisher = titan.health <= 1;
+
+
   // Can barı hitbox'a göre değil, görünen sprite'a göre ortalanacak.
   const spriteCenterX = drawX + drawWidth / 2;
   const barX = spriteCenterX - barWidth / 2;
   const barY = drawY - 5;
 
+  if (needsNapeFinisher) {
+  ctx.fillStyle = "rgba(0,0,0,0.65)";
+  ctx.fillRect(barX - 10, barY - 4, barWidth + 20, 18);
+
+  ctx.fillStyle = "#ff4444";
+  ctx.font = "bold 11px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("KILL!", barX + barWidth / 2, barY + 9);
+  ctx.textAlign = "left";
+} else {
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.fillRect(barX, barY, barWidth, barHeight);
 
@@ -1644,6 +1693,7 @@ drawHeight = titan.height * TITAN_DRAW_SCALE;
   ctx.strokeStyle = "rgba(255,255,255,0.75)";
   ctx.lineWidth = 1;
   ctx.strokeRect(barX, barY, barWidth, barHeight);
+}
 
   if (titan.isBoss) {
     ctx.fillStyle = "#f1c40f";
