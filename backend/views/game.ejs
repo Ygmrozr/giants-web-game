@@ -622,6 +622,8 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let killScore = 0;
     let itemScore = 0;
     const bloodEffects = [];
+    let speedLines = [];
+    let boostTrails = [];
     let titanKillCount = 0;
     let itemCollectedCount = 0;
     let collectedSupplyCount = 0;
@@ -1093,6 +1095,18 @@ document.addEventListener("mouseup", () => {
 if (screenShakeTimer > 0) screenShakeTimer--;
 
       updateBloodEffects();
+
+      speedLines = speedLines.filter(line => {
+  line.x += line.vx;
+  line.y += line.vy;
+  line.life--;
+  return line.life > 0;
+});
+
+boostTrails = boostTrails.filter(trail => {
+  trail.life--;
+  return trail.life > 0;
+});
     }
 
     async function saveScoreToDatabase(){
@@ -1237,6 +1251,27 @@ player.throwTimer = 45;
       const prevY = player.y;
       player.x += player.vx;
       player.y += player.vy;
+
+      const playerSpeed = Math.abs(player.vx) + Math.abs(player.vy);
+
+if (!player.onGround || player.grappling) {
+  speedLines.push({
+    x: player.x + player.width / 2 - player.facing * 28,
+    y: player.y + player.height * 0.62,
+    vx: rand(-0.6, 0.6),
+    vy: rand(-0.4, 0.4),
+    life: 22,
+    size: rand(6, 13)
+  });
+}
+if (player.boostMode) {
+  boostTrails.push({
+    x: player.x + player.width / 2,
+    y: player.y + player.height / 2,
+    life: 20,
+    size: rand(8, 16)
+  });
+}
 
       if (player.x < 0) {
         player.x = 0;
@@ -1931,7 +1966,42 @@ function drawFinish() {
       }
     }
 
-    
+   function drawSpeedLines() {
+  speedLines.forEach(p => {
+    const alpha = p.life / 22;
+
+    ctx.fillStyle = `rgba(255,255,255,${0.18 * alpha})`;
+
+    ctx.beginPath();
+    ctx.arc(
+      p.x - camera.x,
+      p.y,
+      p.size * alpha,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  });
+}
+
+function drawBoostTrails() {
+  boostTrails.forEach(trail => {
+    const alpha = trail.life / 20;
+
+    ctx.fillStyle = `rgba(80,180,255,${0.14 * alpha})`;
+
+    ctx.beginPath();
+    ctx.arc(
+      trail.x - camera.x,
+      trail.y,
+      trail.size * alpha,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  });
+}
+
     function getPlayerImage() {
 
       if (game.state === "lose" || player.health <= 0) {
@@ -2039,19 +2109,24 @@ function drawHUD() {
   ctx.fillRect(65, 122, 150 * (player.health / player.maxHealth), 16);
 
   ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.strokeRect(65, 122, 150, 16);
+ctx.strokeRect(65, 122, 150, 16);
 
-  ctx.fillStyle = "white";
-  ctx.fillText("Gaz:", 20, 165);
+ctx.fillStyle = "white";
+ctx.fillText("Gaz:", 20, 165);
 
-  ctx.fillStyle = "rgba(255,255,255,0.2)";
-  ctx.fillRect(65, 152, 150, 16);
+ctx.fillStyle = "rgba(255,255,255,0.2)";
+ctx.fillRect(65, 152, 150, 16);
 
-  ctx.fillStyle = "#66ccff";
-  ctx.fillRect(65, 152, 150 * (player.gas / player.maxGas), 16);
+ctx.fillStyle = "#4fc3f7";
+ctx.fillRect(
+  65,
+  152,
+  150 * (player.gas / player.maxGas),
+  16
+);
 
-  ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.strokeRect(65, 152, 150, 16);
+ctx.strokeStyle = "rgba(255,255,255,0.7)";
+ctx.strokeRect(65, 152, 150, 16);
 
   if (player.boostMode) {
     ctx.fillStyle = "#00d8ff";
@@ -2141,18 +2216,21 @@ function drawFinalStrikeEffect() {
       drawGround();
       drawItems();
       drawTitans();
-
-<% if (devMode) { %>
-drawTitanNapeDebug();
-<% } %>
-
-drawFinish();
+      drawFinish();
       drawBloodEffects();
+      drawSpeedLines();
+drawBoostTrails();
       drawGrappleLine();
       drawPlayer();
       drawHUD();
 drawFinalStrikeEffect();
 drawGameMessage();
+
+
+<% if (devMode) { %>
+drawTitanNapeDebug();
+<% } %>
+
 
 
         ctx.restore();
