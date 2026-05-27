@@ -429,7 +429,7 @@ itemSprites.boost.src = "/images/items/boost.png";
         attackCooldown: 0,
         stunTimer: 0,
         attackFlashTimer: 0,
-        damage: randInt(10, 18),
+        damage: randInt(6, 12),
         bloodTimer: 0,
         state: "walk",
     frame: 0,
@@ -438,7 +438,8 @@ itemSprites.boost.src = "/images/items/boost.png";
     drawDead: false,
     faceDir: dir,
 bodyHitCount: 0,
-rageTimer: 0
+rageTimer: 0,
+rageDamageCooldown: 0
       };
     }
 
@@ -482,7 +483,7 @@ rageTimer: 0
       boss.y = ground.y - boss.height;
       boss.maxHealth = 12 + currentBattle * 3;
       boss.health = boss.maxHealth;
-      boss.damage = 25 + currentBattle * 3;
+      boss.damage = 15 + currentBattle * 2;
       boss.moveSpeed = 0.55 + currentBattle * 0.06;
       boss.isBoss = true;
 
@@ -687,6 +688,12 @@ async function setLose(message) {
   player.vy = 0;
   player.grappling = false;
   player.grappleTarget = null;
+  player.y = ground.y - player.height + 18;
+player.onGround = true;
+player.grabbed = false;
+player.grabbedBy = null;
+player.thrown = false;
+player.throwTimer = 0;
 
   if(result && result.unlockedTitle){
     game.message += " | New Title: " + result.unlockedTitle;
@@ -738,7 +745,7 @@ player.escapeTimer = 0;
     function startGrapple(target) {
       if (player.gas <= 0) return;
 
-      const gasCost = 10;
+      const gasCost = 5;
       if (player.gas < gasCost) return;
 
       player.gas -= gasCost;
@@ -775,9 +782,9 @@ player.escapeTimer = 0;
 function getTitanNapeZone(titan) {
   const rect = getTitanDrawRect(titan);
 
-  const zoneW = rect.width * 0.22;
-  const zoneH = rect.height * 0.17;
-  const zoneY = rect.y + rect.height * 0.13;
+  const zoneW = rect.width * 0.14;
+const zoneH = rect.height * 0.07;
+const zoneY = rect.y + rect.height * 0.08;
 
   let zoneX;
 
@@ -810,17 +817,34 @@ function attackTitanIfPossible(titan) {
   };
 
   const hitBody = rectsCollide(slash, titanBody);
-  const hitNape = rectsCollide(slash, nape);
+  
+  const fastAirAttack =
+  !player.onGround && (Math.abs(player.vx) > 4 || Math.abs(player.vy) > 4);
+
+  const fastDiagonalAttack =
+  !player.onGround &&
+  Math.abs(player.vx) > 5 &&
+  Math.abs(player.vy) > 3;
+
+const napeTolerance = fastDiagonalAttack ? 10 : 0;
+
+const expandedNape = {
+  x: nape.x - napeTolerance,
+  y: nape.y - napeTolerance,
+  width: nape.width + napeTolerance * 2,
+  height: nape.height + napeTolerance * 2
+};
+
+const hitNape = rectsCollide(slash, expandedNape);
 
   const playerCenterX = player.x + player.width / 2;
 const titanCenterX = titan.x + titan.width / 2;
 
 const playerBehindTitan =
-  (titan.faceDir === 1 && playerCenterX < titanCenterX) ||
-  (titan.faceDir === -1 && playerCenterX > titanCenterX);
+  (titan.faceDir === 1 && playerCenterX < titanCenterX - titan.width * 0.08) ||
+  (titan.faceDir === -1 && playerCenterX > titanCenterX + titan.width * 0.08);
 
-  const validNapeKill = hitNape && playerBehindTitan;
-
+const validNapeKill = hitNape && playerBehindTitan;
 
   if (!hitBody && !hitNape) return false;
 
@@ -837,7 +861,7 @@ const playerBehindTitan =
     titan.bodyHitCount++;
 
     if (titan.bodyHitCount >= 3) {
-      titan.rageTimer = 95;
+      titan.rageTimer = 35;
       titan.bodyHitCount = 0;
       titan.attackCooldown = 0;
       titan.attackFlashTimer = 18;
@@ -849,9 +873,6 @@ const playerBehindTitan =
       titan.faceDir = playerCenterX < titanCenterX ? -1 : 1;
       titan.dir = titan.faceDir;
 
-      if (Math.abs(playerCenterX - titanCenterX) < 180) {
-        damagePlayer(titan.damage, titan.x + titan.width / 2);
-      }
     }
   } else {
     titan.bodyHitCount = 0;
@@ -912,17 +933,24 @@ const playerBehindTitan =
       spawnBlood(player.x + player.width / 2, player.y + player.height / 2, 8);
 
       if (player.health <= 0) {
+  if (player.health <= 0) {
   player.health = 0;
 
-  // Ölünce karakter havada kalmasın, zemine otursun.
-  player.y = ground.y - player.height;
-  player.vx = 0;
-  player.vy = 0;
-  player.onGround = true;
+  player.grabbed = false;
+  player.grabbedBy = null;
   player.grappling = false;
   player.grappleTarget = null;
+  player.thrown = false;
+  player.throwTimer = 0;
+
+  player.vx = 0;
+  player.vy = 0;
+  player.y = ground.y - player.height + 18;
+
+  player.onGround = true;
 
   setLose("Canın bitti!");
+}
 }
     }
 
@@ -1047,6 +1075,7 @@ document.addEventListener("mouseup", () => {
         if (t.bloodTimer > 0) t.bloodTimer--;
         if (t.stunTimer > 0) t.stunTimer--;
         if (t.rageTimer > 0) t.rageTimer--;
+        if (t.rageDamageCooldown > 0) t.rageDamageCooldown--;
       });
 
       updateBloodEffects();
@@ -1293,7 +1322,19 @@ player.throwTimer = 45;
     titan.dir = playerCenterX < titanCenterX ? -1 : 1;
     titan.faceDir = titan.dir;
 
-    titan.x += titan.dir * titan.moveSpeed * 2.4;
+    titan.x += titan.dir * titan.moveSpeed * 1.25;
+    const closeEnoughForRageDamage = Math.abs(playerCenterX - titanCenterX) < 105;
+
+if (
+  currentBattle >= 5 &&
+  closeEnoughForRageDamage &&
+  titan.rageDamageCooldown <= 0 &&
+  !player.grabbed
+) {
+  damagePlayer(8, titan.x + titan.width / 2);
+  titan.rageDamageCooldown = 75;
+}
+
     const closeEnoughToGrab = Math.abs(playerCenterX - titanCenterX) < 95;
 
 if (
@@ -1336,7 +1377,7 @@ if (
         if (rectsCollide(getPlayerRect(), titanRect)) {
           if (titan.stunTimer <= 0 && titanCanAttackPlayer(titan) && titan.attackCooldown <= 0) {
             damagePlayer(titan.damage, titan.x + titan.width / 2);
-            titan.attackCooldown = 40;
+            titan.attackCooldown = titan.rageTimer > 0 ? 120 : 40;
             titan.attackFlashTimer = 12;
           }
         }
