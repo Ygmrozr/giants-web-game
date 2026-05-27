@@ -861,6 +861,64 @@ if (p.type === "blackAsh") {
   ctx.restore();
 }
 
+
+function drawFogLayer() {
+  ctx.save();
+
+  ctx.globalCompositeOperation = "screen";
+
+  // Uzak ince sis
+  for (let i = 0; i < 7; i++) {
+    const x = ((i * 320) - camera.x * 0.10) % 1600;
+    const y = 170 + Math.sin(i * 1.7 + camera.x * 0.001) * 12;
+
+    const fog = ctx.createRadialGradient(x, y, 20, x, y, 260);
+    fog.addColorStop(0, "rgba(120,135,145,0.055)");
+    fog.addColorStop(0.5, "rgba(95,105,115,0.035)");
+    fog.addColorStop(1, "rgba(80,90,100,0)");
+
+    ctx.fillStyle = fog;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 310, 70, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Orta katman dalgalı sis
+  for (let i = 0; i < 6; i++) {
+    const x = ((i * 360) - camera.x * 0.22) % 1800;
+    const y = 300 + Math.sin(i * 2.1 + camera.x * 0.0018) * 18;
+
+    const fog = ctx.createRadialGradient(x, y, 30, x, y, 300);
+    fog.addColorStop(0, "rgba(170,145,105,0.07)");
+    fog.addColorStop(0.45, "rgba(130,105,80,0.04)");
+    fog.addColorStop(1, "rgba(80,60,45,0)");
+
+    ctx.fillStyle = fog;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 360, 85, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Zemine yakın savaş sisi
+  for (let i = 0; i < 8; i++) {
+    const x = ((i * 260) - camera.x * 0.35) % 1500;
+    const y = 535 + Math.sin(i * 1.3 + camera.x * 0.0025) * 10;
+
+    const fog = ctx.createRadialGradient(x, y, 20, x, y, 220);
+    fog.addColorStop(0, "rgba(185,160,120,0.075)");
+    fog.addColorStop(0.55, "rgba(120,100,80,0.04)");
+    fog.addColorStop(1, "rgba(80,60,45,0)");
+
+    ctx.fillStyle = fog;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 300, 45, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.restore();
+}
+
 function drawVignette() {
   ctx.save();
 
@@ -2748,6 +2806,7 @@ const alpha = healthRatio < 0.20
     ctx.translate(rand(-2, 2), rand(-2, 2));
   }
       drawParallax();
+      drawFogLayer();
 drawAtmosphereParticles();
 
 drawGround();
