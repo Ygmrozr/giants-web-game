@@ -440,7 +440,8 @@ itemSprites.boost.src = "/images/items/boost.png";
     faceDir: dir,
 bodyHitCount: 0,
 rageTimer: 0,
-rageDamageCooldown: 0
+rageDamageCooldown: 0,
+stepDustTimer: 0
       };
     }
 
@@ -624,6 +625,7 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     const bloodEffects = [];
     let speedLines = [];
     let boostTrails = [];
+    let stompDusts = [];
     let titanKillCount = 0;
     let itemCollectedCount = 0;
     let collectedSupplyCount = 0;
@@ -1107,6 +1109,14 @@ boostTrails = boostTrails.filter(trail => {
   trail.life--;
   return trail.life > 0;
 });
+
+stompDusts = stompDusts.filter(dust => {
+  dust.x += dust.vx;
+  dust.y += dust.vy;
+  dust.life--;
+  return dust.life > 0;
+});
+
     }
 
     async function saveScoreToDatabase(){
@@ -1264,6 +1274,7 @@ if (!player.onGround || player.grappling) {
     size: rand(6, 13)
   });
 }
+
 if (player.boostMode) {
   boostTrails.push({
     x: player.x + player.width / 2,
@@ -1323,6 +1334,8 @@ if (player.boostMode) {
       }
     }
 
+
+
     function updateTitanAnimation(titan) {
   if (!titan.alive) {
     titan.state = "dead";
@@ -1347,91 +1360,115 @@ if (player.boostMode) {
     titan.frame = (titan.frame + 1) % titanWalkFrames.length;
   }
 }
-    function updateTitans() {
-      if (game.state !== "playing") return;
+   
 
-      titans.forEach(titan => {
-       if (!titan.alive) {
-  if (titan.deadTimer > 0) {
-    titan.deadTimer--;
-    titan.drawDead = true;
-  } else {
-    titan.drawDead = false;
-  }
-  return;
-}
+function updateTitans() {
+  if (game.state !== "playing") return;
 
-        updateTitanAnimation(titan);
+  titans.forEach(titan => {
+    if (!titan.alive) {
+      if (titan.deadTimer > 0) {
+        titan.deadTimer--;
+        titan.drawDead = true;
+      } else {
+        titan.drawDead = false;
+      }
+      return;
+    }
 
-        if (titan.stunTimer <= 0) {
-  if (titan.rageTimer > 0) {
-    const playerCenterX = player.x + player.width / 2;
-    const titanCenterX = titan.x + titan.width / 2;
+    updateTitanAnimation(titan);
 
-    titan.dir = playerCenterX < titanCenterX ? -1 : 1;
-    titan.faceDir = titan.dir;
+    if (titan.stunTimer <= 0) {
+      const playerCenterX = player.x + player.width / 2;
+      const titanCenterX = titan.x + titan.width / 2;
 
-    titan.x += titan.dir * titan.moveSpeed * 1.25;
-    const closeEnoughForRageDamage = Math.abs(playerCenterX - titanCenterX) < 105;
+      if (titan.alive && titan.state === "walk") {
+        titan.stepDustTimer++;
 
-if (
-  currentBattle >= 5 &&
-  closeEnoughForRageDamage &&
-  titan.rageDamageCooldown <= 0 &&
-  !player.grabbed
-) {
-  damagePlayer(8, titan.x + titan.width / 2);
-  titan.rageDamageCooldown = 75;
-}
+        if (titan.stepDustTimer >= (titan.isBoss ? 18 : 32)) {
+          titan.stepDustTimer = 0;
 
-    const closeEnoughToGrab = Math.abs(playerCenterX - titanCenterX) < 95;
+          stompDusts.push({
+  x: titan.x + titan.width / 2,
+  y: ground.y - 18,
+  life: titan.isBoss ? 24 : 18,
+  size: titan.isBoss ? rand(18, 30) : rand(12, 22),
+  vx: rand(-0.35, 0.35),
+vy: rand(-0.25, -0.05)
+});
 
-if (
-  titan.isBoss &&
-  closeEnoughToGrab &&
-  titan.attackCooldown <= 0 &&
-  !player.grabbed &&
-  Math.random() < 0.35
-) {
-  player.grabbed = true;
-  player.grabbedBy = titan;
-  player.escapeProgress = 0;
-  player.escapeTimer = 120;
-
-  titan.attackCooldown = 80;
-  titan.attackFlashTimer = 20;
-}
-
-  } else {
-    titan.x += titan.dir * titan.moveSpeed;
-
-    if (titan.x <= titan.minX) titan.dir = 1;
-    if (titan.x >= titan.maxX) titan.dir = -1;
-  }
-}
-
-        titan.faceDir = titan.dir;
-
-        if (player.attackTimer > 0) {
-          attackTitanIfPossible(titan);
-        }
-
-        const titanRect = {
-          x: titan.x,
-          y: titan.y,
-          width: titan.width,
-          height: titan.height
-        };
-
-        if (rectsCollide(getPlayerRect(), titanRect)) {
-          if (titan.stunTimer <= 0 && titanCanAttackPlayer(titan) && titan.attackCooldown <= 0) {
-            damagePlayer(titan.damage, titan.x + titan.width / 2);
-            titan.attackCooldown = titan.rageTimer > 0 ? 120 : 40;
-            titan.attackFlashTimer = 12;
+          if (titan.isBoss) {
+            screenShakeTimer = Math.max(screenShakeTimer, 5);
           }
         }
-      });
+      }
+
+      if (titan.rageTimer > 0) {
+        titan.dir = playerCenterX < titanCenterX ? -1 : 1;
+        titan.faceDir = titan.dir;
+
+        titan.x += titan.dir * titan.moveSpeed * 1.25;
+
+        const closeEnoughForRageDamage = Math.abs(playerCenterX - titanCenterX) < 105;
+
+        if (
+          currentBattle >= 5 &&
+          closeEnoughForRageDamage &&
+          titan.rageDamageCooldown <= 0 &&
+          !player.grabbed
+        ) {
+          damagePlayer(8, titan.x + titan.width / 2);
+          titan.rageDamageCooldown = 75;
+        }
+
+        const closeEnoughToGrab = Math.abs(playerCenterX - titanCenterX) < 95;
+
+        if (
+          titan.isBoss &&
+          closeEnoughToGrab &&
+          titan.attackCooldown <= 0 &&
+          !player.grabbed &&
+          Math.random() < 0.35
+        ) {
+          player.grabbed = true;
+          player.grabbedBy = titan;
+          player.escapeProgress = 0;
+          player.escapeTimer = 120;
+
+          titan.attackCooldown = 80;
+          titan.attackFlashTimer = 20;
+        }
+      } else {
+        titan.x += titan.dir * titan.moveSpeed;
+
+        if (titan.x <= titan.minX) titan.dir = 1;
+        if (titan.x >= titan.maxX) titan.dir = -1;
+      }
     }
+
+    titan.faceDir = titan.dir;
+
+    if (player.attackTimer > 0) {
+      attackTitanIfPossible(titan);
+    }
+
+    const titanRect = {
+      x: titan.x,
+      y: titan.y,
+      width: titan.width,
+      height: titan.height
+    };
+
+    if (rectsCollide(getPlayerRect(), titanRect)) {
+      if (titan.stunTimer <= 0 && titanCanAttackPlayer(titan) && titan.attackCooldown <= 0) {
+        damagePlayer(titan.damage, titan.x + titan.width / 2);
+        titan.attackCooldown = titan.rageTimer > 0 ? 120 : 40;
+        titan.attackFlashTimer = 12;
+      }
+    }
+  });
+}
+
 
     function updateItems() {
       if (game.state !== "playing") return;
@@ -2002,6 +2039,22 @@ function drawBoostTrails() {
   });
 }
 
+function drawStompDusts() {
+  stompDusts.forEach(dust => {
+    const alpha = dust.life / 26;
+
+    
+    ctx.fillStyle = `rgba(160,150,140,${0.26 * alpha})`;
+
+    ctx.fillRect(
+  dust.x - camera.x,
+  dust.y,
+  dust.size * alpha * 1.8,
+  dust.size * alpha * 0.7
+);
+  });
+}
+
     function getPlayerImage() {
 
       if (game.state === "lose" || player.health <= 0) {
@@ -2212,8 +2265,9 @@ function drawFinalStrikeEffect() {
     ctx.translate(rand(-2, 2), rand(-2, 2));
   }
       drawParallax();
-      drawPlatforms();
       drawGround();
+      drawStompDusts();
+      drawPlatforms();
       drawItems();
       drawTitans();
       drawFinish();
