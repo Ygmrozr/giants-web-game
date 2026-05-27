@@ -242,7 +242,8 @@ levelBackground.src = "/images/levels/trost.png";
       state: "playing",
       message: "",
       maxProgressX: 80,
-      invincibleTimer: 0
+      invincibleTimer: 0,
+      timeScale: 1
     };
 
     const ground = {
@@ -627,6 +628,8 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let collectedMedalCount = 0;
     let scoreSaved = false;
     let lastUnlockedTitle = null;
+    let finalStrikeTimer = 0;
+let screenShakeTimer = 0;
 
     function spawnBlood(x, y, count = 10) {
       for (let i = 0; i < count; i++) {
@@ -904,12 +907,20 @@ const validNapeKill = hitNape && playerBehindTitan;
   player.vy = Math.min(player.vy, -2.8);
 
   if (titan.health <= 0 && validNapeKill) {
+    finalStrikeTimer = 20;
+screenShakeTimer = 25;
+game.timeScale = 0.35;
+
+setTimeout(() => {
+  game.timeScale = 1;
+}, 120);
+
     titan.alive = false;
     titan.state = "dead";
     titan.deadTimer = 90;
     titan.drawDead = true;
     killScore += titan.maxHealth * 140;
-    spawnBlood(bloodX, bloodY, 22);
+    spawnBlood(bloodX, bloodY, 38);
     titanKillCount++;
     updateObjectiveProgress();
   }
@@ -1077,6 +1088,9 @@ document.addEventListener("mouseup", () => {
         if (t.rageTimer > 0) t.rageTimer--;
         if (t.rageDamageCooldown > 0) t.rageDamageCooldown--;
       });
+
+      if (finalStrikeTimer > 0) finalStrikeTimer--;
+if (screenShakeTimer > 0) screenShakeTimer--;
 
       updateBloodEffects();
     }
@@ -2071,6 +2085,18 @@ function drawHUD() {
 }
 }
    
+function drawFinalStrikeEffect() {
+  if (finalStrikeTimer <= 0) return;
+
+  const alpha = finalStrikeTimer / 20;
+
+  ctx.fillStyle = `rgba(120,0,0,${0.12 * alpha})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = `rgba(255,255,255,${0.18 * alpha})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
     function drawGameMessage() {
       if (game.state === "playing") return;
 
@@ -2103,7 +2129,13 @@ function drawHUD() {
     }
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+
+  if (screenShakeTimer > 0) {
+    ctx.translate(rand(-2, 2), rand(-2, 2));
+  }
       drawParallax();
       drawPlatforms();
       drawGround();
@@ -2119,13 +2151,20 @@ drawFinish();
       drawGrappleLine();
       drawPlayer();
       drawHUD();
-      drawGameMessage();
+drawFinalStrikeEffect();
+drawGameMessage();
+
+
+        ctx.restore();
     }
 
     function gameLoop() {
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
+      if (Math.random() < game.timeScale) {
+  update();
+}
+
+draw();
+requestAnimationFrame(gameLoop);
     }
 
     const gameMeta = document.getElementById("gameMeta");
