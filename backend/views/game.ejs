@@ -678,6 +678,7 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let speedLines = [];
     let boostTrails = [];
     let stompDusts = [];
+    let odmGasTrails = [];
     let grappleSparks = [];
     let atmosphereParticles = [];
     let titanKillCount = 0;
@@ -918,6 +919,68 @@ function drawFogLayer() {
   ctx.globalCompositeOperation = "source-over";
   ctx.restore();
 }
+
+function spawnOdmGasTrail() {
+  if (!player.grappling && !player.boostMode) return;
+
+  const speed = Math.abs(player.vx) + Math.abs(player.vy);
+  if (speed < 4) return;
+
+  if (Math.random() > 0.55) return;
+
+  odmGasTrails.push({
+    x: player.x + player.width / 2 - player.facing * 34,
+    y: player.y + player.height * 0.62,
+    vx: -player.vx * 0.18 + rand(-0.4, 0.4),
+    vy: -player.vy * 0.10 + rand(-0.25, 0.25),
+    size: rand(8, 16),
+    life: randInt(18, 28),
+    maxLife: 28
+  });
+}
+
+function updateOdmGasTrails() {
+  for (let i = odmGasTrails.length - 1; i >= 0; i--) {
+    const p = odmGasTrails[i];
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.94;
+    p.vy *= 0.94;
+    p.size *= 1.035;
+    p.life--;
+
+    if (p.life <= 0) {
+      odmGasTrails.splice(i, 1);
+    }
+  }
+}
+
+function drawOdmGasTrails() {
+  ctx.save();
+
+  for (const p of odmGasTrails) {
+    const alpha = p.life / p.maxLife;
+
+    ctx.fillStyle = `rgba(190,190,180,${0.14 * alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(
+      p.x - camera.x,
+      p.y,
+      p.size * 2.1,
+p.size * 0.45,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+
+
 
 function drawVignette() {
   ctx.save();
@@ -1446,6 +1509,9 @@ stompDusts = stompDusts.filter(dust => {
   return dust.life > 0;
 });
 
+updateOdmGasTrails();
+
+
     }
 
     async function saveScoreToDatabase(){
@@ -1590,6 +1656,7 @@ player.throwTimer = 45;
       const prevY = player.y;
       player.x += player.vx;
       player.y += player.vy;
+      spawnOdmGasTrail();
 
       const playerSpeed = Math.abs(player.vx) + Math.abs(player.vy);
 
@@ -2821,6 +2888,7 @@ drawBoostTrails();
 drawGrappleLine();
 drawGrappleSparks();
 
+drawOdmGasTrails();
 drawPlayer();
 drawBloodEffects();
 
