@@ -3,70 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <title>Giants Game</title>
-  <style>
-    *{
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-      font-family:Arial, Helvetica, sans-serif;
-    }
-
-    body{
-      background:#0b0b0b;
-      color:white;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      min-height:100vh;
-      flex-direction:column;
-      gap:12px;
-      overflow:hidden;
-    }
-
-    .topbar{
-      width:1200px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size:18px;
-      font-weight:bold;
-    }
-
-    .help{
-      width:1200px;
-      font-size:14px;
-      opacity:.95;
-      line-height:1.5;
-    }
-    .menu-bar{
-  width:1200px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:white;
-  margin-bottom:10px;
+  
+<style>
+  *{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial, Helvetica, sans-serif;
+  }
+  
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(circle at center,
+    rgba(255,190,90,0.08) 0%,
+    rgba(40,60,90,0.12) 35%,
+    transparent 70%);
+  pointer-events:none;
+  z-index:-1;
 }
 
-.menu-links a{
-  color:white;
-  text-decoration:none;
-  margin-left:16px;
-  font-weight:bold;
-}
+  body{
+    background:
+    radial-gradient(circle at top, #1f2733 0%, #0d1218 45%, #05070a 100%);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    flex-direction:column;
+    gap:8px;
+    overflow:hidden;
+  }
 
-.menu-links a:hover{
-  text-decoration:underline;
-}
+  .objective-hud,
+  .menu-bar,
+  .topbar,
+  .help{
+    display:none;
+  }
 
-    canvas{
-      background:linear-gradient(to top, #1a1a1a 0%, #101820 55%, #0a1018 100%);
-      border:2px solid #d8d8d8;
-      display:block;
-      cursor:crosshair;
-      box-shadow:0 0 30px rgba(255,255,255,.08);
-    }
-    
-  </style>
+  .game-header{
+    backdrop-filter:blur(6px);
+    width:1200px;
+    height:46px;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    padding:0 14px;
+    background:rgba(0,0,0,0.42);
+    border:1px solid rgba(215,175,100,0.45);
+    box-shadow:0 0 18px rgba(0,0,0,0.45);
+  }
+
+  .header-left{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:15px;
+  }
+
+  .player-label{
+    color:#d9b46a;
+    font-weight:bold;
+    letter-spacing:.5px;
+  }
+
+  .header-center{
+    color:#f4d27a;
+    font-size:15px;
+    font-weight:bold;
+    letter-spacing:.6px;
+  }
+
+  .header-right{
+    display:flex;
+    justify-content:flex-end;
+    gap:18px;
+  }
+
+  .header-right a{
+    color:white;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:bold;
+  }
+
+  .header-right a:hover{
+    color:#f4d27a;
+  }
+
+  .control-hint{
+    width:1200px;
+    font-size:12px;
+    color:rgba(255,255,255,0.72);
+    padding-left:4px;
+    margin-top:-2px;
+  }
+
+  canvas{
+    background:linear-gradient(to top, #1a1a1a 0%, #101820 55%, #0a1018 100%);
+    border:3px solid #2b241b;
+    display:block;
+    cursor:crosshair;
+    box-shadow:
+      0 0 0 4px rgba(0,0,0,0.75),
+      0 0 35px rgba(0,0,0,0.9);
+  }
+
+  #completeSectorBtn{
+    font-weight:bold;
+    box-shadow:0 0 18px rgba(31,139,255,0.45);
+  }
+</style>
+
 </head>
 <body>
   <div 
@@ -182,9 +234,18 @@
   </div>
 </div>
 <% } %>
-  <div class="menu-bar">
-  <div>Player: <%= user.username %></div>
-  <div class="menu-links">
+
+  <div class="game-header">
+  <div class="header-left">
+    <span class="player-label">Player</span>
+    <strong><%= user.username %></strong>
+  </div>
+
+  <div class="header-center">
+    Battle <%= level %> · Sector <%= sector %>
+  </div>
+
+  <div class="header-right">
     <a href="/profile">Profile</a>
     <a href="/menu">Main Menu</a>
     <a href="/map">Map</a>
@@ -192,31 +253,15 @@
   </div>
 </div>
 
-  <div class="topbar">
-    <div>Oyuncu: <%= user.username || "Player" %></div>
-    <div id="scoreText">Keşif Madalyonu: 0</div>
-  </div>
+<div class="control-hint">
+  A/D Move · W Jump · Space Attack · Mouse Grapple · R Restart
+</div>
 
-  <div class="help">
-    Hareket: A / D veya ← / → | Zıplama: W / ↑ | Saldırı: Space | Halat: Mouse | Restart: R
-  </div>
+<div id="scoreText" style="display:none;">Keşif Madalyonu: 0</div>
 
-  <canvas id="gameCanvas" width="1200" height="650"></canvas>
-  
+<canvas id="gameCanvas" width="1200" height="650"></canvas>
 
-  <button id="completeSectorBtn" style="
-  display:none;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  padding: 12px 16px;
-  background: #1f8bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-">
+<button id="completeSectorBtn">
   Complete Sector
 </button>
 
@@ -308,6 +353,13 @@ throwTimer: 0
   idle: new Image(),
   dead: new Image()
 };
+
+
+
+const playerAvatar = new Image();
+playerAvatar.src = "<%= user.avatar || '/images/default-avatar.png' %>";
+
+
 
 const selectedSkin = "<%= user.selectedSkin || 'default' %>";
 
@@ -627,6 +679,7 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let boostTrails = [];
     let stompDusts = [];
     let grappleSparks = [];
+    let atmosphereParticles = [];
     let titanKillCount = 0;
     let itemCollectedCount = 0;
     let collectedSupplyCount = 0;
@@ -637,17 +690,19 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
 let screenShakeTimer = 0;
 
     function spawnBlood(x, y, count = 10) {
-      for (let i = 0; i < count; i++) {
-        bloodEffects.push({
-          x,
-          y,
-          vx: rand(-2.8, 2.8),
-          vy: rand(-3.2, -0.6),
-          life: randInt(18, 32),
-          size: rand(2, 5)
-        });
-      }
-    }
+  for (let i = 0; i < count; i++) {
+    bloodEffects.push({
+      x,
+      y,
+      vx: rand(-3.8, 3.8),
+      vy: rand(-4.2, -0.8),
+      life: randInt(18, 34),
+      maxLife: 34,
+      size: rand(2, 5),
+      type: Math.random() < 0.65 ? "drop" : "streak"
+    });
+  }
+}
 
 function spawnGrappleSpark(x, y) {
   grappleSparks.length = 0;
@@ -681,17 +736,169 @@ function spawnGrappleSpark(x, y) {
   }
 }
 
+function initAtmosphereParticles() {
+  atmosphereParticles = [];
+
+  // Az sayıda yumuşak toz bulutu
+  for (let i = 0; i < 10; i++) {
+    atmosphereParticles.push({
+      type: "dust",
+      x: rand(0, WORLD.width),
+      y: rand(120, canvas.height - 80),
+      size: rand(18, 38),
+      speedX: rand(-0.08, 0.04),
+      speedY: rand(-0.02, 0.03),
+      alpha: rand(0.06, 0.13)
+    });
+  }
+
+  // Turuncu köz / ateş parçacıkları
+  for (let i = 0; i < 90; i++) {
+    atmosphereParticles.push({
+      type: "ember",
+      x: rand(0, WORLD.width),
+      y: rand(40, canvas.height - 40),
+      size: rand(1.2, 2.8),
+      length: rand(5, 14),
+      speedX: rand(-0.45, -0.12),
+      speedY: rand(-0.18, 0.08),
+      alpha: rand(0.28, 0.65),
+      flicker: rand(0, Math.PI * 2)
+    });
+  }
+
+  // Performans dostu siyah kül
+for (let i = 24; i < 90 + 28; i++) {
+  atmosphereParticles.push({
+    type: "blackAsh",
+    x: rand(0, WORLD.width),
+    y: rand(40, canvas.height - 50),
+    size: rand(2.2, 4.5),
+    speedX: rand(-0.26, -0.06),
+    speedY: rand(0.03, 0.13),
+    alpha: rand(0.20, 0.38)
+  });
+}
+
+}
+
+
+function updateAtmosphereParticles() {
+  for (const p of atmosphereParticles) {
+    p.x += p.speedX;
+    p.y += p.speedY;
+
+    if (p.type === "ember") {
+      p.flicker += 0.18;
+      p.y += Math.sin(p.flicker) * 0.15;
+    }
+
+    if (p.x < 0) p.x = WORLD.width;
+    if (p.x > WORLD.width) p.x = 0;
+
+    if (p.y < 20) p.y = canvas.height - 40;
+    if (p.y > canvas.height - 20) p.y = 40;
+  }
+}
+
+function drawAtmosphereParticles() {
+  ctx.save();
+
+  for (const p of atmosphereParticles) {
+    const drawX = p.x - camera.x;
+    const drawY = p.y;
+
+    if (drawX < -60 || drawX > canvas.width + 60) continue;
+
+    if (p.type === "dust") {
+      ctx.globalCompositeOperation = "screen";
+
+      const gradient = ctx.createRadialGradient(
+        drawX,
+        drawY,
+        0,
+        drawX,
+        drawY,
+        p.size
+      );
+
+      gradient.addColorStop(0, `rgba(210,150,75,${p.alpha})`);
+      gradient.addColorStop(0.45, `rgba(130,90,55,${p.alpha * 0.45})`);
+      gradient.addColorStop(1, "rgba(80,50,30,0)");
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(drawX, drawY, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (p.type === "ember") {
+  const flickerAlpha = p.alpha * (0.75 + Math.sin(p.flicker) * 0.15);
+
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = `rgba(255,95,25,${flickerAlpha})`;
+
+  ctx.beginPath();
+  ctx.arc(drawX, drawY, p.size, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+
+if (p.type === "blackAsh") {
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = `rgba(8,7,6,${p.alpha})`;
+
+  ctx.fillRect(
+    drawX,
+    drawY,
+    p.size * 1.4,
+    p.size
+  );
+}
+
+  }
+
+  ctx.restore();
+}
+
+function drawVignette() {
+  ctx.save();
+
+  const gradient = ctx.createRadialGradient(
+    canvas.width / 2,
+    canvas.height / 2,
+    160,
+    canvas.width / 2,
+    canvas.height / 2,
+    720
+  );
+
+  gradient.addColorStop(0, "rgba(0,0,0,0)");
+  gradient.addColorStop(1, "rgba(0,0,0,0.38)");
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.restore();
+}
+
+
 
     function updateBloodEffects() {
-      for (let i = bloodEffects.length - 1; i >= 0; i--) {
-        const p = bloodEffects[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.18;
-        p.life--;
-        if (p.life <= 0) bloodEffects.splice(i, 1);
-      }
+  for (let i = bloodEffects.length - 1; i >= 0; i--) {
+    const p = bloodEffects[i];
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.22;
+    p.vx *= 0.96;
+    p.life--;
+
+    if (p.life <= 0) {
+      bloodEffects.splice(i, 1);
     }
+  }
+}
 
     function getDistanceScore() {
       return Math.max(0, Math.floor((game.maxProgressX - 80) / 16));
@@ -778,6 +985,7 @@ player.escapeTimer = 0;
       bloodEffects.length = 0;
 
       setupSectorContent();
+      initAtmosphereParticles();
 
       document.getElementById("completeSectorBtn").style.display = "none";
     }
@@ -2066,13 +2274,33 @@ ctx.fill();
 
 
     function drawBloodEffects() {
-      for (const p of bloodEffects) {
-        ctx.fillStyle = "rgba(160,0,0,0.9)";
-        ctx.beginPath();
-        ctx.arc(p.x - camera.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+  for (const p of bloodEffects) {
+    const alpha = Math.max(0, p.life / p.maxLife);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    if (p.type === "streak") {
+      ctx.strokeStyle = "rgba(130,0,0,1)";
+      ctx.lineWidth = p.size;
+
+      ctx.beginPath();
+      ctx.moveTo(p.x - camera.x, p.y);
+      ctx.lineTo(
+        p.x - camera.x - p.vx * 2.2,
+        p.y - p.vy * 1.2
+      );
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(150,0,0,1)";
+      ctx.beginPath();
+      ctx.arc(p.x - camera.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    ctx.restore();
+  }
+}
 
    function drawSpeedLines() {
   speedLines.forEach(p => {
@@ -2250,81 +2478,198 @@ function drawPlayer() {
 
 
 
+function drawBar(x, y, w, h, value, max, fillColor, label) {
+  const ratio = Math.max(0, Math.min(1, value / max));
+
+  ctx.fillStyle = "rgba(0,0,0,0.75)";
+  ctx.fillRect(x, y, w, h);
+
+  ctx.fillStyle = fillColor;
+  ctx.fillRect(x + 3, y + 3, (w - 6) * ratio, h - 6);
+
+  ctx.strokeStyle = "rgba(210,185,130,0.9)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, w, h);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 16px Arial";
+  ctx.fillText(label, x - 55, y + h - 5);
+}
+
 function drawHUD() {
   scoreText.textContent = "Keşif Madalyonu: " + collectedMedalCount;
 
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(10, 10, 340, 210);
+  ctx.save();
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "16px Arial";
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+ctx.shadowBlur = 10;
 
-  ctx.fillText("Battle: " + currentBattle + " / Sector: " + currentSectorNumber, 20, 34);
-  ctx.fillText("Görev: " + objectiveType.toUpperCase(), 20, 58);
-  ctx.fillText("Titan Kill: " + titanKillCount + " / " + targetKillCount, 20, 82);
-  ctx.fillText("Keşif Madalyonu: " + collectedMedalCount, 20, 106);
+  // SOL ÜST AVATAR / HP / GAS PANELİ
+  ctx.fillStyle = "rgba(0,0,0,0.56)";
+  ctx.fillRect(22, 22, 350, 92);
 
-  ctx.fillStyle = "white";
-  ctx.fillText("Can:", 20, 135);
+  ctx.strokeStyle = "rgba(215,175,100,0.78)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(22, 22, 350, 92);
 
-  ctx.fillStyle = "rgba(255,255,255,0.2)";
-  ctx.fillRect(65, 122, 150, 16);
+  // Avatar kutusu
+  ctx.fillStyle = "rgba(0,0,0,0.72)";
+  ctx.fillRect(34, 34, 58, 58);
 
-  ctx.fillStyle = player.health > 55 ? "#2ecc71" : player.health > 25 ? "#f1c40f" : "#e74c3c";
-  ctx.fillRect(65, 122, 150 * (player.health / player.maxHealth), 16);
+  ctx.strokeStyle = "rgba(215,175,100,0.85)";
+  ctx.strokeRect(34, 34, 58, 58);
 
-  ctx.strokeStyle = "rgba(255,255,255,0.7)";
-ctx.strokeRect(65, 122, 150, 16);
-
-ctx.fillStyle = "white";
-ctx.fillText("Gaz:", 20, 165);
-
-ctx.fillStyle = "rgba(255,255,255,0.2)";
-ctx.fillRect(65, 152, 150, 16);
-
-ctx.fillStyle = "#4fc3f7";
-ctx.fillRect(
-  65,
-  152,
-  150 * (player.gas / player.maxGas),
-  16
-);
-
-ctx.strokeStyle = "rgba(255,255,255,0.7)";
-ctx.strokeRect(65, 152, 150, 16);
-
-  if (player.boostMode) {
-    ctx.fillStyle = "#00d8ff";
-    ctx.fillText("ODM Boost: " + player.boostTimer, 20, 195);
+  if (typeof playerAvatar !== "undefined" && playerAvatar.complete && playerAvatar.naturalWidth > 0) {
+    ctx.drawImage(playerAvatar, 38, 38, 50, 50);
   }
 
-  if (player.gas <= 0) {
-    ctx.fillStyle = "#ff8080";
-    ctx.fillText("Gaz bitti!", 230, 165);
+  // HP yazısı
+  ctx.fillStyle = "#e7c985";
+  ctx.font = "bold 13px Arial";
+  ctx.fillText("HP", 108, 52);
+
+  // HP bar arka plan
+  ctx.fillStyle = "rgba(0,0,0,0.68)";
+  ctx.fillRect(145, 38, 130, 16);
+
+  // HP bar doluluk
+  ctx.fillStyle = "#22b84a";
+  ctx.fillRect(
+    148,
+    41,
+    124 * Math.max(0, Math.min(1, player.health / player.maxHealth)),
+    10
+  );
+
+  ctx.strokeStyle = "rgba(215,175,100,0.85)";
+  ctx.strokeRect(145, 38, 130, 16);
+
+  // HP sayı
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 13px Arial";
+  ctx.fillText(`${Math.ceil(player.health)} / ${player.maxHealth}`, 286, 52);
+
+  // GAS yazısı
+  ctx.fillStyle = "#e7c985";
+  ctx.font = "bold 13px Arial";
+  ctx.fillText("GAS", 108, 84);
+
+  // GAS bar arka plan
+  ctx.fillStyle = "rgba(0,0,0,0.68)";
+  ctx.fillRect(145, 70, 120, 16);
+
+  // GAS bar doluluk
+  ctx.fillStyle = "#1498d4";
+  ctx.fillRect(
+    148,
+    73,
+    114 * Math.max(0, Math.min(1, player.gas / player.maxGas)),
+    10
+  );
+
+  ctx.strokeStyle = "rgba(215,175,100,0.85)";
+  ctx.strokeRect(145, 70, 120, 16);
+
+  // GAS sayı
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 13px Arial";
+  ctx.fillText(`${Math.ceil(player.gas)}%`, 276, 84);
+
+  // SAĞ ÜST OBJECTIVE PANELİ
+  ctx.fillStyle = "rgba(0,0,0,0.54)";
+  ctx.fillRect(1018, 22, 160, 86);
+
+  ctx.strokeStyle = "rgba(215,175,100,0.78)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(1018, 22, 160, 86);
+
+  let objectiveText = "Reach Target";
+  let progressText = "";
+
+  if (objectiveType === "kill") {
+    objectiveText = "Eliminate Titans";
+    progressText = `${titanKillCount} / ${targetKillCount}`;
+  } else if (objectiveType === "collect") {
+    objectiveText = "Collect Supplies";
+    progressText = `${collectedSupplyCount} / ${targetItemCount}`;
+  } else {
+    objectiveText = "Reach Wall";
+    progressText = player.x >= finish.x ? "COMPLETED" : "NOT REACHED";
   }
 
-  if (player.grabbed) {
-  ctx.fillStyle = "rgba(0,0,0,0.75)";
-  ctx.fillRect(380, 20, 440, 90);
-
-  ctx.fillStyle = "#ff4444";
-  ctx.font = "bold 22px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("GRABBED! PRESS SPACE TO ESCAPE", 600, 52);
 
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
-  ctx.fillRect(460, 70, 280, 18);
+  ctx.fillStyle = "#ffd88a";
+  ctx.font = "bold 14px Arial";
+  ctx.fillText("OBJECTIVE", 1098, 50);
 
-  ctx.fillStyle = "#2ecc71";
-  ctx.fillRect(460, 70, 280 * Math.min(player.escapeProgress / 100, 1), 18);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 13px Arial";
+  ctx.fillText(objectiveText, 1098, 76);
 
-  ctx.strokeStyle = "white";
-  ctx.strokeRect(460, 70, 280, 18);
+  ctx.fillStyle = "#ff4a3d";
+  ctx.font = "bold 22px Arial";
+  ctx.fillText(progressText, 1098, 100);
 
   ctx.textAlign = "left";
+
+  // SOL ALT KEŞİF MADALYONU PANELİ
+  ctx.fillStyle = "rgba(0,0,0,0.54)";
+  ctx.fillRect(22, 570, 210, 54);
+
+  ctx.strokeStyle = "rgba(215,175,100,0.78)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(22, 570, 210, 54);
+
+  ctx.fillStyle = "#f4d27a";
+  ctx.font = "bold 15px Arial";
+  ctx.fillText("Keşif Madalyonu", 58, 592);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 24px Arial";
+  ctx.fillText(collectedMedalCount, 58, 618);
+
+  // GAZ BİTTİ UYARISI
+  if (player.gas <= 0) {
+    ctx.fillStyle = "#ff5555";
+    ctx.font = "bold 20px Arial";
+    ctx.fillText("Gaz bitti!", 540, 70);
+  }
+
+  // TITAN YAKALAMA PANELİ
+  if (player.grabbed) {
+    ctx.fillStyle = "rgba(0,0,0,0.76)";
+    ctx.fillRect(380, 24, 440, 86);
+
+    ctx.strokeStyle = "rgba(215,175,100,0.85)";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(380, 24, 440, 86);
+
+    ctx.fillStyle = "#ff4a3d";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GRABBED! PRESS SPACE TO ESCAPE", 600, 55);
+
+    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.fillRect(460, 72, 280, 16);
+
+    ctx.fillStyle = "#2ecc71";
+    ctx.fillRect(
+      460,
+      72,
+      280 * Math.min(player.escapeProgress / 100, 1),
+      16
+    );
+
+    ctx.strokeStyle = "white";
+    ctx.strokeRect(460, 72, 280, 16);
+
+    ctx.textAlign = "left";
+  }
+
+  ctx.restore();
 }
-}
-   
+
 function drawFinalStrikeEffect() {
   if (finalStrikeTimer <= 0) return;
 
@@ -2391,6 +2736,7 @@ const alpha = healthRatio < 0.20
       updateItems();
       updateFinish();
       updateCamera();
+      updateAtmosphereParticles();
     }
 
     function draw() {
@@ -2402,22 +2748,39 @@ const alpha = healthRatio < 0.20
     ctx.translate(rand(-2, 2), rand(-2, 2));
   }
       drawParallax();
-      drawGround();
-      drawStompDusts();
-      drawPlatforms();
-      drawItems();
-      drawTitans();
-      drawFinish();
-      drawBloodEffects();
-      drawSpeedLines();
+drawAtmosphereParticles();
+
+drawGround();
+drawStompDusts();
+drawPlatforms();
+drawItems();
+drawTitans();
+
+drawFinish();
+drawSpeedLines();
 drawBoostTrails();
 drawGrappleLine();
-      drawGrappleSparks();
-      drawPlayer();
-      drawHUD();
+drawGrappleSparks();
+
+drawPlayer();
+drawBloodEffects();
+
+drawVignette();
+drawHUD();
 drawLowHealthEffect();
 drawFinalStrikeEffect();
 drawGameMessage();
+
+const gradient = ctx.createRadialGradient(
+  600, 325, 180,
+  600, 325, 720
+);
+
+gradient.addColorStop(0, "rgba(0,0,0,0)");
+gradient.addColorStop(1, "rgba(0,0,0,0.35)");
+
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 
 <% if (devMode) { %>
