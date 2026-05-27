@@ -626,6 +626,7 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let speedLines = [];
     let boostTrails = [];
     let stompDusts = [];
+    let grappleSparks = [];
     let titanKillCount = 0;
     let itemCollectedCount = 0;
     let collectedSupplyCount = 0;
@@ -647,6 +648,39 @@ let screenShakeTimer = 0;
         });
       }
     }
+
+function spawnGrappleSpark(x, y) {
+  grappleSparks.length = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const angle = rand(-Math.PI, Math.PI);
+
+    grappleSparks.push({
+      x,
+      y,
+      vx: Math.cos(angle) * rand(1.8, 5.2),
+      vy: Math.sin(angle) * rand(1.2, 3.8),
+      length: rand(7, 16),
+      life: randInt(8, 14),
+      maxLife: 14,
+      type: "spark"
+    });
+  }
+
+  for (let i = 0; i < 4; i++) {
+    grappleSparks.push({
+      x,
+      y,
+      vx: rand(-0.5, 0.5),
+      vy: rand(-0.8, -0.2),
+      size: rand(4, 8),
+      life: randInt(12, 18),
+      maxLife: 18,
+      type: "smoke"
+    });
+  }
+}
+
 
     function updateBloodEffects() {
       for (let i = bloodEffects.length - 1; i >= 0; i--) {
@@ -760,8 +794,14 @@ player.escapeTimer = 0;
       const px = player.x + player.width / 2;
       const py = player.y + player.height / 2;
 
+spawnGrappleSpark(
+  target.x + rand(-18, 18),
+  target.y + rand(-22, -10)
+);
+
       player.grappling = true;
       player.grappleTarget = { x: target.x, y: target.y };
+      
 
       const dx = target.x - px;
       const dy = target.y - py;
@@ -1080,6 +1120,29 @@ document.addEventListener("mouseup", () => {
 
   if (player.throwTimer <= 0) {
     player.thrown = false;
+  }
+}
+
+
+for (let i = grappleSparks.length - 1; i >= 0; i--) {
+  const p = grappleSparks[i];
+
+  p.x += p.vx;
+  p.y += p.vy;
+
+  if (p.type === "spark") {
+    p.vx *= 0.82;
+    p.vy *= 0.82;
+  } else {
+    p.vx *= 0.95;
+    p.vy *= 0.95;
+    p.size *= 1.04;
+  }
+
+  p.life--;
+
+  if (p.life <= 0) {
+    grappleSparks.splice(i, 1);
   }
 }
 
@@ -1974,25 +2037,33 @@ function drawFinish() {
 }
 
     function drawGrappleLine() {
-      if (!player.grappling || !player.grappleTarget) return;
+  if (!player.grappling || !player.grappleTarget) return;
 
-      const px = player.x + player.width / 2 - camera.x;
-      const py = player.y + player.height / 2;
-      const tx = player.grappleTarget.x - camera.x;
-      const ty = player.grappleTarget.y;
+  const px = player.x + player.width / 2 - camera.x;
+  const py = player.y + player.height * 0.45;
+  const tx = player.grappleTarget.x - camera.x;
+  const ty = player.grappleTarget.y;
 
-      ctx.strokeStyle = "#e5e5e5";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(tx, ty);
-      ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(tx, ty);
+  ctx.stroke();
 
-      ctx.fillStyle = "#9ae8ff";
-      ctx.beginPath();
-      ctx.arc(tx, ty, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  ctx.strokeStyle = "rgba(0,0,0,0.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(tx, ty);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(220,220,220,0.9)";
+ctx.beginPath();
+ctx.arc(tx, ty, 2, 0, Math.PI * 2);
+ctx.fill();
+}
+
 
     function drawBloodEffects() {
       for (const p of bloodEffects) {
@@ -2052,6 +2123,47 @@ function drawStompDusts() {
   dust.size * alpha * 1.8,
   dust.size * alpha * 0.7
 );
+  });
+}
+
+function drawGrappleSparks() {
+  grappleSparks.forEach(p => {
+    const alpha = p.life / p.maxLife;
+    const x = p.x - camera.x;
+    const y = p.y;
+
+    ctx.save();
+
+    if (p.type === "spark") {
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = "rgba(255,55,20,0.95)";
+      ctx.shadowBlur = 14;
+      ctx.strokeStyle = `rgba(255,80,35,${alpha})`;
+      ctx.lineWidth = 2.2;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(
+        x - p.vx * p.length * 0.5,
+        y - p.vy * p.length * 0.5
+      );
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(255,220,160,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.4 * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (p.type === "smoke") {
+      ctx.globalAlpha = alpha * 0.25;
+      ctx.fillStyle = "rgba(120,115,110,1)";
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
   });
 }
 
@@ -2299,7 +2411,8 @@ const alpha = healthRatio < 0.20
       drawBloodEffects();
       drawSpeedLines();
 drawBoostTrails();
-      drawGrappleLine();
+drawGrappleLine();
+      drawGrappleSparks();
       drawPlayer();
       drawHUD();
 drawLowHealthEffect();
