@@ -2225,6 +2225,31 @@ function drawFinalStrikeEffect() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+
+function drawLowHealthEffect() {
+  const healthRatio = player.health / player.maxHealth;
+
+  if (healthRatio > 0.45) return;
+const alpha = healthRatio < 0.20
+  ? (1 - healthRatio) * 0.75
+  : (1 - healthRatio) * 0.45;
+
+  const gradient = ctx.createRadialGradient(
+    canvas.width / 2,
+    canvas.height / 2,
+    canvas.height * 0.15,
+    canvas.width / 2,
+    canvas.height / 2,
+    canvas.width * 0.75
+  );
+
+  gradient.addColorStop(0, `rgba(0,0,0,0)`);
+  gradient.addColorStop(1, `rgba(120,0,0,${alpha})`);
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
     function drawGameMessage() {
       if (game.state === "playing") return;
 
@@ -2277,6 +2302,7 @@ drawBoostTrails();
       drawGrappleLine();
       drawPlayer();
       drawHUD();
+drawLowHealthEffect();
 drawFinalStrikeEffect();
 drawGameMessage();
 
