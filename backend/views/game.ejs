@@ -113,10 +113,275 @@ body::before{
       0 0 35px rgba(0,0,0,0.9);
   }
 
-  #completeSectorBtn{
-    font-weight:bold;
-    box-shadow:0 0 18px rgba(31,139,255,0.45);
-  }
+
+.game-canvas-wrap{
+  position:relative;
+  width:1200px;
+  height:650px;
+}
+
+.complete-sector-canvas-btn{
+  display:none;
+  position:absolute;
+  bottom:18px;
+  right:18px;
+  z-index:20;
+
+  padding:11px 15px;
+  background:
+  radial-gradient(circle at center, rgba(255,150,35,0.12), transparent 38%);
+  color:white;
+  border:1px solid rgba(244,210,122,0.55);
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.8px;
+  cursor:pointer;
+
+  box-shadow:
+    0 0 16px rgba(31,139,255,0.42),
+    inset 0 0 12px rgba(255,255,255,0.08);
+}
+
+.complete-sector-canvas-btn:hover{
+  filter:brightness(1.18);
+  transform:translateY(-1px);
+}
+
+#completeSectorBtn:hover{
+  filter:brightness(1.18);
+  transform:translateY(-1px);
+}
+
+.sector-result-panel{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:
+  radial-gradient(circle at center, rgba(255,150,35,0.12), transparent 38%);
+  z-index:99999;
+  justify-content:center;
+  align-items:center;
+  backdrop-filter:blur(6px);
+}
+
+.sector-result-card{
+  width:760px;
+  padding:18px 22px 20px;
+  background:
+    linear-gradient(180deg, rgba(28,20,10,0.98), rgba(4,5,6,0.98)),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 7px);
+  border:2px solid rgba(255,198,73,0.85);
+  box-shadow:
+    0 0 0 3px rgba(0,0,0,0.65),
+    0 0 45px rgba(0,0,0,0.95),
+    0 0 32px rgba(255,142,30,0.24);
+  color:white;
+  text-align:center;
+  position:relative;
+}
+
+.result-title{
+  color:#f6d070;
+  font-size:18px;
+  letter-spacing:7px;
+  font-weight:900;
+  margin-bottom:8px;
+  text-shadow:0 0 14px rgba(255,190,70,0.5);
+}
+
+.rank-area{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:28px;
+  margin-bottom:2px;
+}
+
+.rank-laurel{
+  font-size:44px;
+  color:rgba(255,205,88,0.75);
+  text-shadow:0 0 16px rgba(255,190,60,0.45);
+}
+
+.result-rank{
+  font-size:72px;
+  line-height:1;
+  font-weight:900;
+  color:#ff4d4d;
+  text-shadow:0 0 25px currentColor;
+}
+
+.result-stars{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  font-size:20px;
+  margin:2px 0 12px;
+}
+
+.result-stars span{
+  color:#333;
+  text-shadow:none;
+}
+
+.result-stars span.active{
+  color:#ffd700;
+  text-shadow:0 0 12px rgba(255,215,0,0.8);
+}
+
+.result-stats{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.stat-card{
+  min-height:115px;
+  padding:9px 6px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.055), rgba(0,0,0,0.35));
+  border:1px solid rgba(255,210,100,0.35);
+  box-shadow:inset 0 0 24px rgba(0,0,0,0.55);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+
+.stat-icon{
+  font-size:28px;
+  margin-bottom:6px;
+  text-shadow:0 0 14px currentColor;
+}
+
+.stat-card span{
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  opacity:.9;
+}
+
+.stat-card strong{
+  font-size:10px;
+  margin-top:10px;
+  line-height:1;
+}
+
+.stat-card small{
+  margin-top:10px;
+  font-size:13px;
+  color:rgba(255,255,255,0.76);
+  font-weight:bold;
+}
+
+.score-card{ color:#ffd86b; border-color:rgba(255,216,107,0.55); }
+.kill-card{ color:#ff4d3d; border-color:rgba(255,77,61,0.55); }
+.medal-card{ color:#49bfff; border-color:rgba(73,191,255,0.55); }
+.combo-card{ color:#ffc247; border-color:rgba(255,194,71,0.55); }
+.reward-card{ color:#b15cff; border-color:rgba(177,92,255,0.55); }
+
+.result-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr 1.4fr;
+  gap:0;
+  border:1px solid rgba(255,210,100,0.35);
+  margin-bottom:22px;
+  background:rgba(0,0,0,0.32);
+}
+
+.result-summary > div{
+  padding:9px 12px;
+  border-right:1px solid rgba(255,210,100,0.18);
+}
+
+.result-summary > div:last-child{
+  border-right:none;
+}
+
+.result-summary span{
+  display:block;
+  color:#d6b66a;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-bottom:6px;
+}
+
+.result-summary strong{
+  font-size:24px;
+  color:#ffd86b;
+  text-shadow:0 0 12px rgba(255,216,107,0.35);
+}
+
+.rank-progress{
+  height:20px;
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(255,210,100,0.35);
+  margin-top:8px;
+  overflow:hidden;
+}
+
+#nextRankProgress{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, #ff5a1f, #ffd86b);
+  box-shadow:0 0 14px rgba(255,160,35,0.7);
+}
+
+#nextRankText{
+  display:block;
+  margin-top:6px;
+  color:#e8d098;
+  font-size:14px;
+  font-weight:bold;
+}
+
+.result-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:14px;
+  padding:0 45px;
+}
+
+.result-actions button{
+  padding:9px 12px;
+  border:none;
+  cursor:pointer;
+  color:white;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.5px;
+  border:1px solid rgba(255,255,255,0.22);
+  transition:.18s;
+}
+
+.result-actions button:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.18);
+}
+
+.btn-retry{
+  background:linear-gradient(135deg, #8b1818, #3d0909);
+  box-shadow:0 0 16px rgba(255,55,35,0.25);
+}
+
+.btn-menu{
+  background:linear-gradient(135deg, #373737, #131313);
+}
+
+.btn-next{
+  background:linear-gradient(135deg, #0f8cff, #073b8e);
+  box-shadow:0 0 16px rgba(31,139,255,0.35);
+}
+
+#goMenuBtn{
+  background:linear-gradient(135deg, #3a3a3a, #1c1c1c);
+}
+
+
+
 </style>
 
 </head>
@@ -263,13 +528,94 @@ body::before{
 
 <div id="scoreText" style="display:none;">Keşif Madalyonu: 0</div>
 
-<canvas id="gameCanvas" width="1200" height="650"></canvas>
+<div class="game-canvas-wrap">
+  <canvas id="gameCanvas" width="1200" height="650"></canvas>
 
-<button id="completeSectorBtn">
-  Complete Sector
-</button>
+  <button id="completeSectorBtn" class="complete-sector-canvas-btn">
+    COMPLETE SECTOR
+  </button>
+</div>
 
+    <div id="sectorResultPanel" class="sector-result-panel">
+  <div class="sector-result-card">
 
+    <div class="result-title">MISSION RESULT</div>
+
+    <div class="rank-area">
+      <div class="rank-laurel">❬</div>
+      <div class="result-rank" id="resultRank">-</div>
+      <div class="rank-laurel">❭</div>
+    </div>
+
+    <div class="result-stars" id="resultStars">
+      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+    </div>
+
+    <div class="result-stats">
+      <div class="stat-card score-card">
+        <div class="stat-icon">⌖</div>
+        <span>Score</span>
+        <strong id="resultScore">0</strong>
+        <small id="bestScoreText">BEST: 0</small>
+      </div>
+
+      <div class="stat-card kill-card">
+        <div class="stat-icon">☠</div>
+        <span>Titan Kills</span>
+        <strong id="resultKills">0</strong>
+        <small id="bestKillsText">BEST: 0</small>
+      </div>
+
+      <div class="stat-card medal-card">
+        <div class="stat-icon">✪</div>
+        <span>Medals</span>
+        <strong id="resultMedals">0</strong>
+        <small id="bestMedalsText">BEST: 0</small>
+      </div>
+
+      <div class="stat-card combo-card">
+        <div class="stat-icon">⚔</div>
+        <span>Best Combo</span>
+        <strong id="resultCombo">0</strong>
+        <small id="bestComboText">MAX: 0</small>
+      </div>
+
+      <div class="stat-card reward-card">
+        <div class="stat-icon">▣</div>
+        <span>Reward</span>
+        <strong id="resultReward">After Save</strong>
+        <small>Sector Clear Bonus</small>
+      </div>
+    </div>
+
+    <div class="result-summary">
+      <div>
+        <span>Total Score</span>
+        <strong id="resultTotalScore">0</strong>
+      </div>
+
+      <div>
+        <span>Rank Points</span>
+        <strong id="resultRankPoints">0</strong>
+      </div>
+
+      <div>
+        <span>Next Rank</span>
+        <div class="rank-progress">
+          <div id="nextRankProgress"></div>
+        </div>
+        <small id="nextRankText">0 / 250</small>
+      </div>
+    </div>
+
+    <div class="result-actions">
+      <button id="retrySectorBtn" class="btn-retry">↻ Retry</button>
+      <button id="goMenuBtn" class="btn-menu">⌂ Main Menu</button>
+      <button id="nextSectorBtn" class="btn-next">Next Sector ❯</button>
+    </div>
+
+  </div>
+</div>
 
   <script>
 
@@ -358,12 +704,8 @@ throwTimer: 0
   dead: new Image()
 };
 
-
-
 const playerAvatar = new Image();
 playerAvatar.src = "<%= user.avatar || '/images/default-avatar.png' %>";
-
-
 
 const selectedSkin = "<%= user.selectedSkin || 'default' %>";
 
@@ -530,7 +872,6 @@ stepDustTimer: 0
   { x: 3575, y: 345, type: "platform" }
 ];
 
-
     function createBossTitan() {
       const boss = createTitan(3450, 3300, 3650, -1);
 
@@ -625,7 +966,6 @@ stepDustTimer: 0
       return { ...base, score: 50, medals: 1 };
     }
 
-
     function spawnItemsBySector() {
   items.length = 0;
 
@@ -665,6 +1005,7 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     }
 
 
+    
     const titans = [];
 
     const items = [];
@@ -703,6 +1044,10 @@ let comboParticles = [];
     let lastUnlockedTitle = null;
     let finalStrikeTimer = 0;
 let screenShakeTimer = 0;
+
+let objectiveCompleted = false;
+let objectiveCompleteNoticeTimer = 0;
+let pendingSectorResult = null;
 
 
     function spawnBlood(x, y, count = 10) {
@@ -1037,27 +1382,10 @@ function drawVignette() {
       return getDistanceScore() + killScore + itemScore;
     }
 
-    async function setWin(message) {
-  if (game.state !== "playing") return;
 
-  const result = await saveScoreToDatabase();
-
-  game.state = "win";
-  game.message = message;
-  player.vx = 0;
-  player.vy = 0;
-  player.grappling = false;
-  player.grappleTarget = null;
-
-  if(result && result.unlockedTitle){
-    game.message += " | New Title: " + result.unlockedTitle;
-  }
-}
 
 async function setLose(message) {
   if (game.state !== "playing") return;
-
-  const result = await saveScoreToDatabase();
 
   game.state = "lose";
   game.message = message;
@@ -1072,9 +1400,6 @@ player.grabbedBy = null;
 player.thrown = false;
 player.throwTimer = 0;
 
-  if(result && result.unlockedTitle){
-    game.message += " | New Title: " + result.unlockedTitle;
-  }
 }
 
     function resetGame() {
@@ -1103,8 +1428,27 @@ comboCount = 0;
 comboTimer = 0;
 comboDisplayTimer = 0;
 bestCombo = 0;
+savedBestCombo = 0;
 comboPopTimer = 0;
 comboParticles.length = 0;
+
+const resultPanel = document.getElementById("sectorResultPanel");
+
+if (resultPanel) {
+  resultPanel.style.display = "none";
+}
+
+pendingSectorResult = null;
+
+objectiveCompleted = false;
+objectiveCompleteNoticeTimer = 0;
+
+const completeBtn = document.getElementById("completeSectorBtn");
+
+if (completeBtn) {
+  completeBtn.style.display = "none";
+}
+
 
       camera.x = 0;
       killScore = 0;
@@ -1123,7 +1467,6 @@ comboParticles.length = 0;
       setupSectorContent();
       initAtmosphereParticles();
 
-      document.getElementById("completeSectorBtn").style.display = "none";
     }
 
 
@@ -2059,7 +2402,6 @@ vy: rand(-0.25, -0.05)
 
           updateObjectiveProgress();
 
-
           if (item.kind === "boost") {
             player.boostMode = true;
             player.boostTimer = 520;
@@ -2074,7 +2416,72 @@ vy: rand(-0.25, -0.05)
       });
     }
 
-    async function updateFinish() {
+
+    function updateObjectiveProgress() {
+  const progressEl = document.getElementById("objectiveProgress");
+  const completeBtn = document.getElementById("completeSectorBtn");
+
+  if (!progressEl) return;
+
+  if (objectiveType === "kill") {
+    progressEl.textContent = `${titanKillCount} / ${targetKillCount}`;
+
+    if (titanKillCount >= targetKillCount && !objectiveCompleted) {
+      objectiveCompleted = true;
+      objectiveCompleteNoticeTimer = 180;
+
+      if (completeBtn) {
+        completeBtn.style.display = "block";
+      }
+    }
+  }
+
+  if (objectiveType === "collect") {
+    progressEl.textContent = `${collectedMedalCount} / ${targetItemCount}`;
+
+    if (collectedMedalCount >= targetItemCount && !objectiveCompleted) {
+      objectiveCompleted = true;
+      objectiveCompleteNoticeTimer = 180;
+
+      if (completeBtn) {
+        completeBtn.style.display = "block";
+      }
+    }
+  }
+
+  if (objectiveType === "reach") {
+    progressEl.textContent = objectiveCompleted ? "COMPLETED" : "NOT REACHED";
+  }
+}
+
+function drawObjectiveCompleteNotice() {
+  if (objectiveCompleteNoticeTimer <= 0) return;
+
+  objectiveCompleteNoticeTimer--;
+
+  ctx.save();
+  ctx.textAlign = "center";
+
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(canvas.width / 2 - 210, 95, 420, 62);
+
+  ctx.strokeStyle = "rgba(244,210,122,0.85)";
+  ctx.strokeRect(canvas.width / 2 - 210, 95, 420, 62);
+
+  ctx.fillStyle = "#f4d27a";
+  ctx.font = "bold 22px Arial";
+  ctx.fillText("OBJECTIVE COMPLETE", canvas.width / 2, 130);
+
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.font = "bold 12px Arial";
+  ctx.fillText("Complete the sector to view your result", canvas.width / 2, 148);
+
+  ctx.restore();
+}
+
+    
+
+async function updateFinish() {
   if (game.state !== "playing") return;
 
   const finishRect = {
@@ -2085,21 +2492,22 @@ vy: rand(-0.25, -0.05)
   };
 
   if (rectsCollide(getPlayerRect(), finishRect)) {
-  if (objectiveType === "reach") {
-    const progressEl = document.getElementById("objectiveProgress");
-    const completeBtn = document.getElementById("completeSectorBtn");
+    if (objectiveType === "reach") {
+      const progressEl = document.getElementById("objectiveProgress");
+      const completeBtn = document.getElementById("completeSectorBtn");
 
-    if (progressEl) {
-      progressEl.textContent = "COMPLETED";
-    }
+      if (progressEl) {
+        progressEl.textContent = "COMPLETED";
+      }
 
-    if (completeBtn) {
-      completeBtn.style.display = "block";
+      if (completeBtn && !objectiveCompleted) {
+        objectiveCompleted = true;
+        objectiveCompleteNoticeTimer = 180;
+        completeBtn.style.display = "block";
+      }
     }
   }
 }
-}
-
     function updateCamera() {
       camera.x = player.x - canvas.width * 0.42;
       camera.x = clamp(camera.x, 0, WORLD.width - canvas.width);
@@ -3006,12 +3414,33 @@ const alpha = healthRatio < 0.20
       ctx.textAlign = "start";
     }
 
+
+    function checkObjectiveCompletion() {
+  if (objectiveCompleted) return;
+
+  if (objectiveType === "kill" && titanKillCount >= targetKillCount) {
+    objectiveCompleted = true;
+    objectiveCompleteNoticeTimer = 180;
+    document.getElementById("completeSectorBtn").style.display = "block";
+    updateObjectiveProgress();
+  }
+
+  if (objectiveType === "collect" && collectedMedalCount >= targetItemCount) {
+    objectiveCompleted = true;
+    objectiveCompleteNoticeTimer = 180;
+    document.getElementById("completeSectorBtn").style.display = "block";
+    updateObjectiveProgress();
+  }
+}
+
+
     function update() {
       updateTimers();
       updatePlayer();
       updateTitans();
       updateItems();
       updateFinish();
+      checkObjectiveCompletion();
       updateCamera();
       updateAtmosphereParticles();
     }
@@ -3047,6 +3476,7 @@ drawBloodEffects();
 drawVignette();
 drawComboCounter();
 drawHUD();
+drawObjectiveCompleteNotice();
 drawLowHealthEffect();
 drawFinalStrikeEffect();
 drawGameMessage();
@@ -3093,100 +3523,181 @@ requestAnimationFrame(gameLoop);
 
     loadBattleParallaxBackgrounds();
 
-    function updateObjectiveProgress() {
-  const progressEl = document.getElementById("objectiveProgress");
-  const completeBtn = document.getElementById("completeSectorBtn");
 
-  if (!progressEl || !completeBtn) return;
+function calculateRankPoints() {
+  const totalTitans = Math.max(1, titans.length);
+  const killedTitans = titanKillCount;
 
-  if (objectiveType === "kill") {
-    progressEl.textContent = `${titanKillCount} / ${targetKillCount}`;
+  const totalItems = Math.max(1, items.length);
+  const collectedItems = items.filter(item => item.collected).length;
 
-    if (titanKillCount >= targetKillCount) {
-      progressEl.textContent = "COMPLETED";
-      completeBtn.style.display = "block";
-    }
-  }
+  const titanRatio = killedTitans / totalTitans;
+  const itemRatio = collectedItems / totalItems;
 
-  else if (objectiveType === "collect") {
-    progressEl.textContent = `${collectedSupplyCount} / ${targetItemCount}`;
+  // Çok titanlı maplerde S için hepsini öldürme zorunluluğu olmasın
+  const titanScore = Math.min(titanRatio / 0.85, 1) * 42;
 
-    if (collectedSupplyCount >= targetItemCount) {
-      progressEl.textContent = "COMPLETED";
-      completeBtn.style.display = "block";
-    }
-  }
+  // Item tarafında da hepsini toplamak yerine %85 üstü çok iyi sayılsın
+  const itemScoreRank = Math.min(itemRatio / 0.85, 1) * 33;
 
-  else if (objectiveType === "reach") {
-    progressEl.textContent = "NOT REACHED";
-  }
+  const comboScore = Math.min(savedBestCombo / 7, 1) * 15;
+  const scoreBonus = Math.min(getTotalScore() / 3500, 1) * 10;
+
+  return Math.floor(
+    titanScore +
+    itemScoreRank +
+    comboScore +
+    scoreBonus
+  );
 }
 
+function calculatePreviewRank() {
+  const points = calculateRankPoints();
+
+  if (points >= 94) return "S";
+  if (points >= 84) return "A";
+  if (points >= 68) return "B";
+  if (points >= 48) return "C";
+  return "D";
+}
+
+function getRankColor(rank) {
+  if (rank === "S") return "#ffd700";
+  if (rank === "A") return "#3da8ff";
+  if (rank === "B") return "#4caf50";
+  if (rank === "C") return "#ffa726";
+  return "#ff4d4d";
+}
+
+function getRankStarCount(rank) {
+  if (rank === "S") return 5;
+  if (rank === "A") return 4;
+  if (rank === "B") return 3;
+  if (rank === "C") return 2;
+  return 1;
+}
+
+function getNextRankTarget(points) {
+  if (points < 45) return 45;
+  if (points < 75) return 75;
+  if (points < 105) return 105;
+  if (points < 170) return 170;
+  return 170;
+}
+
+
+function openSectorResultPanel() {
+  const rank = calculatePreviewRank();
+  const rankPoints = calculateRankPoints();
+  const rankColor = getRankColor(rank);
+
+  pendingSectorResult = {
+    score: getTotalScore(),
+    titanKills: titanKillCount,
+    itemsCollected: itemCollectedCount,
+    medals: collectedMedalCount,
+    bestCombo: savedBestCombo,
+    rank
+  };
+
+  const rankEl = document.getElementById("resultRank");
+  rankEl.textContent = rank;
+  rankEl.style.color = rankColor;
+  rankEl.style.textShadow = `0 0 28px ${rankColor}`;
+
+  document.getElementById("resultScore").textContent = pendingSectorResult.score;
+  document.getElementById("resultKills").textContent = pendingSectorResult.titanKills;
+  document.getElementById("resultMedals").textContent = pendingSectorResult.medals;
+  document.getElementById("resultCombo").textContent = pendingSectorResult.bestCombo;
+  document.getElementById("resultReward").textContent = "After Save";
+
+  document.getElementById("resultTotalScore").textContent = pendingSectorResult.score;
+  document.getElementById("resultRankPoints").textContent = rankPoints;
+
+  document.getElementById("bestScoreText").textContent =
+    `BEST: ${pendingSectorResult.score}`;
+
+  document.getElementById("bestKillsText").textContent =
+    `BEST: ${pendingSectorResult.titanKills}`;
+
+  document.getElementById("bestMedalsText").textContent =
+    `BEST: ${pendingSectorResult.medals}`;
+
+  document.getElementById("bestComboText").textContent =
+    `MAX: ${pendingSectorResult.bestCombo}`;
+
+  const stars = document.querySelectorAll("#resultStars span");
+  const activeStars = getRankStarCount(rank);
+
+  stars.forEach((star, index) => {
+    star.classList.toggle("active", index < activeStars);
+  });
+
+  const nextTarget = getNextRankTarget(rankPoints);
+  const progressPercent =
+    nextTarget === 170 && rankPoints >= 170
+      ? 100
+      : Math.min(100, Math.floor((rankPoints / nextTarget) * 100));
+
+  document.getElementById("nextRankProgress").style.width =
+    progressPercent + "%";
+
+  document.getElementById("nextRankText").textContent =
+    rankPoints >= 170
+      ? "MAX RANK"
+      : `${rankPoints} / ${nextTarget}`;
+
+  game.state = "result";
+  document.getElementById("sectorResultPanel").style.display = "flex";
+}
+
+async function submitSectorCompletion() {
+  if (!pendingSectorResult) return null;
+
+  const response = await fetch(`/game/<%= level %>/<%= sector %>/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+  score: pendingSectorResult.score,
+  titanKills: pendingSectorResult.titanKills,
+  itemsCollected: pendingSectorResult.itemsCollected,
+  medals: pendingSectorResult.medals,
+  bestCombo: pendingSectorResult.bestCombo,
+  rank: pendingSectorResult.rank
+})
+  });
+
+  return await response.json();
+}
+
+document.getElementById("completeSectorBtn").addEventListener("click", () => {
+  openSectorResultPanel();
+});
+
+document.getElementById("retrySectorBtn").addEventListener("click", () => {
+  resetGame();
+});
+
+document.getElementById("goMenuBtn").addEventListener("click", async () => {
+  const data = await submitSectorCompletion();
+  if (!data || !data.success) return alert("Sector could not be saved.");
+  window.location.href = "/menu";
+});
+
+document.getElementById("nextSectorBtn").addEventListener("click", async () => {
+  const data = await submitSectorCompletion();
+  if (!data || !data.success) return alert("Sector could not be saved.");
+  window.location.href = `/game/${data.nextLevel}/${data.nextSector}`;
+});
+
+
+game.state = "playing";
     resetGame();
     updateObjectiveProgress();
     gameLoop();
   </script>
 
-<script>
-  const completeSectorBtn = document.getElementById("completeSectorBtn");
 
-  if (completeSectorBtn) {
-    completeSectorBtn.addEventListener("click", async () => {
-      try {
-        const url = `/game/<%= level %>/<%= sector %>/complete`;
-        console.log("POST URL:", url);
-
-        console.log("COMPLETE BEST COMBO SENDING:", savedBestCombo);
-
-        const response = await fetch(url, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-
-  body: JSON.stringify({
-  score: getTotalScore(),
-  titanKills: titanKillCount,
-  itemsCollected: itemCollectedCount,
-  medals: collectedMedalCount,
-  bestCombo: savedBestCombo
-})
-});
-
-        console.log("Response status:", response.status);
-
-        const rawText = await response.text();
-        console.log("Raw response:", rawText);
-
-        let data;
-        try {
-          data = JSON.parse(rawText);
-        } catch (e) {
-          alert("Server valid JSON döndürmedi. Console'a bak.");
-          return;
-        }
-
-        if (!data.success) {
-          alert(data.message || "Sector could not be completed.");
-          return;
-        }
-
-        alert(
-  `Sector Completed!\n` +
-  `Rank: ${data.sectorGrade}\n` +
-  `Reward: ${data.reward}\n` +
-  `Score: ${data.totalScore}`
-);
-        window.location.href = `/game/${data.nextLevel}/${data.nextSector}`;
-      } catch (error) {
-        console.error("Complete sector request failed:", error);
-        alert("Complete sector request failed. Console'a bak.");
-      }
-    });
-  
-  }
-
-</script>
 
 </body>
 </html>
