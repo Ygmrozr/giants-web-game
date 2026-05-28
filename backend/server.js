@@ -424,6 +424,24 @@ function getLevelRewards(level){
 }
 
 
+function calculateSectorGrade({ bestCombo, titanKills, medals, score }) {
+  let points = 0;
+
+  points += Math.min(Number(bestCombo) || 0, 8) * 10;
+  points += Math.min(Number(titanKills) || 0, 8) * 12;
+  points += Math.min(Number(medals) || 0, 12) * 6;
+  points += Math.min(Math.floor((Number(score) || 0) / 250), 10) * 5;
+
+  if (points >= 170) return "S+";
+  if (points >= 135) return "S";
+  if (points >= 105) return "A";
+  if (points >= 75) return "B";
+  if (points >= 45) return "C";
+  return "D";
+}
+
+
+
 
 // ---------------- ROUTES ----------------
 
@@ -810,7 +828,7 @@ app.get("/verify/:id", async (req, res) => {
 ////////// save score
 app.post("/save-score", requireAuth, async (req,res)=>{
   try{
-    const { score, titanKills, itemsCollected } = req.body;
+    const { score, titanKills, itemsCollected, bestCombo } = req.body;
 
     const user = await User.findById(req.session.user.id);
 
@@ -834,7 +852,8 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       username: user.username,
       score: Number(score) || 0,
       titanKills: Number(titanKills) || 0,
-      itemsCollected: Number(itemsCollected) || 0
+      itemsCollected: Number(itemsCollected) || 0,
+      bestCombo: Number(bestCombo) || 0
     });
 
     user.totalScore += Number(score) || 0;
@@ -845,6 +864,14 @@ app.post("/save-score", requireAuth, async (req,res)=>{
     if((Number(score) || 0) > user.highestScore){
       user.highestScore = Number(score) || 0;
     }
+
+
+const currentBestCombo = Number(user.bestCombo) || 0;
+const newBestCombo = Number(bestCombo) || 0;
+
+if (newBestCombo > currentBestCombo) {
+  user.bestCombo = newBestCombo;
+}
 
     const newLevel = getLevelFromScore(user.totalScore);
     user.level = newLevel;
@@ -883,6 +910,7 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       unlockedCharacter,
       totalScore: user.totalScore,
       highestScore: user.highestScore,
+      bestCombo: user.bestCombo,
       level: user.level
     });
 
@@ -1226,7 +1254,6 @@ app.get("/map/:level", requireAuth, async (req, res) => {
   });
 });
 
-
 app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
   try {
     const level = Number(req.params.level);
@@ -1234,11 +1261,12 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
     const userId = req.session.user.id;
 
     const {
-  score = 0,
-  titanKills = 0,
-  itemsCollected = 0,
-  medals = 0
-} = req.body;
+      score = 0,
+      titanKills = 0,
+      itemsCollected = 0,
+      medals = 0,
+      bestCombo = 0
+    } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -1252,31 +1280,70 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
 
     if (!Array.isArray(user.completedSectors)) user.completedSectors = [];
     if (!Array.isArray(user.unlockedLevels)) user.unlockedLevels = [1];
+    if (!Array.isArray(user.sectorGrades)) user.sectorGrades = [];
 
     const sectorKey = `${level}-${sector}`;
     const alreadyCompleted = user.completedSectors.includes(sectorKey);
 
     if (!alreadyCompleted) {
       user.completedSectors.push(sectorKey);
+
       user.coins = (user.coins || 0) + (sectorData.reward || 0);
       user.coins += Number(medals || 0) * 10;
-
-      user.totalScore = (user.totalScore || 0) + Number(score || 0);
-      user.titanKills = (user.titanKills || 0) + Number(titanKills || 0);
-      user.itemsCollected = (user.itemsCollected || 0) + Number(itemsCollected || 0);
-
-      if (!user.highestScore || Number(score || 0) > user.highestScore) {
-        user.highestScore = Number(score || 0);
-      }
-
-      await Score.create({
-        userId: user._id,
-        username: user.username,
-        score: Number(score || 0),
-        titanKills: Number(titanKills || 0),
-        itemsCollected: Number(itemsCollected || 0)
-      });
     }
+
+    const gradeRank = { D: 1, C: 2, B: 3, A: 4, S: 5, "S+": 6 };
+
+    const newGradeData = {
+      sectorKey,
+      bestCombo: Number(bestCombo) || 0,
+      titanKills: Number(titanKills) || 0,
+      medals: Number(medals) || 0,
+      score: Number(score) || 0,
+      grade: calculateSectorGrade({ bestCombo, titanKills, medals, score })
+    };
+
+    let sectorGrade = user.sectorGrades.find(item => item.sectorKey === sectorKey);
+
+    if (!sectorGrade) {
+      user.sectorGrades.push(newGradeData);
+      user.totalScore = (user.totalScore || 0) + Number(score || 0);
+    } else if (Number(score || 0) > Number(sectorGrade.score || 0)) {
+      const scoreDifference = Number(score || 0) - Number(sectorGrade.score || 0);
+      user.totalScore = (user.totalScore || 0) + scoreDifference;
+    }
+
+    if (
+      !sectorGrade ||
+      gradeRank[newGradeData.grade] > gradeRank[sectorGrade.grade] ||
+      Number(newGradeData.score) > Number(sectorGrade.score || 0)
+    ) {
+      if (sectorGrade) {
+        sectorGrade.bestCombo = newGradeData.bestCombo;
+        sectorGrade.titanKills = newGradeData.titanKills;
+        sectorGrade.medals = newGradeData.medals;
+        sectorGrade.score = Math.max(Number(sectorGrade.score || 0), Number(newGradeData.score || 0));
+        if (gradeRank[newGradeData.grade] > gradeRank[sectorGrade.grade]) {
+  sectorGrade.grade = newGradeData.grade;
+}
+      }
+    }
+
+    user.titanKills = (user.titanKills || 0) + Number(titanKills || 0);
+    user.itemsCollected = (user.itemsCollected || 0) + Number(itemsCollected || 0);
+
+    if (!user.highestScore || Number(score || 0) > user.highestScore) {
+      user.highestScore = Number(score || 0);
+    }
+
+    await Score.create({
+      userId: user._id,
+      username: user.username,
+      score: Number(score || 0),
+      titanKills: Number(titanKills || 0),
+      itemsCollected: Number(itemsCollected || 0),
+      bestCombo: Number(bestCombo) || 0
+    });
 
     let nextLevel = level;
     let nextSector = sector + 1;
@@ -1312,13 +1379,15 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
 
     return res.json({
       success: true,
-      reward: sectorData.reward || 0,
+      reward: alreadyCompleted ? 0 : sectorData.reward || 0,
       nextLevel: user.currentLevel,
       nextSector: user.currentSector,
       totalScore: user.totalScore,
       titanKills: user.titanKills,
-      itemsCollected: user.itemsCollected
+      itemsCollected: user.itemsCollected,
+      sectorGrade: newGradeData.grade
     });
+
   } catch (err) {
     console.error("COMPLETE SECTOR ERROR:", err);
     return res.status(500).json({
@@ -1327,6 +1396,7 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
     });
   }
 });
+
 
 ///// titles
 app.get("/titles", requireAuth, async (req,res)=>{

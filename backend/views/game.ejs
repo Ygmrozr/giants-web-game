@@ -126,7 +126,11 @@ body::before{
   data-objective-type="<%= sectorData.objectiveType %>"
   data-target-kill-count="<%= sectorData.enemyCount || 0 %>"
   data-target-item-count="<%= sectorData.itemTarget || 0 %>"
-  data-spawn-enemy-count="<%= sectorData.objectiveType === 'kill' && Number(sector) !== 10 ? (sectorData.enemyCount || 0) + 3 : (sectorData.enemyCount || 0) %>"
+  data-spawn-enemy-count="<%= 
+  sectorData.objectiveType === 'kill' && Number(sector) !== 10 
+    ? (sectorData.enemyCount || 0) + 3 
+    : (sectorData.enemyCount || 0) 
+%>"
   data-spawn-gas-count="<%= sectorData.objectiveType === 'collect' ? (sectorData.itemTarget || 0) + 2 : 2 %>"
   data-level="<%= level %>"
   data-sector="<%= sector %>"
@@ -675,6 +679,16 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let killScore = 0;
     let itemScore = 0;
     const bloodEffects = [];
+
+    let comboCount = 0;
+let comboTimer = 0;
+let comboDisplayTimer = 0;
+let bestCombo = 0;
+let savedBestCombo = 0;
+
+let comboPopTimer = 0;
+let comboParticles = [];  
+
     let speedLines = [];
     let boostTrails = [];
     let stompDusts = [];
@@ -689,6 +703,7 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
     let lastUnlockedTitle = null;
     let finalStrikeTimer = 0;
 let screenShakeTimer = 0;
+
 
     function spawnBlood(x, y, count = 10) {
   for (let i = 0; i < count; i++) {
@@ -783,7 +798,6 @@ for (let i = 24; i < 90 + 28; i++) {
 
 }
 
-
 function updateAtmosphereParticles() {
   for (const p of atmosphereParticles) {
     p.x += p.speedX;
@@ -861,7 +875,6 @@ if (p.type === "blackAsh") {
 
   ctx.restore();
 }
-
 
 function drawFogLayer() {
   ctx.save();
@@ -979,9 +992,6 @@ p.size * 0.45,
   ctx.restore();
 }
 
-
-
-
 function drawVignette() {
   ctx.save();
 
@@ -1002,8 +1012,6 @@ function drawVignette() {
 
   ctx.restore();
 }
-
-
 
     function updateBloodEffects() {
   for (let i = bloodEffects.length - 1; i >= 0; i--) {
@@ -1091,6 +1099,13 @@ player.grabbedBy = null;
 player.escapeProgress = 0;
 player.escapeTimer = 0;
 
+comboCount = 0;
+comboTimer = 0;
+comboDisplayTimer = 0;
+bestCombo = 0;
+comboPopTimer = 0;
+comboParticles.length = 0;
+
       camera.x = 0;
       killScore = 0;
       itemScore = 0;
@@ -1154,6 +1169,32 @@ spawnGrappleSpark(
   return { x, y, width, height };
 }
 
+function addKillCombo() {
+  if (comboTimer > 0) {
+    comboCount++;
+  } else {
+    comboCount = 1;
+  }
+
+  comboTimer = 300;
+  comboDisplayTimer = 120;
+  comboPopTimer = 16;
+  bestCombo = Math.max(bestCombo, comboCount);
+savedBestCombo = Math.max(savedBestCombo, bestCombo);
+
+  for (let i = 0; i < 14; i++) {
+    comboParticles.push({
+      x: canvas.width / 2,
+      y: 92,
+      vx: rand(-3.2, 3.2),
+      vy: rand(-2.2, 2.2),
+      life: randInt(18, 32),
+      maxLife: 32,
+      size: rand(2, 4)
+    });
+  }
+}
+
 
 function getTitanNapeZone(titan) {
   const rect = getTitanDrawRect(titan);
@@ -1177,7 +1218,6 @@ const zoneY = rect.y + rect.height * 0.08;
     height: zoneH
   };
 }
-
 
 function attackTitanIfPossible(titan) {
   if (!titan.alive || titan.hitCooldown > 0 || player.attackTimer <= 0) return false;
@@ -1295,7 +1335,8 @@ setTimeout(() => {
     killScore += titan.maxHealth * 140;
     spawnBlood(bloodX, bloodY, 38);
     titanKillCount++;
-    updateObjectiveProgress();
+addKillCombo();
+updateObjectiveProgress();
   }
 
   return true;
@@ -1432,91 +1473,116 @@ document.addEventListener("mouseup", () => {
   }
 });
 
-    function updateTimers() {
-      if (player.boostMode) {
-        player.boostTimer--;
-        if (player.boostTimer <= 0) {
-          player.boostMode = false;
-        }
-      }
-
-      if (player.attackTimer > 0) player.attackTimer--;
-      if (player.attackCooldown > 0) player.attackCooldown--;
-      if (player.hitFlashTimer > 0) player.hitFlashTimer--;
-      if (game.invincibleTimer > 0) game.invincibleTimer--;
-      if (player.throwTimer > 0) {
-  player.throwTimer--;
-
-  if (player.throwTimer <= 0) {
-    player.thrown = false;
+function updateTimers() {
+  if (player.boostMode) {
+    player.boostTimer--;
+    if (player.boostTimer <= 0) {
+      player.boostMode = false;
+    }
   }
-}
 
+  if (player.attackTimer > 0) player.attackTimer--;
+  if (player.attackCooldown > 0) player.attackCooldown--;
+  if (player.hitFlashTimer > 0) player.hitFlashTimer--;
+  if (game.invincibleTimer > 0) game.invincibleTimer--;
 
-for (let i = grappleSparks.length - 1; i >= 0; i--) {
-  const p = grappleSparks[i];
+  if (player.throwTimer > 0) {
+    player.throwTimer--;
+
+    if (player.throwTimer <= 0) {
+      player.thrown = false;
+    }
+  }
+
+  if (comboTimer > 0) {
+    comboTimer--;
+  } else {
+    comboCount = 0;
+  }
+
+  if (comboDisplayTimer > 0) {
+    comboDisplayTimer--;
+  }
+
+  for (let i = comboParticles.length - 1; i >= 0; i--) {
+  const p = comboParticles[i];
 
   p.x += p.vx;
   p.y += p.vy;
-
-  if (p.type === "spark") {
-    p.vx *= 0.82;
-    p.vy *= 0.82;
-  } else {
-    p.vx *= 0.95;
-    p.vy *= 0.95;
-    p.size *= 1.04;
-  }
-
+  p.vx *= 0.92;
+  p.vy *= 0.92;
   p.life--;
 
   if (p.life <= 0) {
-    grappleSparks.splice(i, 1);
+    comboParticles.splice(i, 1);
   }
 }
 
-      titans.forEach(t => {
-        if (t.hitCooldown > 0) t.hitCooldown--;
-        if (t.attackCooldown > 0) t.attackCooldown--;
-        if (t.attackFlashTimer > 0) t.attackFlashTimer--;
-        if (t.bloodTimer > 0) t.bloodTimer--;
-        if (t.stunTimer > 0) t.stunTimer--;
-        if (t.rageTimer > 0) t.rageTimer--;
-        if (t.rageDamageCooldown > 0) t.rageDamageCooldown--;
-      });
+  for (let i = grappleSparks.length - 1; i >= 0; i--) {
+    const p = grappleSparks[i];
 
-      if (finalStrikeTimer > 0) finalStrikeTimer--;
-if (screenShakeTimer > 0) screenShakeTimer--;
+    p.x += p.vx;
+    p.y += p.vy;
 
-      updateBloodEffects();
-
-      speedLines = speedLines.filter(line => {
-  line.x += line.vx;
-  line.y += line.vy;
-  line.life--;
-  return line.life > 0;
-});
-
-boostTrails = boostTrails.filter(trail => {
-  trail.life--;
-  return trail.life > 0;
-});
-
-stompDusts = stompDusts.filter(dust => {
-  dust.x += dust.vx;
-  dust.y += dust.vy;
-  dust.life--;
-  return dust.life > 0;
-});
-
-updateOdmGasTrails();
-
-
+    if (p.type === "spark") {
+      p.vx *= 0.82;
+      p.vy *= 0.82;
+    } else {
+      p.vx *= 0.95;
+      p.vy *= 0.95;
+      p.size *= 1.04;
     }
+
+    p.life--;
+
+    if (p.life <= 0) {
+      grappleSparks.splice(i, 1);
+    }
+  }
+
+  titans.forEach(t => {
+    if (t.hitCooldown > 0) t.hitCooldown--;
+    if (t.attackCooldown > 0) t.attackCooldown--;
+    if (t.attackFlashTimer > 0) t.attackFlashTimer--;
+    if (t.bloodTimer > 0) t.bloodTimer--;
+    if (t.stunTimer > 0) t.stunTimer--;
+    if (t.rageTimer > 0) t.rageTimer--;
+    if (t.rageDamageCooldown > 0) t.rageDamageCooldown--;
+  });
+
+  if (finalStrikeTimer > 0) finalStrikeTimer--;
+  if (screenShakeTimer > 0) screenShakeTimer--;
+
+  updateBloodEffects();
+
+  speedLines = speedLines.filter(line => {
+    line.x += line.vx;
+    line.y += line.vy;
+    line.life--;
+    return line.life > 0;
+  });
+
+  boostTrails = boostTrails.filter(trail => {
+    trail.life--;
+    return trail.life > 0;
+  });
+
+  stompDusts = stompDusts.filter(dust => {
+    dust.x += dust.vx;
+    dust.y += dust.vy;
+    dust.life--;
+    return dust.life > 0;
+  });
+
+  updateOdmGasTrails();
+} 
 
     async function saveScoreToDatabase(){
   if(scoreSaved) return { unlockedTitle: null };
   scoreSaved = true;
+
+
+console.log("BEST COMBO SENDING:", bestCombo);
 
   try{
     const res = await fetch("/save-score", {
@@ -1528,8 +1594,8 @@ updateOdmGasTrails();
   score: getTotalScore(),
   titanKills: titanKillCount,
   itemsCollected: itemCollectedCount,
-  medals: collectedMedalCount
-
+  medals: collectedMedalCount,
+  bestCombo: savedBestCombo
       })
     });
 
@@ -1730,7 +1796,108 @@ if (player.boostMode) {
       }
     }
 
+function drawComboCounter() {
+  if (comboTimer <= 0 || comboCount <= 1) return;
 
+  const timerRatio = Math.max(0, comboTimer / 300);
+  const fadeIn = Math.min(1, comboDisplayTimer / 18);
+  const fadeOut = Math.min(1, comboTimer / 30);
+  const alpha = Math.min(fadeIn, fadeOut);
+
+  const popScale = comboPopTimer > 0
+    ? 1 + comboPopTimer * 0.018
+    : 1;
+
+  let title = "FIRST BLOOD";
+
+  if (comboCount >= 5) {
+    title = "PERFECT STRIKE";
+  } else if (comboCount >= 3) {
+    title = "CHAIN ATTACK";
+  } else if (comboCount >= 2) {
+    title = "KILL COMBO";
+  }
+
+  ctx.save();
+
+  ctx.translate(canvas.width / 2, 92);
+  ctx.scale(popScale, popScale);
+  ctx.textAlign = "center";
+
+  // Dış glow
+  const glow = ctx.createRadialGradient(0, 0, 10, 0, 0, 210);
+  glow.addColorStop(0, `rgba(255,55,25,${0.24 * alpha})`);
+  glow.addColorStop(0.45, `rgba(255,165,55,${0.13 * alpha})`);
+  glow.addColorStop(1, "rgba(0,0,0,0)");
+
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(0, 0, 210, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ana panel
+  ctx.fillStyle = `rgba(0,0,0,${0.46 * alpha})`;
+  ctx.fillRect(-170, -38, 340, 82);
+
+  ctx.strokeStyle = `rgba(255,210,120,${0.85 * alpha})`;
+  ctx.lineWidth = 1.7;
+  ctx.strokeRect(-170, -38, 340, 82);
+
+  // Üst dekoratif çizgiler
+  ctx.strokeStyle = `rgba(255,80,35,${0.9 * alpha})`;
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.moveTo(-125, -47);
+  ctx.lineTo(-35, -47);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(35, -47);
+  ctx.lineTo(125, -47);
+  ctx.stroke();
+
+  // Başlık
+  ctx.fillStyle = `rgba(255,220,145,${alpha})`;
+  ctx.font = "bold 15px Arial";
+  ctx.fillText(title, 0, -13);
+
+  // Combo sayısı
+  ctx.shadowColor = "rgba(255,50,20,0.9)";
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = `rgba(255,65,45,${alpha})`;
+  ctx.font = "bold 46px Arial";
+  ctx.fillText(`x${comboCount}`, 0, 30);
+
+  ctx.shadowBlur = 0;
+
+  // Best combo küçük bilgi
+  ctx.fillStyle = `rgba(255,255,255,${0.65 * alpha})`;
+  ctx.font = "bold 11px Arial";
+  ctx.fillText(`BEST x${bestCombo}`, 0, 43);
+
+  // Süre barı
+  ctx.fillStyle = `rgba(255,255,255,${0.16 * alpha})`;
+  ctx.fillRect(-120, 53, 240, 4);
+
+  ctx.fillStyle = `rgba(255,95,35,${0.95 * alpha})`;
+  ctx.fillRect(-120, 53, 240 * timerRatio, 4);
+
+  ctx.restore();
+
+  // Küçük kırmızı/turuncu parçacıklar
+  for (const p of comboParticles) {
+    const pAlpha = Math.max(0, p.life / p.maxLife);
+
+    ctx.save();
+    ctx.globalAlpha = pAlpha;
+    ctx.fillStyle = "rgba(255,90,35,1)";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
 
     function updateTitanAnimation(titan) {
   if (!titan.alive) {
@@ -1757,7 +1924,6 @@ if (player.boostMode) {
   }
 }
    
-
 function updateTitans() {
   if (game.state !== "playing") return;
 
@@ -1865,7 +2031,6 @@ vy: rand(-0.25, -0.05)
   });
 }
 
-
     function updateItems() {
       if (game.state !== "playing") return;
 
@@ -1940,8 +2105,6 @@ vy: rand(-0.25, -0.05)
       camera.x = clamp(camera.x, 0, WORLD.width - canvas.width);
     }
 
-  
-  
       function drawLayer(img, speed, targetHeight, yOffset = 0, bottomAlign = true) {
   if (!img.complete || img.naturalWidth === 0) return;
 
@@ -1965,7 +2128,6 @@ vy: rand(-0.25, -0.05)
   }
 }
       
-
 const parallaxSettings = {
   1: [
     { img: bg1, speed: 0.10, x: 0, y: -50 },
@@ -2003,7 +2165,6 @@ const parallaxSettings = {
   ]
 };
 
-
 function drawParallax() {
   const settings = parallaxSettings[currentBattle] || parallaxSettings[1];
 
@@ -2018,7 +2179,6 @@ function drawParallax() {
   });
 }
 
-
 function drawGround() {
       ctx.fillStyle = "rgba(255,255,220,0.08)";
       ctx.fillRect(ground.x - camera.x, ground.y, ground.width, ground.height);
@@ -2026,7 +2186,6 @@ function drawGround() {
       ctx.fillStyle = "rgba(75, 95, 55, 0.55)";
       ctx.fillRect(ground.x - camera.x, ground.y, ground.width, 8);
     }
-    
 
     function drawPlatforms() {
   itemSlots.forEach(slot => {
@@ -2045,7 +2204,6 @@ function drawGround() {
     ctx.strokeRect(x, y - 4, 70, 15);
   });
 }
-    
 
     function drawItems() {
   items.forEach(item => {
@@ -2200,7 +2358,6 @@ drawHeight = titan.height * TITAN_DRAW_SCALE;
   };
 }
 
-
     function drawTitans() {
   titans.forEach(titan => {
     const shouldDrawDead = !titan.alive && titan.deadTimer > 0;
@@ -2340,7 +2497,6 @@ function drawTitanNapeDebug() {
   });
 }
    
-
 function drawFinish() {
   if (objectiveType !== "reach") return;
 
@@ -2396,7 +2552,6 @@ ctx.beginPath();
 ctx.arc(tx, ty, 2, 0, Math.PI * 2);
 ctx.fill();
 }
-
 
     function drawBloodEffects() {
   for (const p of bloodEffects) {
@@ -2600,8 +2755,6 @@ function drawPlayer() {
     ctx.fillRect(hitboxX, hitboxY, player.width, player.height);
   }
 }
-
-
 
 function drawBar(x, y, w, h, value, max, fillColor, label) {
   const ratio = Math.max(0, Math.min(1, value / max));
@@ -2807,7 +2960,6 @@ function drawFinalStrikeEffect() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-
 function drawLowHealthEffect() {
   const healthRatio = player.health / player.maxHealth;
 
@@ -2893,6 +3045,7 @@ drawPlayer();
 drawBloodEffects();
 
 drawVignette();
+drawComboCounter();
 drawHUD();
 drawLowHealthEffect();
 drawFinalStrikeEffect();
@@ -2936,6 +3089,7 @@ requestAnimationFrame(gameLoop);
     const spawnGasCount = Number(gameMeta.dataset.spawnGasCount || 2);
     const currentBattle = Number(gameMeta.dataset.level || 1);
     const currentSectorNumber = Number(gameMeta.dataset.sector || 1);
+
 
     loadBattleParallaxBackgrounds();
 
@@ -2982,17 +3136,21 @@ requestAnimationFrame(gameLoop);
         const url = `/game/<%= level %>/<%= sector %>/complete`;
         console.log("POST URL:", url);
 
+        console.log("COMPLETE BEST COMBO SENDING:", savedBestCombo);
+
         const response = await fetch(url, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
   },
+
   body: JSON.stringify({
   score: getTotalScore(),
   titanKills: titanKillCount,
   itemsCollected: itemCollectedCount,
-  medals: collectedMedalCount
-  })
+  medals: collectedMedalCount,
+  bestCombo: savedBestCombo
+})
 });
 
         console.log("Response status:", response.status);
@@ -3013,7 +3171,12 @@ requestAnimationFrame(gameLoop);
           return;
         }
 
-        alert(`Sector completed! Reward: ${data.reward}`);
+        alert(
+  `Sector Completed!\n` +
+  `Rank: ${data.sectorGrade}\n` +
+  `Reward: ${data.reward}\n` +
+  `Score: ${data.totalScore}`
+);
         window.location.href = `/game/${data.nextLevel}/${data.nextSector}`;
       } catch (error) {
         console.error("Complete sector request failed:", error);

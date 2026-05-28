@@ -82,22 +82,37 @@ currentLevel: {
   type: Number,
   default: 1
 },
+
 currentSector: {
   type: Number,
   default: 1
 },
+
 unlockedLevels: {
   type: [Number],
   default: [1]
 },
+
 completedSectors: {
   type: [String],
   default: []
 },
+
 isAdmin: {
   type: Boolean,
   default: false
 },
+
+sectorGrades: [
+  {
+    sectorKey: String,
+    bestCombo: { type: Number, default: 0 },
+    titanKills: { type: Number, default: 0 },
+    medals: { type: Number, default: 0 },
+    score: { type: Number, default: 0 },
+    grade: { type: String, default: "D" }
+  }
+],
 
 selectedBadge: {
   type: String,
@@ -123,7 +138,6 @@ reviveTokens: { type: Number, default: 0 }
   
 }, { timestamps: true });
 
-export default mongoose.model("User", userSchema);
 
 userSchema.virtual("title").get(function () {
   if (this.titanKills >= 500) return "Cadet";
@@ -141,3 +155,5 @@ userSchema.virtual("title").get(function () {
 
 userSchema.set("toObject", { virtuals: true });
 userSchema.set("toJSON", { virtuals: true });
+
+export default mongoose.model("User", userSchema);

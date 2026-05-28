@@ -22,6 +22,11 @@ const scoreSchema = new mongoose.Schema({
     default: 0
   },
 
+  bestCombo: {
+  type: Number,
+  default: 0
+},
+
   itemsCollected: {
     type: Number,
     default: 0
