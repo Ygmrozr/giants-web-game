@@ -1348,7 +1348,7 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
     let nextLevel = level;
     let nextSector = sector + 1;
 
-    if (sector >= 10) {
+    if (sector >= 5) {
       nextLevel = level + 1;
       nextSector = 1;
 

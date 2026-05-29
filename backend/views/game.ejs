@@ -415,7 +415,6 @@ body::before{
 
 </div>
 
-
   <% if (devMode) { %>
 <div style="
   position:fixed;
@@ -467,11 +466,6 @@ body::before{
     <a style="color:white; margin-left:6px;" href="/game/3/3?dev=1">3</a>
     <a style="color:white; margin-left:6px;" href="/game/3/4?dev=1">4</a>
     <a style="color:white; margin-left:6px;" href="/game/3/5?dev=1">5</a>
-    <a style="color:white; margin-left:6px;" href="/game/3/6?dev=1">6</a>
-    <a style="color:white; margin-left:6px;" href="/game/3/7?dev=1">7</a>
-    <a style="color:white; margin-left:6px;" href="/game/3/8?dev=1">8</a>
-    <a style="color:white; margin-left:6px;" href="/game/3/9?dev=1">9</a>
-    <a style="color:white; margin-left:6px;" href="/game/3/10?dev=1">10</a>
   </div>
 
   <div style="margin-bottom:6px;">
@@ -523,7 +517,7 @@ body::before{
 </div>
 
 <div class="control-hint">
-  A/D Move · W Jump · Space Attack · Mouse Grapple · R Restart
+  A/D Move · W Jump · Space Attack · Mouse Grapple · E Carry Civilian · G Drop · R Restart
 </div>
 
 <div id="scoreText" style="display:none;">Keşif Madalyonu: 0</div>
@@ -622,7 +616,6 @@ body::before{
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const scoreText = document.getElementById("scoreText");
-
     const levelBackground = new Image();
 levelBackground.src = "/images/levels/trost.png";
 
@@ -690,7 +683,6 @@ levelBackground.src = "/images/levels/trost.png";
       escapeTimer: 0,
 thrown: false,
 throwTimer: 0
-      
     };
     
     const playerSprites = {
@@ -766,8 +758,39 @@ itemSprites.coin.src = "/images/items/coin.png";
 itemSprites.medkit.src = "/images/items/medkit.png";
 itemSprites.boost.src = "/images/items/boost.png";
 
-
     const keys = {};
+
+
+/////////////////femal titan sprites
+const femaleTitanSprites = {
+  idle: new Image(),
+  walk1: new Image(),
+  walk2: new Image(),
+  walk3: new Image(),
+  walk4: new Image(),
+  walk5: new Image(),
+  attack: new Image(),
+  hurt: new Image(),
+  dead: new Image()
+};
+
+femaleTitanSprites.idle.src = "/images/titans/female/01_idle.png";
+femaleTitanSprites.walk1.src = "/images/titans/female/02_walk_1.png";
+femaleTitanSprites.walk2.src = "/images/titans/female/03_walk_2.png";
+femaleTitanSprites.walk3.src = "/images/titans/female/04_walk_3.png";
+femaleTitanSprites.walk4.src = "/images/titans/female/05_walk_4.png";
+femaleTitanSprites.walk5.src = "/images/titans/female/05_walk_5.png";
+femaleTitanSprites.attack.src = "/images/titans/female/07_attack.png";
+femaleTitanSprites.hurt.src = "/images/titans/female/08_hurt.png";
+femaleTitanSprites.dead.src = "/images/titans/female/09_dead.png";
+
+const femaleTitanWalkFrames = [
+  femaleTitanSprites.walk1,
+  femaleTitanSprites.walk2,
+  femaleTitanSprites.walk3,
+  femaleTitanSprites.walk4,
+  femaleTitanSprites.walk5,
+];
 
     function rand(min, max) {
       return Math.random() * (max - min) + min;
@@ -872,6 +895,71 @@ stepDustTimer: 0
   { x: 3575, y: 345, type: "platform" }
 ];
 
+const roofChasePlatforms = [
+  { x: 720, y: 290, width: 130, height: 14 },
+  { x: 1420, y: 200, width: 150, height: 14 },
+  { x: 2180, y: 250, width: 140, height: 14 },
+  { x: 2920, y: 170, width: 160, height: 14 }
+];
+
+// Battle 3 sector ayarları
+const rescueSettingsBySector = {
+  // Sector 1 öğretici: Dişi Dev sivile saldırmaz, sadece takip baskısı verir.
+  1: {
+    civilians: 1,
+    difficulty: 1,
+    attacksEnabled: false,
+    startCooldown: 9999,
+    warningTime: 0,
+    chargeTime: 0,
+    hitsNeeded: 1,
+    cooldownAfterAttack: 9999,
+    chargeSpeedMultiplier: 1.35
+  },
+
+  // Sector 2 kolay başlangıç: uyarı uzun, tek vuruşla saldırı bozulur.
+  2: {
+    civilians: 1,
+    difficulty: 1,
+    attacksEnabled: true,
+    startCooldown: 460,
+    warningTime: 150,
+    chargeTime: 150,
+    hitsNeeded: 1,
+    cooldownAfterAttack: 420,
+    chargeSpeedMultiplier: 1.55
+  },
+
+  // Sector 3 orta seviye: yine tek vuruş yeterli, saldırı arası uzun.
+  3: {
+    civilians: 2,
+    difficulty: 2,
+    attacksEnabled: true,
+    startCooldown: 400,
+    warningTime: 135,
+    chargeTime: 160,
+    hitsNeeded: 1,
+    cooldownAfterAttack: 380,
+    chargeSpeedMultiplier: 1.70
+  },
+
+  // Sector 4 zorlaşır ama hâlâ engellenebilir: iki vuruş gerekir.
+  4: {
+    civilians: 2,
+    difficulty: 3,
+    attacksEnabled: true,
+    startCooldown: 350,
+    warningTime: 120,
+    chargeTime: 170,
+    hitsNeeded: 2,
+    cooldownAfterAttack: 340,
+    chargeSpeedMultiplier: 1.85
+  },
+
+  // Sector 5 boss savaşı.
+  5: { civilians: 0, difficulty: 5 }
+};
+
     function createBossTitan() {
       const boss = createTitan(3450, 3300, 3650, -1);
 
@@ -889,8 +977,61 @@ stepDustTimer: 0
       return boss;
     }
 
+    function createFemaleTitan() {
+  const female = createTitan(850, 420, WORLD.width - 420, 1);
+
+  female.isFemaleTitan = true;
+  female.height = 260;
+  female.width = 105;
+  female.spriteWidth = 190;
+  female.spriteHeight = 295;
+  female.y = ground.y - female.height;
+
+  female.maxHealth = 18;
+  female.health = female.maxHealth;
+  female.damage = 18;
+  female.moveSpeed = 2.5;
+  female.dir = 1;
+  female.faceDir = 1;
+
+  return female;
+}
+
+function createCivilian() {
+  return {
+    x: 140,
+    y: ground.y - 34,
+    width: 22,
+    height: 34,
+    following: false,
+    rescued: false,
+    dropped: false,
+    health: 3,
+    vx: 0,
+    vy: 0,
+    lastSafeY: ground.y - 34,
+    fallStartY: ground.y - 34
+  };
+}
+
+function spawnRescueCivilian() {
+  if (civilianQueue.length <= 0) {
+    activeCivilian = null;
+    return;
+  }
+
+  civilianQueue.shift();
+  activeCivilian = createCivilian();
+}
+
+
     function spawnTitansBySector() {
       titans.length = 0;
+      
+      if (isFemaleTitanBattle) {
+  titans.push(createFemaleTitan());
+  return;
+}
 
       if (currentSectorNumber === 10) {
         titans.push(createBossTitan());
@@ -967,7 +1108,10 @@ stepDustTimer: 0
     }
 
     function spawnItemsBySector() {
+  if (isRoofChaseSector) {
   items.length = 0;
+  return;
+}
 
   let slotIndex = 0;
   const gasCount = objectiveType === "collect" ? spawnGasCount : 2;
@@ -1004,8 +1148,6 @@ if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
       spawnItemsBySector();
     }
 
-
-    
     const titans = [];
 
     const items = [];
@@ -1049,6 +1191,30 @@ let objectiveCompleted = false;
 let objectiveCompleteNoticeTimer = 0;
 let pendingSectorResult = null;
 
+let chaseObstacles = [];
+let femalePushCooldown = 0;
+let chaseProgress = 0;
+const chaseTarget = 100;
+
+let rescuedCivilianCount = 0;
+let activeCivilian = null;
+let rescueTarget = 1;
+let civilianQueue = [];
+
+let femaleAttackWarningTimer = 0;
+let femaleAttackCooldown = 180;
+let femaleAttackZone = null;
+
+let femaleAttackMode = "idle";
+let femaleAttackTimer = 0;
+let femaleAttackHitsNeeded = 0;
+let femaleAttackHits = 0;
+
+let femaleTargetCivilian = false;
+let civilianDangerTimer = 0;
+let civilianDangerMaxTimer = 300;
+const civilianSafeZoneX = WORLD.width - 260;
+const civilianSafeZoneWidth = 170;
 
     function spawnBlood(x, y, count = 10) {
   for (let i = 0; i < count; i++) {
@@ -1382,8 +1548,6 @@ function drawVignette() {
       return getDistanceScore() + killScore + itemScore;
     }
 
-
-
 async function setLose(message) {
   if (game.state !== "playing") return;
 
@@ -1404,11 +1568,19 @@ player.throwTimer = 0;
 
     function resetGame() {
       scoreSaved = false;
-      player.x = 80;
-      player.y = ground.y - player.height;
+      if (isRoofChaseSector) {
+  const firstRoof = roofChasePlatforms[0];
+
+  player.x = firstRoof.x + 20;
+  player.y = firstRoof.y - player.height;
+  player.onGround = true;
+} else {
+  player.x = 80;
+  player.y = ground.y - player.height;
+  player.onGround = true;
+}
       player.vx = 0;
       player.vy = 0;
-      player.onGround = true;
       player.facing = 1;
       player.grappling = false;
       player.grappleTarget = null;
@@ -1432,6 +1604,7 @@ savedBestCombo = 0;
 comboPopTimer = 0;
 comboParticles.length = 0;
 
+
 const resultPanel = document.getElementById("sectorResultPanel");
 
 if (resultPanel) {
@@ -1442,14 +1615,47 @@ pendingSectorResult = null;
 
 objectiveCompleted = false;
 objectiveCompleteNoticeTimer = 0;
+chaseProgress = 0;
+
+
+femalePushCooldown = 0;
+
+
+femaleAttackWarningTimer = 0;
+const currentRescueSetting = rescueSettingsBySector[currentSectorNumber] || rescueSettingsBySector[1];
+femaleAttackCooldown = currentRescueSetting.startCooldown || 420;
+femaleAttackZone = null;
+
+femaleAttackMode = "idle";
+femaleAttackTimer = 0;
+femaleAttackHitsNeeded = currentRescueSetting.hitsNeeded || 1;
+femaleAttackHits = 0;
+femaleTargetCivilian = false;
+civilianDangerTimer = 0;
+civilianDangerMaxTimer = Math.max(180, (currentRescueSetting.warningTime || 150) + (currentRescueSetting.chargeTime || 150));
+
+rescuedCivilianCount = 0;
+activeCivilian = null;
+civilianQueue = [];
+
+if (isFemaleTitanBattle && currentSectorNumber <= 4) {
+  const setting = rescueSettingsBySector[currentSectorNumber];
+  rescueTarget = setting.civilians;
+
+  for (let i = 0; i < rescueTarget; i++) {
+    civilianQueue.push(i);
+  }
+
+  spawnRescueCivilian();
+}
+
+
 
 const completeBtn = document.getElementById("completeSectorBtn");
 
 if (completeBtn) {
   completeBtn.style.display = "none";
 }
-
-
       camera.x = 0;
       killScore = 0;
       itemScore = 0;
@@ -1466,9 +1672,7 @@ if (completeBtn) {
 
       setupSectorContent();
       initAtmosphereParticles();
-
     }
-
 
     function startGrapple(target) {
       if (player.gas <= 0) return;
@@ -1537,7 +1741,6 @@ savedBestCombo = Math.max(savedBestCombo, bestCombo);
     });
   }
 }
-
 
 function getTitanNapeZone(titan) {
   const rect = getTitanDrawRect(titan);
@@ -1659,6 +1862,22 @@ const validNapeKill = hitNape && playerBehindTitan;
 
   spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 10);
 
+  if (titan.isFemaleTitan && isRoofChaseSector && femaleAttackMode === "charge") {
+  femaleAttackHits++;
+
+  if (femaleAttackHits >= femaleAttackHitsNeeded) {
+    femaleAttackMode = "retreat";
+    femaleAttackTimer = 90;
+    femaleAttackCooldown = getFemaleAttackCooldown();
+    femaleTargetCivilian = false;
+    civilianDangerTimer = 0;
+
+    titan.stunTimer = 35;
+    titan.state = "hurt";
+    screenShakeTimer = 12;
+  }
+}
+
   player.vx *= 0.35;
   player.vy = Math.min(player.vy, -2.8);
 
@@ -1678,10 +1897,16 @@ setTimeout(() => {
     killScore += titan.maxHealth * 140;
     spawnBlood(bloodX, bloodY, 38);
     titanKillCount++;
+    if (isFemaleTitanFinalSector && titan.isFemaleTitan) {
+  objectiveCompleted = true;
+  objectiveCompleteNoticeTimer = 180;
+
+  const completeBtn = document.getElementById("completeSectorBtn");
+  if (completeBtn) completeBtn.style.display = "block";
+}
 addKillCombo();
 updateObjectiveProgress();
   }
-
   return true;
 }
 
@@ -1828,6 +2053,28 @@ function updateTimers() {
   if (player.attackCooldown > 0) player.attackCooldown--;
   if (player.hitFlashTimer > 0) player.hitFlashTimer--;
   if (game.invincibleTimer > 0) game.invincibleTimer--;
+
+  if (femalePushCooldown > 0) femalePushCooldown--;
+
+if (femaleAttackCooldown > 0) femaleAttackCooldown--;
+if (femaleAttackWarningTimer > 0) femaleAttackWarningTimer--;
+
+if (civilianDangerTimer > 0) {
+  civilianDangerTimer--;
+
+  if (
+    civilianDangerTimer <= 0 &&
+    femaleTargetCivilian &&
+    activeCivilian &&
+    !activeCivilian.rescued
+  ) {
+    if (isCivilianInSafeZone(activeCivilian)) {
+      rescueActiveCivilian();
+    } else {
+      setLose("Sivili zamanında güvenli bölgeye ulaştıramadın!");
+    }
+  }
+}
 
   if (player.throwTimer > 0) {
     player.throwTimer--;
@@ -2065,6 +2312,7 @@ player.throwTimer = 45;
       const prevY = player.y;
       player.x += player.vx;
       player.y += player.vy;
+      
       spawnOdmGasTrail();
 
       const playerSpeed = Math.abs(player.vx) + Math.abs(player.vy);
@@ -2106,14 +2354,16 @@ if (player.boostMode) {
         player.onGround = true;
       }
 
-      const standables = itemSlots
-  .filter(slot => slot.type === "platform")
-  .map(slot => ({
-    x: slot.x - 25,
-    y: slot.y + 18,
-    width: 70,
-    height: 12
-  }));
+      const standables = isRoofChaseSector
+  ? roofChasePlatforms
+  : itemSlots
+      .filter(slot => slot.type === "platform")
+      .map(slot => ({
+        x: slot.x - 25,
+        y: slot.y + 18,
+        width: 70,
+        height: 12
+      }));
 
       for (const s of standables) {
         const playerRect = getPlayerRect();
@@ -2130,9 +2380,9 @@ if (player.boostMode) {
         }
       }
 
-      if (player.y > canvas.height + 220) {
-        setLose("Düştün!");
-      }
+if (player.y > canvas.height + 220) {
+  setLose(isRoofChaseSector ? "Female Titan caught you!" : "Düştün!");
+}
 
       if (player.x > game.maxProgressX) {
         game.maxProgressX = player.x;
@@ -2266,11 +2516,247 @@ function drawComboCounter() {
     titan.frame = (titan.frame + 1) % titanWalkFrames.length;
   }
 }
-   
+
+function getFemaleTitan() {
+  return titans.find(titan => titan.isFemaleTitan);
+}
+
+function updateFemaleTitanChase(titan) { 
+  if (!titan || !titan.alive) return;
+
+  if (titan.x < 520) titan.dir = 1;
+  if (titan.x > WORLD.width - 520) titan.dir = -1;
+
+  titan.faceDir = titan.dir;
+  titan.x += titan.dir * titan.moveSpeed * 1.15;
+
+  titan.state = "walk";
+  titan.frameTimer++;
+
+  if (titan.frameTimer >= 18) {
+    titan.frameTimer = 0;
+    titan.frame = (titan.frame + 1) % femaleTitanWalkFrames.length;
+  }
+}
+
+function updateFemaleTitanPush(titan) {
+  if (!isRoofChaseSector) return;
+  if (!titan || !titan.alive) return;
+  if (femalePushCooldown > 0) return;
+
+  const playerCenterX = player.x + player.width / 2;
+  const titanCenterX = titan.x + titan.width / 2;
+  const distance = Math.abs(playerCenterX - titanCenterX);
+
+  const playerOnGround = player.y + player.height >= ground.y - 6;
+
+  if (distance < 190 && playerOnGround) {
+    const pushDir = playerCenterX < titanCenterX ? -1 : 1;
+
+    player.vx = pushDir * 12;
+    player.vy = -6;
+    player.grappling = false;
+    player.grappleTarget = null;
+
+    if (activeCivilian && activeCivilian.following) {
+      activeCivilian.health--;
+
+      if (activeCivilian.health <= 0) {
+        setLose("Civilian died!");
+      }
+    }
+
+    damagePlayer(8, titanCenterX);
+
+    screenShakeTimer = 14;
+    femalePushCooldown = 90;
+  }
+}
+
+function getFemaleDifficulty() {
+  const setting = rescueSettingsBySector[currentSectorNumber];
+  return setting ? setting.difficulty : 1;
+}
+
+
+function getFemaleRescueSetting() {
+  return rescueSettingsBySector[currentSectorNumber] || rescueSettingsBySector[1];
+}
+
+function getFemaleAttackCooldown() {
+  const setting = getFemaleRescueSetting();
+  return setting.cooldownAfterAttack || 420;
+}
+
+function startFemaleCivilianAttack(titan) {
+  const setting = getFemaleRescueSetting();
+
+  if (setting.attacksEnabled === false) return;
+
+  femaleTargetCivilian = true;
+  civilianDangerMaxTimer = Math.max(180, (setting.warningTime || 150) + (setting.chargeTime || 150));
+  civilianDangerTimer = civilianDangerMaxTimer;
+
+  femaleAttackMode = "warning";
+  femaleAttackTimer = setting.warningTime || 150;
+  femaleAttackHits = 0;
+  femaleAttackHitsNeeded = setting.hitsNeeded || 1;
+
+  titan.state = "attack";
+  titan.attackFlashTimer = femaleAttackTimer;
+}
+
+function startFemalePlayerAttack(titan) {
+  const setting = getFemaleRescueSetting();
+
+  if (setting.attacksEnabled === false) return;
+
+  femaleTargetCivilian = false;
+  civilianDangerTimer = 0;
+
+  femaleAttackMode = "warning";
+  femaleAttackTimer = Math.max(90, setting.warningTime || 130);
+  femaleAttackHits = 0;
+  femaleAttackHitsNeeded = setting.hitsNeeded || 1;
+
+  titan.state = "attack";
+  titan.attackFlashTimer = femaleAttackTimer;
+}
+
+function updateFemaleTitanSpecialAttack(titan) {
+  if (!isRoofChaseSector) return;
+  if (!titan || !titan.alive) return;
+
+  const playerCenterX = player.x + player.width / 2;
+  const titanCenterX = titan.x + titan.width / 2;
+  const distanceToPlayer = Math.abs(playerCenterX - titanCenterX);
+
+  const civilianNeedsProtection =
+    activeCivilian &&
+    !activeCivilian.rescued &&
+    activeCivilian.following;
+
+  const setting = getFemaleRescueSetting();
+
+  if (setting.attacksEnabled === false) {
+    return;
+  }
+
+  if (femaleAttackMode === "idle") {
+    if (civilianNeedsProtection && femaleAttackCooldown <= 0) {
+      startFemaleCivilianAttack(titan);
+    } else if (femaleAttackCooldown <= 0 && distanceToPlayer < 520 && currentSectorNumber >= 3) {
+      startFemalePlayerAttack(titan);
+    }
+  }
+
+  if (femaleAttackMode === "warning") {
+    femaleAttackTimer--;
+
+    const targetX =
+      femaleTargetCivilian && activeCivilian
+        ? activeCivilian.x + activeCivilian.width / 2
+        : playerCenterX;
+
+    titan.faceDir = targetX < titanCenterX ? -1 : 1;
+    titan.dir = titan.faceDir;
+    titan.state = "attack";
+    titan.attackFlashTimer = 12;
+
+    if (femaleAttackTimer <= 0) {
+      femaleAttackMode = "charge";
+      femaleAttackTimer = setting.chargeTime || 160;
+    }
+  }
+
+  if (femaleAttackMode === "charge") {
+    femaleAttackTimer--;
+
+    const targetX =
+      femaleTargetCivilian && activeCivilian
+        ? activeCivilian.x + activeCivilian.width / 2
+        : playerCenterX;
+
+    const dir = targetX < titanCenterX ? -1 : 1;
+    titan.dir = dir;
+    titan.faceDir = dir;
+    titan.x += dir * titan.moveSpeed * (setting.chargeSpeedMultiplier || 1.7);
+
+    titan.state = "attack";
+    titan.attackFlashTimer = 10;
+
+    const newTitanCenterX = titan.x + titan.width / 2;
+
+    if (femaleTargetCivilian && activeCivilian && !activeCivilian.rescued) {
+      const civilianCenterX = activeCivilian.x + activeCivilian.width / 2;
+      const civilianClose = Math.abs(civilianCenterX - newTitanCenterX) < 95;
+
+      if (civilianClose) {
+        if (activeCivilian.following) {
+          damagePlayer(14, newTitanCenterX);
+          activeCivilian.following = false;
+          activeCivilian.dropped = true;
+          activeCivilian.vy = 0;
+        }
+
+        setLose("Dişi Dev sivili yakaladı!");
+        return;
+      }
+    } else if (Math.abs(playerCenterX - newTitanCenterX) < 120) {
+      damagePlayer(18, newTitanCenterX);
+      femaleAttackMode = "retreat";
+      femaleAttackTimer = 80;
+      femaleAttackCooldown = getFemaleAttackCooldown();
+      screenShakeTimer = 16;
+    }
+
+    if (femaleAttackTimer <= 0) {
+      femaleAttackMode = "retreat";
+      femaleAttackTimer = 80;
+      femaleAttackCooldown = getFemaleAttackCooldown();
+    }
+  }
+
+  if (femaleAttackMode === "retreat") {
+    femaleAttackTimer--;
+
+    titan.dir = player.x < titan.x ? 1 : -1;
+    titan.faceDir = titan.dir;
+    titan.x += titan.dir * titan.moveSpeed * 1.6;
+
+    if (femaleAttackTimer <= 0) {
+      femaleAttackMode = "idle";
+      femaleTargetCivilian = false;
+      civilianDangerTimer = 0;
+      titan.state = "walk";
+    }
+  }
+}
+
+function updateChaseObjective() {
+  if (!isRoofChaseSector || objectiveCompleted) return;
+
+  const finalRoof = roofChasePlatforms[roofChasePlatforms.length - 1];
+
+  if (player.x >= finalRoof.x - 40) {
+    objectiveCompleted = true;
+    objectiveCompleteNoticeTimer = 180;
+
+    const completeBtn = document.getElementById("completeSectorBtn");
+    if (completeBtn) {
+      completeBtn.style.display = "block";
+    }
+  }
+}
+
 function updateTitans() {
   if (game.state !== "playing") return;
 
   titans.forEach(titan => {
+    if (titan.isFemaleTitan && isFemaleTitanChaseSector) {
+  updateFemaleTitanChase(titan);
+  return;
+}
     if (!titan.alive) {
       if (titan.deadTimer > 0) {
         titan.deadTimer--;
@@ -2374,6 +2860,134 @@ vy: rand(-0.25, -0.05)
   });
 }
 
+function isCivilianInSafeZone(civilian) {
+  if (!civilian || civilian.rescued) return false;
+
+  const civilianCenterX = civilian.x + civilian.width / 2;
+  const civilianFeetY = civilian.y + civilian.height;
+
+  return (
+    civilianCenterX >= civilianSafeZoneX &&
+    civilianCenterX <= civilianSafeZoneX + civilianSafeZoneWidth &&
+    civilianFeetY <= ground.y + 8
+  );
+}
+
+function rescueActiveCivilian() {
+  if (!activeCivilian || activeCivilian.rescued) return;
+
+  activeCivilian.rescued = true;
+  activeCivilian.following = false;
+  activeCivilian.dropped = false;
+
+  rescuedCivilianCount++;
+  femaleTargetCivilian = false;
+  civilianDangerTimer = 0;
+
+  updateObjectiveProgress();
+
+  if (rescuedCivilianCount >= rescueTarget) {
+    objectiveCompleted = true;
+    objectiveCompleteNoticeTimer = 180;
+
+    const completeBtn = document.getElementById("completeSectorBtn");
+    if (completeBtn) completeBtn.style.display = "block";
+  } else {
+    spawnRescueCivilian();
+  }
+}
+
+function updateCivilianEscort() {
+  if (!isRoofChaseSector || !activeCivilian || activeCivilian.rescued) return;
+
+  const playerNear =
+    Math.abs((player.x + player.width / 2) - (activeCivilian.x + activeCivilian.width / 2)) < 85 &&
+    Math.abs((player.y + player.height) - (activeCivilian.y + activeCivilian.height)) < 55;
+
+  // E ile sivili yanına al
+  if (playerNear && keys["e"] && !activeCivilian.following) {
+    activeCivilian.following = true;
+    activeCivilian.dropped = false;
+  }
+
+  // G ile sivili bırak
+  if (keys["g"] && activeCivilian.following) {
+  activeCivilian.following = false;
+  activeCivilian.dropped = true;
+  activeCivilian.x = player.x + player.facing * 45;
+  activeCivilian.y = player.y + player.height - activeCivilian.height;
+  activeCivilian.vx = 0;
+  activeCivilian.vy = 0;
+
+  activeCivilian.fallStartY = activeCivilian.y;
+}
+
+  if (activeCivilian.following) {
+    activeCivilian.x = player.x - player.facing * 38;
+    activeCivilian.y = player.y + player.height - activeCivilian.height;
+  } else {
+    activeCivilian.vy += 0.5;
+    activeCivilian.y += activeCivilian.vy;
+
+    if (activeCivilian.y + activeCivilian.height >= ground.y) {
+  const fallDistance = activeCivilian.y - activeCivilian.fallStartY;
+
+  activeCivilian.y = ground.y - activeCivilian.height;
+  activeCivilian.vy = 0;
+
+  if (fallDistance > 120) {
+    activeCivilian.health--;
+
+    if (activeCivilian.health <= 0) {
+      setLose("Civilian died!");
+    }
+  }
+
+  activeCivilian.fallStartY = activeCivilian.y;
+}
+
+    for (const p of roofChasePlatforms) {
+      if (
+        activeCivilian.x < p.x + p.width &&
+        activeCivilian.x + activeCivilian.width > p.x &&
+        activeCivilian.y + activeCivilian.height >= p.y &&
+        activeCivilian.y + activeCivilian.height <= p.y + 18
+      ) {
+        const fallDistance = activeCivilian.y - activeCivilian.fallStartY;
+
+activeCivilian.y = p.y - activeCivilian.height;
+activeCivilian.vy = 0;
+
+if (fallDistance > 120) {
+  activeCivilian.health--;
+}
+
+activeCivilian.fallStartY = activeCivilian.y;
+
+if (activeCivilian.health <= 0) {
+  setLose("Civilian died!");
+}
+      }
+    }
+  }
+
+  const femaleTitan = getFemaleTitan();
+
+  if (
+    femaleTitan &&
+    !activeCivilian.following &&
+    activeCivilian.dropped &&
+    activeCivilian.y + activeCivilian.height >= ground.y - 4 &&
+    Math.abs(femaleTitan.x - activeCivilian.x) < 140
+  ) {
+    setLose("Female Titan killed the civilian!");
+  }
+
+  if (isCivilianInSafeZone(activeCivilian)) {
+    rescueActiveCivilian();
+  }
+}
+
     function updateItems() {
       if (game.state !== "playing") return;
 
@@ -2415,7 +3029,6 @@ vy: rand(-0.25, -0.05)
         }
       });
     }
-
 
     function updateObjectiveProgress() {
   const progressEl = document.getElementById("objectiveProgress");
@@ -2478,8 +3091,6 @@ function drawObjectiveCompleteNotice() {
 
   ctx.restore();
 }
-
-    
 
 async function updateFinish() {
   if (game.state !== "playing") return;
@@ -2596,6 +3207,31 @@ function drawGround() {
     }
 
     function drawPlatforms() {
+
+      if (isRoofChaseSector) {
+  roofChasePlatforms.forEach(p => {
+    const x = p.x - camera.x;
+    const y = p.y;
+
+    // ince görünmez gibi ana yüzey
+    ctx.fillStyle = "rgba(40, 28, 22, 0.72)";
+    ctx.fillRect(x, y, p.width, p.height);
+
+    // üst çatı kenarı
+    ctx.fillStyle = "rgba(150, 95, 55, 0.85)";
+    ctx.fillRect(x, y - 4, p.width, 4);
+
+    // alt gölge
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(x, y + p.height - 3, p.width, 3);
+
+    // hafif altın outline
+    ctx.strokeStyle = "rgba(230,190,120,0.25)";
+    ctx.strokeRect(x, y - 4, p.width, p.height + 4);
+  });
+  return;
+}
+
   itemSlots.forEach(slot => {
     if (slot.type !== "platform") return;
 
@@ -2711,6 +3347,27 @@ function drawGround() {
 }
 
     function getTitanImage(titan) {
+
+      if (titan.isFemaleTitan) {
+  if (!titan.alive || titan.state === "dead") {
+    return femaleTitanSprites.dead;
+  }
+
+  if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") {
+    return femaleTitanSprites.hurt;
+  }
+
+  if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") {
+    return femaleTitanSprites.attack;
+  }
+
+  if (titan.state === "walk") {
+    return femaleTitanWalkFrames[titan.frame % femaleTitanWalkFrames.length];
+  }
+
+  return femaleTitanSprites.idle;
+}
+
   if (!titan.alive || titan.state === "dead") {
     return titanSprites.dead;
   }
@@ -2905,6 +3562,33 @@ function drawTitanNapeDebug() {
   });
 }
    
+function drawCivilianSafeZone() {
+  if (!isRoofChaseSector || currentSectorNumber > 4) return;
+
+  const drawX = civilianSafeZoneX - camera.x;
+  const drawY = ground.y - 130;
+  const zoneHeight = 130;
+
+  ctx.save();
+
+  ctx.fillStyle = "rgba(0, 255, 135, 0.18)";
+  ctx.fillRect(drawX, drawY, civilianSafeZoneWidth, zoneHeight);
+
+  ctx.strokeStyle = "rgba(0, 255, 135, 0.95)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(drawX, drawY, civilianSafeZoneWidth, zoneHeight);
+
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(drawX - 8, drawY - 34, civilianSafeZoneWidth + 16, 26);
+
+  ctx.fillStyle = "#00ff88";
+  ctx.font = "bold 15px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("SAFE ZONE", drawX + civilianSafeZoneWidth / 2, drawY - 16);
+
+  ctx.restore();
+}
+
 function drawFinish() {
   if (objectiveType !== "reach") return;
 
@@ -3164,6 +3848,110 @@ function drawPlayer() {
   }
 }
 
+function drawCivilian() {
+  if (!isRoofChaseSector || !activeCivilian || activeCivilian.rescued) return;
+
+  const x = activeCivilian.x - camera.x;
+  const y = activeCivilian.y;
+  const hpRatio = activeCivilian.health / 3;
+
+  ctx.save();
+
+  ctx.fillStyle = "rgba(30,30,30,0.95)";
+  ctx.fillRect(x, y, activeCivilian.width, activeCivilian.height);
+
+  ctx.fillStyle = "#f2c28b";
+  ctx.beginPath();
+  ctx.arc(x + 11, y - 6, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(x - 6, y - 24, 34, 6);
+
+  ctx.fillStyle = hpRatio > 0.6 ? "#2ecc71" : hpRatio > 0.3 ? "#f1c40f" : "#e74c3c";
+  ctx.fillRect(x - 6, y - 24, 34 * hpRatio, 6);
+
+  ctx.strokeStyle = "white";
+  ctx.strokeRect(x - 6, y - 24, 34, 6);
+
+  if (!activeCivilian.following) {
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px Arial";
+    ctx.fillText("E", x + 6, y - 34);
+  }
+
+  ctx.restore();
+}
+
+function drawFemaleAttackWarning() {
+  if (!isRoofChaseSector) return;
+  if (femaleAttackMode !== "warning" && femaleAttackMode !== "charge") return;
+
+  const titan = getFemaleTitan();
+  if (!titan) return;
+
+  const titanScreenX = titan.x - camera.x;
+  const isOffScreenLeft = titanScreenX < 0;
+  const isOffScreenRight = titanScreenX > canvas.width;
+
+  ctx.save();
+  ctx.textAlign = "center";
+
+  if (isOffScreenLeft || isOffScreenRight) {
+    const iconX = isOffScreenLeft ? 42 : canvas.width - 42;
+    const arrow = isOffScreenLeft ? "←" : "→";
+
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    ctx.fillRect(iconX - 30, 120, 60, 72);
+
+    ctx.strokeStyle = "rgba(255,70,40,0.9)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(iconX - 30, 120, 60, 72);
+
+    ctx.fillStyle = "#ff3b2f";
+    ctx.font = "bold 34px Arial";
+    ctx.fillText("!", iconX, 150);
+
+    ctx.fillStyle = "#ffd86b";
+    ctx.font = "bold 22px Arial";
+    ctx.fillText(arrow, iconX, 180);
+  }
+
+  ctx.fillStyle = femaleAttackMode === "warning" ? "#ff3b2f" : "#ffd86b";
+  ctx.font = "bold 26px Arial";
+
+  let text;
+
+  if (femaleTargetCivilian) {
+    text = femaleAttackMode === "warning"
+      ? "⚠ DİŞİ DEV SİVİLİ HEDEF ALDI!"
+      : `SİVİLİ KORU! KARŞI SALDIRI ${femaleAttackHits}/${femaleAttackHitsNeeded}`;
+  } else {
+    text = femaleAttackMode === "warning"
+      ? "DİŞİ DEV SALDIRIYA HAZIRLANIYOR!"
+      : `COUNTER ATTACK! ${femaleAttackHits}/${femaleAttackHitsNeeded}`;
+  }
+
+  ctx.fillText(text, canvas.width / 2, 150);
+
+  if (femaleTargetCivilian && civilianDangerTimer > 0) {
+    const ratio = Math.max(0, Math.min(1, civilianDangerTimer / civilianDangerMaxTimer));
+
+    ctx.fillStyle = "rgba(0,0,0,0.62)";
+    ctx.fillRect(canvas.width / 2 - 180, 166, 360, 14);
+
+    ctx.fillStyle = ratio > 0.45 ? "#ffd86b" : "#ff3b2f";
+    ctx.fillRect(canvas.width / 2 - 176, 170, 352 * ratio, 6);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 13px Arial";
+    ctx.fillText("Sivili SAFE ZONE'a ulaştır veya Dişi Dev'i durdur!", canvas.width / 2, 204);
+  }
+
+  ctx.restore();
+}
+
+
 function drawBar(x, y, w, h, value, max, fillColor, label) {
   const ratio = Math.max(0, Math.min(1, value / max));
 
@@ -3269,19 +4057,31 @@ ctx.shadowBlur = 10;
   ctx.lineWidth = 1.5;
   ctx.strokeRect(1018, 22, 160, 86);
 
-  let objectiveText = "Reach Target";
-  let progressText = "";
+let objectiveText = "Reach Target";
+let progressText = "";
 
-  if (objectiveType === "kill") {
-    objectiveText = "Eliminate Titans";
-    progressText = `${titanKillCount} / ${targetKillCount}`;
-  } else if (objectiveType === "collect") {
-    objectiveText = "Collect Supplies";
-    progressText = `${collectedSupplyCount} / ${targetItemCount}`;
-  } else {
-    objectiveText = "Reach Wall";
-    progressText = player.x >= finish.x ? "COMPLETED" : "NOT REACHED";
-  }
+if (isRoofChaseSector) {
+  objectiveText = "Rescue Civilians";
+  progressText = `${rescuedCivilianCount} / ${rescueTarget}`;
+
+} else if (isFemaleTitanChaseSector) {
+  objectiveText = "Track Female Titan";
+  progressText = `${Math.floor(chaseProgress)}%`;
+
+} else if (objectiveType === "kill") {
+  objectiveText = "Eliminate Titans";
+  progressText = `${titanKillCount} / ${targetKillCount}`;
+
+} else if (objectiveType === "collect") {
+  objectiveText = "Collect Supplies";
+  progressText = `${collectedSupplyCount} / ${targetItemCount}`;
+
+} else {
+  objectiveText = "Reach Wall";
+  progressText = player.x >= finish.x
+    ? "COMPLETED"
+    : "NOT REACHED";
+}
 
   ctx.textAlign = "center";
 
@@ -3414,7 +4214,6 @@ const alpha = healthRatio < 0.20
       ctx.textAlign = "start";
     }
 
-
     function checkObjectiveCompletion() {
   if (objectiveCompleted) return;
 
@@ -3433,12 +4232,15 @@ const alpha = healthRatio < 0.20
   }
 }
 
-
     function update() {
       updateTimers();
       updatePlayer();
       updateTitans();
-      updateItems();
+updateFemaleTitanPush(getFemaleTitan());
+updateFemaleTitanSpecialAttack(getFemaleTitan());
+updateItems();
+updateCivilianEscort();
+updateChaseObjective();
       updateFinish();
       checkObjectiveCompletion();
       updateCamera();
@@ -3462,6 +4264,8 @@ drawStompDusts();
 drawPlatforms();
 drawItems();
 drawTitans();
+drawFemaleAttackWarning();
+drawCivilianSafeZone();
 
 drawFinish();
 drawSpeedLines();
@@ -3471,6 +4275,7 @@ drawGrappleSparks();
 
 drawOdmGasTrails();
 drawPlayer();
+drawCivilian();
 drawBloodEffects();
 
 drawVignette();
@@ -3497,8 +4302,6 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 drawTitanNapeDebug();
 <% } %>
 
-
-
         ctx.restore();
     }
 
@@ -3520,9 +4323,18 @@ requestAnimationFrame(gameLoop);
     const currentBattle = Number(gameMeta.dataset.level || 1);
     const currentSectorNumber = Number(gameMeta.dataset.sector || 1);
 
+    const isFemaleTitanBattle = currentBattle === 3;
+const isFemaleTitanChaseSector =
+  currentBattle === 3 && currentSectorNumber === 1;
+
+const isCivilianRescueSector =
+  currentBattle === 3 && currentSectorNumber >= 1 && currentSectorNumber <= 4;
+const isRoofChaseSector = isCivilianRescueSector;
+
+const isFemaleTitanFinalSector =
+  currentBattle === 3 && currentSectorNumber === 5;
 
     loadBattleParallaxBackgrounds();
-
 
 function calculateRankPoints() {
   const totalTitans = Math.max(1, titans.length);
@@ -3584,7 +4396,6 @@ function getNextRankTarget(points) {
   if (points < 170) return 170;
   return 170;
 }
-
 
 function openSectorResultPanel() {
   const rank = calculatePreviewRank();
@@ -3690,14 +4501,11 @@ document.getElementById("nextSectorBtn").addEventListener("click", async () => {
   window.location.href = `/game/${data.nextLevel}/${data.nextSector}`;
 });
 
-
 game.state = "playing";
     resetGame();
     updateObjectiveProgress();
     gameLoop();
   </script>
-
-
 
 </body>
 </html>

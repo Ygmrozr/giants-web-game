@@ -830,7 +830,8 @@
     (user.unlockedTitles && user.unlockedTitles.length ? user.unlockedTitles[user.unlockedTitles.length - 1] : "New Recruit");
 
   const continueLevel = user.currentLevel || 1;
-  const continueSector = user.currentSector || 1;
+  const rawContinueSector = user.currentSector || 1;
+  const continueSector = continueLevel === 3 ? Math.min(rawContinueSector, 5) : rawContinueSector;
 %>
 
 <div class="map-container">
@@ -1015,13 +1016,13 @@
           <div>
             <h2 id="sectorModalTitle">Battle 1</h2>
           </div>
-          <div class="sector-badge" id="sectorModalBadge">10 Sectors</div>
+          <div class="sector-badge" id="sectorModalBadge">Sectors</div>
         </div>
 
         <div class="sector-divider"></div>
 
         <div class="sector-progress-line">
-          <span id="sectorProgressText">Completed: 0 / 10</span>
+          <span id="sectorProgressText">Completed: 0 / 0</span>
         </div>
       </div>
 
@@ -1046,51 +1047,6 @@
       localStorage.setItem("bgMusicPlaying","false");
     }
   }
-
-  function openSectorModal(level) {
-    const modal = document.getElementById("sectorModal");
-    const grid = document.getElementById("sectorGrid");
-    const title = document.getElementById("sectorModalTitle");
-    const subtitle = document.getElementById("sectorModalSubtitle");
-
-    const levelData = gameLevels[level];
-    if (!levelData) return;
-
-    title.textContent = levelData.name || `Battle ${level}`;
-    grid.innerHTML = "";
-
-    for (let i = 1; i <= 10; i++) {
-      const sectorData = levelData.sectors[i];
-
-      const isOpen =
-        isAdmin ||
-        level < currentLevel ||
-        (level === currentLevel && i <= currentSector) ||
-        (level === 1 && i === 1);
-
-      const card = document.createElement(isOpen ? "a" : "div");
-      card.className = "sector-card" + (isOpen ? "" : " locked");
-
-      if (isOpen) {
-        card.href = `/game/${level}/${i}`;
-      }
-
-      card.innerHTML = `
-        <div class="sector-num">Sector ${i}</div>
-        <div class="sector-text">${sectorData.objectiveText}</div>
-        <div class="sector-state">${isOpen ? "Open" : "Locked"}</div>
-      `;
-
-      grid.appendChild(card);
-    }
-
-    modal.classList.remove("hidden");
-  }
-
-  function closeSectorModal() {
-    document.getElementById("sectorModal").classList.add("hidden");
-  }
-
 </script>
 <script>
   const currentLevel = <%= Number(user.currentLevel || 1) %>;
@@ -1108,24 +1064,40 @@
     return "⚔";
   }
 
+  function getSectorTotal(level, levelData) {
+    if (level === 3) return 5;
+
+    const sectorKeys = Object.keys(levelData.sectors || {})
+      .map(Number)
+      .filter((sectorNo) => Number.isInteger(sectorNo) && sectorNo > 0);
+
+    return sectorKeys.length || 10;
+  }
+
   function openSectorModal(level) {
     const modal = document.getElementById("sectorModal");
     const grid = document.getElementById("sectorGrid");
     const title = document.getElementById("sectorModalTitle");
-    const subtitle = document.getElementById("sectorModalSubtitle");
+    const sectorBadge = document.getElementById("sectorModalBadge");
     const progressText = document.getElementById("sectorProgressText");
 
     const levelData = gameLevelsData[level];
     if (!levelData) return;
 
-    const completedCount = completedSectors.filter(x => x.startsWith(level + "-")).length;
+    const sectorTotal = getSectorTotal(level, levelData);
+    const completedCount = completedSectors.filter((sectorKey) => {
+      const [completedLevel, completedSector] = sectorKey.split("-").map(Number);
+      return completedLevel === level && completedSector <= sectorTotal;
+    }).length;
 
     title.textContent = `Battle ${level}`;
-    progressText.textContent = `Completed: ${completedCount} / 10`;
+    sectorBadge.textContent = `${sectorTotal} Sectors`;
+    progressText.textContent = `Completed: ${completedCount} / ${sectorTotal}`;
     grid.innerHTML = "";
 
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= sectorTotal; i++) {
       const sectorData = levelData.sectors[i];
+      const objectiveText = sectorData?.objectiveText || "Clear this sector";
       const sectorKey = `${level}-${i}`;
       const isCompleted = completedSectors.includes(sectorKey);
 
@@ -1165,9 +1137,9 @@
 
       el.innerHTML = `
         <div class="sector-corner-badge">${cornerBadge}</div>
-        <div class="sector-icon">${getSectorIcon(sectorData.objectiveText)}</div>
+        <div class="sector-icon">${getSectorIcon(objectiveText)}</div>
         <div class="sector-num">Sector ${i}</div>
-        <div class="sector-text">${sectorData.objectiveText}</div>
+        <div class="sector-text">${objectiveText}</div>
         <div class="sector-state">${stateText}</div>
       `;
 
