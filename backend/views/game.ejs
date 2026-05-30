@@ -641,6 +641,15 @@ levelBackground.src = "/images/levels/trost.png";
   height: 35
 };
 
+const grappleMinYByBattle = {
+  1: 170,
+  2: 80,
+  3: 180,
+  4: 235,
+  5: 180
+};
+
+
     const player = {
       x: 80,
       y: ground.y - 46,
@@ -649,8 +658,8 @@ levelBackground.src = "/images/levels/trost.png";
       vx: 0,
       vy: 0,
 
-      speed: 5.8,
-      maxRunSpeed: 6.1,
+      speed: 5.0,
+maxRunSpeed: 5.3,
       gravity: 0.58,
       jumpPower: -5.5,
 
@@ -659,7 +668,7 @@ levelBackground.src = "/images/levels/trost.png";
 
       grappling: false,
       grappleTarget: null,
-      grapplePull: 0.82,
+      grapplePull: 0.68,
       airFriction: 0.992,
       groundFriction: 0.78,
       maxGrappleDistance: 430,
@@ -1265,6 +1274,8 @@ let civilianDangerTimer = 0;
 let civilianDangerMaxTimer = 300;
 let civilianSafeZoneX = 3707;
 const civilianSafeZoneWidth = 170;
+const femaleTitanSafeZoneStopX = civilianSafeZoneX - 260;
+
 
     function spawnBlood(x, y, count = 10) {
   for (let i = 0; i < count; i++) {
@@ -1725,45 +1736,43 @@ if (completeBtn) {
     }
 
     function startGrapple(target) {
-      if (player.gas <= 0) return;
+  if (player.grappling) return;
 
-      const gasCost = 5;
-      if (player.gas < gasCost) return;
+  const minGrappleY = grappleMinYByBattle[currentBattle] || 180;
 
-      player.gas -= gasCost;
+  if (target.y < minGrappleY) {
+    return;
+  }
 
-      const px = player.x + player.width / 2;
-      const py = player.y + player.height / 2;
+  if (player.gas <= 0) return;
 
-spawnGrappleSpark(
-  target.x + rand(-18, 18),
-  target.y + rand(-22, -10)
-);
+  const gasCost = 3;
 
-      player.grappling = true;
-      player.grappleTarget = { x: target.x, y: target.y };
-      
+  if (player.gas < gasCost) return;
 
-      const dx = target.x - px;
-      const dy = target.y - py;
-      const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+  player.gas -= gasCost;
 
-      player.vx += (dx / len) * 3.4;
-      player.vy += (dy / len) * 3.4;
-      player.onGround = false;
-    }
+  const px = player.x + player.width / 2;
+  const py = player.y + player.height / 2;
 
-    function getSlashHitbox() {
-  const width = 46;
-  const height = 34;
+  spawnGrappleSpark(
+    target.x + rand(-18, 18),
+    target.y + rand(-22, -10)
+  );
 
-  const x = player.facing === 1
-    ? player.x + player.width - 8
-    : player.x - width + 8;
+  player.grappling = true;
+  player.grappleTarget = {
+    x: target.x,
+    y: target.y
+  };
 
-  const y = player.y + player.height * 0.12;
+  const dx = target.x - px;
+  const dy = target.y - py;
+  const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
 
-  return { x, y, width, height };
+  player.vx += (dx / len) * 2.6;
+  player.vy += (dy / len) * 2.6;
+  player.onGround = false;
 }
 
 function addKillCombo() {
@@ -1790,6 +1799,20 @@ savedBestCombo = Math.max(savedBestCombo, bestCombo);
       size: rand(2, 4)
     });
   }
+}
+
+
+function getSlashHitbox() {
+  const width = 46;
+  const height = 34;
+
+  const x = player.facing === 1
+    ? player.x + player.width - 8
+    : player.x - width + 8;
+
+  const y = player.y + player.height * 0.12;
+
+  return { x, y, width, height };
 }
 
 function getTitanNapeZone(titan) {
@@ -2081,7 +2104,27 @@ function loadBattleParallaxBackgrounds() {
   startGrapple({
     x: worldX,
     y: worldY
+  });canvas.addEventListener("mousedown", (e) => {
+  if (game.state !== "playing") return;
+  if (player.gas <= 0) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+  const worldX = clickX + camera.x;
+  const worldY = clickY;
+
+  const minGrappleY = grappleMinYByBattle[currentBattle] || 180;
+
+  if (worldY < minGrappleY) {
+    return;
+  }
+
+  startGrapple({
+    x: worldX,
+    y: worldY
   });
+});
 });
 
 document.addEventListener("mouseup", () => {
@@ -2111,19 +2154,6 @@ if (femaleAttackWarningTimer > 0) femaleAttackWarningTimer--;
 
 if (civilianDangerTimer > 0) {
   civilianDangerTimer--;
-
-  if (
-    civilianDangerTimer <= 0 &&
-    femaleTargetCivilian &&
-    activeCivilian &&
-    !activeCivilian.rescued
-  ) {
-    if (isCivilianInSafeZone(activeCivilian)) {
-      rescueActiveCivilian();
-    } else {
-      setLose("Sivili zamanında güvenli bölgeye ulaştıramadın!");
-    }
-  }
 }
 
   if (player.throwTimer > 0) {
@@ -2680,10 +2710,7 @@ function updateFemaleTitanSpecialAttack(titan) {
   const titanCenterX = titan.x + titan.width / 2;
   const distanceToPlayer = Math.abs(playerCenterX - titanCenterX);
 
-  const civilianNeedsProtection =
-    activeCivilian &&
-    !activeCivilian.rescued &&
-    activeCivilian.following;
+ const civilianNeedsProtection = false;
 
   const setting = getFemaleRescueSetting();
 
@@ -2702,10 +2729,7 @@ function updateFemaleTitanSpecialAttack(titan) {
   if (femaleAttackMode === "warning") {
     femaleAttackTimer--;
 
-    const targetX =
-      femaleTargetCivilian && activeCivilian
-        ? activeCivilian.x + activeCivilian.width / 2
-        : playerCenterX;
+    const targetX = playerCenterX;
 
     titan.faceDir = targetX < titanCenterX ? -1 : 1;
     titan.dir = titan.faceDir;
@@ -2731,33 +2755,53 @@ function updateFemaleTitanSpecialAttack(titan) {
     titan.faceDir = dir;
     titan.x += dir * titan.moveSpeed * (setting.chargeSpeedMultiplier || 1.7);
 
+    if (titan.x > femaleTitanSafeZoneStopX) {
+  titan.x = femaleTitanSafeZoneStopX;
+  titan.dir = -1;
+  titan.faceDir = -1;
+  titan.state = "idle";
+  femaleAttackMode = "retreat";
+  femaleAttackTimer = 80;
+  femaleAttackCooldown = getFemaleAttackCooldown();
+  femaleTargetCivilian = false;
+  civilianDangerTimer = 0;
+  return;
+}
+
     titan.state = "attack";
     titan.attackFlashTimer = 10;
 
     const newTitanCenterX = titan.x + titan.width / 2;
 
-    if (femaleTargetCivilian && activeCivilian && !activeCivilian.rescued) {
-      const civilianCenterX = activeCivilian.x + activeCivilian.width / 2;
-      const civilianClose = Math.abs(civilianCenterX - newTitanCenterX) < 95;
+    if (activeCivilian && !activeCivilian.rescued && !activeCivilian.dead) {
+  const civilianCenterX = activeCivilian.x + activeCivilian.width / 2;
+  const civilianClose = Math.abs(civilianCenterX - newTitanCenterX) < 85;
 
-      if (civilianClose) {
-        if (activeCivilian.following) {
-          damagePlayer(14, newTitanCenterX);
-          activeCivilian.following = false;
-          activeCivilian.dropped = true;
-          activeCivilian.vy = 0;
-        }
+  if (civilianClose) {
+    activeCivilian.health--;
 
-        setLose("Dişi Dev sivili yakaladı!");
-        return;
-      }
-    } else if (Math.abs(playerCenterX - newTitanCenterX) < 120) {
-      damagePlayer(18, newTitanCenterX);
-      femaleAttackMode = "retreat";
-      femaleAttackTimer = 80;
-      femaleAttackCooldown = getFemaleAttackCooldown();
-      screenShakeTimer = 16;
+    if (activeCivilian.following) {
+      activeCivilian.following = false;
+      activeCivilian.dropped = true;
+      activeCivilian.vy = 0;
+      activeCivilian.fallStartY = activeCivilian.y;
     }
+
+    if (activeCivilian.health <= 0) {
+      killCivilian("Female Titan killed the civilian!");
+    } else {
+      screenShakeTimer = 10;
+    }
+  }
+}
+
+    if (Math.abs(playerCenterX - newTitanCenterX) < 120) {
+  damagePlayer(18, newTitanCenterX);
+  femaleAttackMode = "retreat";
+  femaleAttackTimer = 80;
+  femaleAttackCooldown = getFemaleAttackCooldown();
+  screenShakeTimer = 16;
+}
 
     if (femaleAttackTimer <= 0) {
       femaleAttackMode = "retreat";
@@ -2772,6 +2816,11 @@ function updateFemaleTitanSpecialAttack(titan) {
     titan.dir = player.x < titan.x ? 1 : -1;
     titan.faceDir = titan.dir;
     titan.x += titan.dir * titan.moveSpeed * 1.6;
+    if (titan.x > femaleTitanSafeZoneStopX) {
+  titan.x = femaleTitanSafeZoneStopX;
+  titan.dir = -1;
+  titan.faceDir = -1;
+}
 
     if (femaleAttackTimer <= 0) {
       femaleAttackMode = "idle";
@@ -2962,11 +3011,17 @@ function killCivilian(message = "Civilian died!") {
   activeCivilian.vy = 0;
   activeCivilian.deathTimer = 90;
 
-  setTimeout(() => {
-    setLose(message);
-  }, 900);
-}
+  game.state = "lose";
+  game.message = message;
+  screenShakeTimer = 0;
+finalStrikeTimer = 0;
+game.timeScale = 1;
 
+  player.vx = 0;
+  player.vy = 0;
+  player.grappling = false;
+  player.grappleTarget = null;
+}
 
 function updateCivilianEscort() {
   if (!isRoofChaseSector || !activeCivilian || activeCivilian.rescued) return;
@@ -3089,7 +3144,7 @@ killCivilian("Female Titan killed the civilian!");  }
     if (civilianShouldRun) {
       activeCivilian.frameTimer++;
 
-      if (activeCivilian.frameTimer >= 8) {
+      if (activeCivilian.frameTimer >= 16) {
         activeCivilian.frameTimer = 0;
         activeCivilian.frame = (activeCivilian.frame + 1) % 4;
       }
@@ -3905,10 +3960,10 @@ function drawGrappleSparks() {
 }
 
     function getPlayerImage() {
+  if (player.health <= 0) {
+    return playerSprites.dead;
+  }
 
-      if (game.state === "lose" || player.health <= 0) {
-  return playerSprites.dead;
-}
   if (player.attackTimer > 0) {
     return playerSprites.attack;
   }
@@ -3917,7 +3972,7 @@ function drawGrappleSparks() {
     return playerSprites.jump;
   }
 
-  if (Math.abs(player.vx) > 0.5) {
+  if (game.state === "playing" && Math.abs(player.vx) > 0.5) {
     const runFrames = [
       playerSprites.run1,
       playerSprites.run2,
@@ -3996,23 +4051,34 @@ function drawCivilian(civilian) {
   const shouldRun =
     civilian.following && player.onGround && Math.abs(player.vx) > 0.4;
 
+  const isScared =
+    femaleAttackMode === "warning" || civilianDangerTimer > 0;
+
   if (civilian.dead) {
     sprite = civilianSprites.dead;
   } else if (civilian.rescued) {
     sprite = civilianSprites.rescued;
   } else if (isCarried) {
     sprite = civilianSprites.carried;
-  } else if (femaleAttackMode === "warning" || civilianDangerTimer > 0) {
+  } else if (isScared && shouldRun) {
+    sprite = civilianRunFrames[civilian.frame % civilianRunFrames.length];
+  } else if (isScared) {
     sprite = civilianSprites.scared;
   } else if (shouldRun) {
     sprite = civilianRunFrames[civilian.frame % civilianRunFrames.length];
   }
 
-  const drawW = isCarried ? 90 : 70;
-  const drawH = isCarried ? 90 : 110;
+  const targetH = civilian.dead ? 95 : isCarried ? 90 : 110;
+  const ratio = sprite.width / sprite.height;
+
+  const drawH = targetH;
+  const drawW = drawH * ratio;
 
   const drawX = civilian.x - camera.x - drawW / 2;
-  const drawY = civilian.y + civilian.height - drawH;
+
+  const drawY = civilian.dead
+    ? civilian.y + civilian.height - drawH + 8
+    : civilian.y + civilian.height - drawH;
 
   ctx.save();
 
@@ -4026,6 +4092,8 @@ function drawCivilian(civilian) {
 
   ctx.restore();
 }
+
+
 function drawFemaleAttackWarning() {
   if (!isRoofChaseSector) return;
   if (femaleAttackMode !== "warning" && femaleAttackMode !== "charge") return;
@@ -4395,7 +4463,7 @@ updateChaseObjective();
 
   ctx.save();
 
-  if (screenShakeTimer > 0) {
+  if (screenShakeTimer > 0 && game.state === "playing") {
     ctx.translate(rand(-2, 2), rand(-2, 2));
   }
       drawParallax();
