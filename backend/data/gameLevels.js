@@ -36,21 +36,45 @@ const gameLevels = {
   },
 
   3: {
-    name: "Stohess",
-    background: "/images/levels/level3.png",
-    sectors: {
-    1: { objectiveType: "reach", objectiveText: "Enter Stohess District", enemyCount: 1, reward: 140 },
-    2: { objectiveType: "collect", objectiveText: "Collect 2 investigation clues", itemTarget: 2, enemyCount: 1, reward: 155 },
-    3: { objectiveType: "reach", objectiveText: "Reach the underground passage", enemyCount: 1, reward: 170 },
-    4: { objectiveType: "collect", objectiveText: "Collect 3 operation supplies", itemTarget: 3, enemyCount: 1, reward: 185 },
-    5: { objectiveType: "reach", objectiveText: "Reach the central plaza", enemyCount: 1, reward: 200 },
-    6: { objectiveType: "kill", objectiveText: "Survive Annie's first attack", enemyCount: 1, reward: 230 },
-    7: { objectiveType: "reach", objectiveText: "Find Eren to fight Annie", enemyCount: 1, reward: 250 },
-    8: { objectiveType: "collect", objectiveText: "Collect 3 gas supplies for the final chase", itemTarget: 3, enemyCount: 1, reward: 270 },
-    9: { objectiveType: "reach", objectiveText: "Reach the final confrontation zone", enemyCount: 1, reward: 300 },
-    10: { objectiveType: "kill", objectiveText: "Defeat the Female Titan", enemyCount: 1, reward: 400 }
+  name: "Stohess",
+  background: "/images/levels/level3.png",
+  sectors: {
+    1: {
+      objectiveType: "rescue",
+      objectiveText: "Rescue 1 civilian from Stohess District",
+      civilianTarget: 1,
+      enemyCount: 1,
+      reward: 140
+    },
+    2: {
+      objectiveType: "rescue",
+      objectiveText: "Escort 1 civilian to the extraction zone",
+      civilianTarget: 1,
+      enemyCount: 1,
+      reward: 155
+    },
+    3: {
+      objectiveType: "rescue",
+      objectiveText: "Rescue 2 civilians during the Female Titan pursuit",
+      civilianTarget: 2,
+      enemyCount: 1,
+      reward: 175
+    },
+    4: {
+      objectiveType: "rescue",
+      objectiveText: "Protect and extract 2 civilians under attack",
+      civilianTarget: 2,
+      enemyCount: 1,
+      reward: 195
+    },
+    5: {
+      objectiveType: "kill",
+      objectiveText: "Defeat the Female Titan",
+      enemyCount: 1,
+      reward: 250
+    }
   }
-  },
+},
 
   4: {
     name: "Castle Utgard",
@@ -61,11 +85,11 @@ const gameLevels = {
     3: { objectiveType: "kill", objectiveText: "Stop Titans climbing the outer walls", enemyCount: 5, reward: 145 },
     4: { objectiveType: "reach", objectiveText: "Reach the upper tower", enemyCount: 5, reward: 155 },
     5: { objectiveType: "kill", objectiveText: "Hold the tower against the Titan wave", enemyCount: 6, reward: 170 },
-    6: { objectiveType: "collect", objectiveText: "Collect 3 gas supplies before night falls", itemTarget: 3, enemyCount: 6, reward: 185 },
-    7: { objectiveType: "kill", objectiveText: "Protect the remaining soldiers", enemyCount: 7, reward: 200 },
-    8: { objectiveType: "reach", objectiveText: "Reach the castle exit route", enemyCount: 7, reward: 220 },
-    9: { objectiveType: "kill", objectiveText: "Break through the final Titan wave", enemyCount: 8, reward: 240 },
-    10: { objectiveType: "kill", objectiveText: "Defeat the Titan leading Ymir", enemyCount: 1, reward: 300 }
+    6: { objectiveType: "kill", objectiveText: "Hold the line against the Titan assault", enemyCount: 9, reward: 280 },
+    7: { objectiveType: "reach", objectiveText: "Reach the final battle zone", enemyCount: 9, reward: 300 },
+    8: { objectiveType: "kill", objectiveText: "Eliminate the Titans blocking the path to victory", enemyCount: 10, reward: 330 },
+    9: { objectiveType: "collect", objectiveText: "Collect final gas supplies before the boss fight", itemTarget: 5, enemyCount: 10, reward: 360 },
+    10: { objectiveType: "kill", objectiveText: "Defeat the final boss Titan and reclaim Shiganshina", enemyCount: 1, reward: 500 }
   }
   },
 

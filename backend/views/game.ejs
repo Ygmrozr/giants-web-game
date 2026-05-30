@@ -803,7 +803,8 @@ const civilianSprites = {
   run4: new Image(),
   scared: new Image(),
   rescued: new Image(),
-  dead: new Image()
+  dead: new Image(),
+  carried: new Image()
 };
 
 civilianSprites.idle.src = "/images/civilians/01_idle.png";
@@ -814,6 +815,9 @@ civilianSprites.run4.src = "/images/civilians/05_run_4.png";
 civilianSprites.scared.src = "/images/civilians/06_scared.png";
 civilianSprites.rescued.src = "/images/civilians/07_rescued.png";
 civilianSprites.dead.src = "/images/civilians/08_dead.png";
+civilianSprites.carried.src = "/images/civilians/09_carried.png";
+
+
 
 const civilianRunFrames = [
   civilianSprites.run1,
@@ -2781,6 +2785,12 @@ function updateFemaleTitanSpecialAttack(titan) {
 function updateChaseObjective() {
   if (!isRoofChaseSector || objectiveCompleted) return;
 
+  // Battle 3 sectors 1-4 are civilian rescue missions.
+  // Reaching the end of the map should not complete the objective anymore.
+  if (currentBattle === 3 && currentSectorNumber <= 4) {
+    return;
+  }
+
   const finalRoof = roofChasePlatforms[roofChasePlatforms.length - 1];
 
   if (player.x >= finalRoof.x - 40) {
@@ -2906,15 +2916,12 @@ vy: rand(-0.25, -0.05)
 }
 
 function isCivilianInSafeZone(civilian) {
-  if (!civilian || civilian.rescued) return false;
-
-  const civilianCenterX = civilian.x + civilian.width / 2;
-  const civilianFeetY = civilian.y + civilian.height;
+  if (!civilian) return false;
 
   return (
-    civilianCenterX >= civilianSafeZoneX &&
-    civilianCenterX <= civilianSafeZoneX + civilianSafeZoneWidth &&
-    civilianFeetY <= ground.y + 8
+    civilian.x + civilian.width > civilianSafeZoneX &&
+    civilian.x < civilianSafeZoneX + civilianSafeZoneWidth &&
+    civilian.y + civilian.height >= ground.y - 6
   );
 }
 
@@ -2933,8 +2940,17 @@ function rescueActiveCivilian() {
   rescuedCivilianCount++;
 
   updateObjectiveProgress();
-}
 
+  if (rescuedCivilianCount >= rescueTarget) {
+    objectiveCompleted = true;
+    objectiveCompleteNoticeTimer = 180;
+
+    const completeBtn = document.getElementById("completeSectorBtn");
+    if (completeBtn) {
+      completeBtn.style.display = "block";
+    }
+  }
+}
 
 function killCivilian(message = "Civilian died!") {
   if (!activeCivilian || activeCivilian.dead) return;
@@ -2985,13 +3001,24 @@ function updateCivilianEscort() {
 }
 
   if (activeCivilian.following) {
+  if (!player.onGround) {
     if (player.facing === 1) {
-  activeCivilian.x = player.x - 18;
-} else {
-  activeCivilian.x = player.x + 18;
-}
-    activeCivilian.y = player.y + player.height - activeCivilian.height;
+      activeCivilian.x = player.x + 55;
+    } else {
+      activeCivilian.x = player.x + 35;
+    }
+
+    activeCivilian.y = player.y + 80;
   } else {
+    if (player.facing === 1) {
+      activeCivilian.x = player.x - 18;
+    } else {
+      activeCivilian.x = player.x + 18;
+    }
+
+    activeCivilian.y = player.y + player.height - activeCivilian.height;
+  }
+} else {
     activeCivilian.vy += 0.5;
     activeCivilian.y += activeCivilian.vy;
 
@@ -3046,36 +3073,35 @@ killCivilian("Civilian died!");}
   ) {
 killCivilian("Female Titan killed the civilian!");  }
 
-  if (isCivilianInSafeZone(activeCivilian)) {
-    rescueActiveCivilian();
-  }
-
-
-  if (activeCivilian) {
-  const civilianShouldRun =
-    activeCivilian.following && Math.abs(player.vx) > 0.4;
-
-  if (civilianShouldRun) {
-    activeCivilian.frameTimer++;
-
-    if (activeCivilian.frameTimer >= 8) {
-      activeCivilian.frameTimer = 0;
-      activeCivilian.frame = (activeCivilian.frame + 1) % 4;
-    }
-  } else {
-    activeCivilian.frame = 0;
-    activeCivilian.frameTimer = 0;
-  }
-
-  if (activeCivilian.following) {
-    activeCivilian.facing = player.x < activeCivilian.x ? -1 : 1;
-  }
+  if (
+  activeCivilian &&
+  !activeCivilian.following &&
+  !activeCivilian.rescued &&
+  isCivilianInSafeZone(activeCivilian)
+) {
+  rescueActiveCivilian();
 }
 
+    if (activeCivilian) {
+    const civilianShouldRun =
+      activeCivilian.following && player.onGround && Math.abs(player.vx) > 0.4;
 
+    if (civilianShouldRun) {
+      activeCivilian.frameTimer++;
 
+      if (activeCivilian.frameTimer >= 8) {
+        activeCivilian.frameTimer = 0;
+        activeCivilian.frame = (activeCivilian.frame + 1) % 4;
+      }
+    } else {
+      activeCivilian.frame = 0;
+      activeCivilian.frameTimer = 0;
+    }
 
-
+    if (activeCivilian.following) {
+      activeCivilian.facing = player.facing;
+    }
+  }
 }
 
     function updateItems() {
@@ -3723,26 +3749,9 @@ function drawFinish() {
   const drawX = finish.x - camera.x;
   const drawY = finish.y;
 
-  // Ana kolon
-  ctx.fillStyle = "#00bfff";
-  ctx.fillRect(drawX, drawY, finish.width, finish.height);
 
-  // Parlayan dış çizgi
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(drawX, drawY, finish.width, finish.height);
 
-  // Üst işaret
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 16px Arial";
-  ctx.fillText("Inner Wall", drawX - 8, drawY - 10);
 
-  // Hedef halkası
-  ctx.beginPath();
-  ctx.arc(drawX + finish.width / 2, drawY + finish.height / 2, 35, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(0,255,150,0.8)";
-  ctx.lineWidth = 3;
-  ctx.stroke();
 }
 
     function drawGrappleLine() {
@@ -3981,20 +3990,29 @@ function drawCivilian(civilian) {
 
   let sprite = civilianSprites.idle;
 
+  const isCarried =
+    civilian.following && !player.onGround;
+
+  const shouldRun =
+    civilian.following && player.onGround && Math.abs(player.vx) > 0.4;
+
   if (civilian.dead) {
     sprite = civilianSprites.dead;
   } else if (civilian.rescued) {
     sprite = civilianSprites.rescued;
+  } else if (isCarried) {
+    sprite = civilianSprites.carried;
   } else if (femaleAttackMode === "warning" || civilianDangerTimer > 0) {
     sprite = civilianSprites.scared;
-  } else if (civilian.following && Math.abs(player.vx) > 0.4) {
-  sprite = civilianRunFrames[civilian.frame % civilianRunFrames.length];
-}
+  } else if (shouldRun) {
+    sprite = civilianRunFrames[civilian.frame % civilianRunFrames.length];
+  }
 
-  const drawW = 70;
-const drawH = 110;
-  const drawX = civilian.x - camera.x - 35;
-const drawY = civilian.y + civilian.height - drawH;
+  const drawW = isCarried ? 90 : 70;
+  const drawH = isCarried ? 90 : 110;
+
+  const drawX = civilian.x - camera.x - drawW / 2;
+  const drawY = civilian.y + civilian.height - drawH;
 
   ctx.save();
 
@@ -4008,7 +4026,6 @@ const drawY = civilian.y + civilian.height - drawH;
 
   ctx.restore();
 }
-
 function drawFemaleAttackWarning() {
   if (!isRoofChaseSector) return;
   if (femaleAttackMode !== "warning" && femaleAttackMode !== "charge") return;
