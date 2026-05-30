@@ -792,6 +792,42 @@ const femaleTitanWalkFrames = [
   femaleTitanSprites.walk5,
 ];
 
+
+
+////////////civil sprites
+const civilianSprites = {
+  idle: new Image(),
+  run1: new Image(),
+  run2: new Image(),
+  run3: new Image(),
+  run4: new Image(),
+  scared: new Image(),
+  rescued: new Image(),
+  dead: new Image()
+};
+
+civilianSprites.idle.src = "/images/civilians/01_idle.png";
+civilianSprites.run1.src = "/images/civilians/02_run_1.png";
+civilianSprites.run2.src = "/images/civilians/03_run_2.png";
+civilianSprites.run3.src = "/images/civilians/04_run_3.png";
+civilianSprites.run4.src = "/images/civilians/05_run_4.png";
+civilianSprites.scared.src = "/images/civilians/06_scared.png";
+civilianSprites.rescued.src = "/images/civilians/07_rescued.png";
+civilianSprites.dead.src = "/images/civilians/08_dead.png";
+
+const civilianRunFrames = [
+  civilianSprites.run1,
+  civilianSprites.run2,
+  civilianSprites.run3,
+  civilianSprites.run4
+];
+
+
+
+const rescueSoldierSprite = new Image();
+rescueSoldierSprite.src = "/images/npcs/rescue_soldier.png";
+
+
     function rand(min, max) {
       return Math.random() * (max - min) + min;
     }
@@ -1000,19 +1036,29 @@ const rescueSettingsBySector = {
 function createCivilian() {
   return {
     x: 140,
-    y: ground.y - 34,
-    width: 22,
-    height: 34,
+y: ground.y - 150,
+width: 22,
+height: 34,
+
     following: false,
     rescued: false,
     dropped: false,
+
     health: 3,
+
     vx: 0,
     vy: 0,
-    lastSafeY: ground.y - 34,
-    fallStartY: ground.y - 34
+
+    frame: 0,
+    frameTimer: 0,
+    facing: 1,
+
+    dead: false,
+    deathTimer: 0
   };
 }
+
+
 
 function spawnRescueCivilian() {
   if (civilianQueue.length <= 0) {
@@ -1213,7 +1259,7 @@ let femaleAttackHits = 0;
 let femaleTargetCivilian = false;
 let civilianDangerTimer = 0;
 let civilianDangerMaxTimer = 300;
-const civilianSafeZoneX = WORLD.width - 260;
+let civilianSafeZoneX = 3707;
 const civilianSafeZoneWidth = 170;
 
     function spawnBlood(x, y, count = 10) {
@@ -2562,8 +2608,7 @@ function updateFemaleTitanPush(titan) {
       activeCivilian.health--;
 
       if (activeCivilian.health <= 0) {
-        setLose("Civilian died!");
-      }
+killCivilian("Civilian died!");      }
     }
 
     damagePlayer(8, titanCenterX);
@@ -2879,26 +2924,43 @@ function rescueActiveCivilian() {
   activeCivilian.rescued = true;
   activeCivilian.following = false;
   activeCivilian.dropped = false;
+  activeCivilian.vx = 0;
+  activeCivilian.vy = 0;
+
+  activeCivilian.x = civilianSafeZoneX + 45;
+  activeCivilian.y = ground.y - activeCivilian.height;
 
   rescuedCivilianCount++;
-  femaleTargetCivilian = false;
-  civilianDangerTimer = 0;
 
   updateObjectiveProgress();
-
-  if (rescuedCivilianCount >= rescueTarget) {
-    objectiveCompleted = true;
-    objectiveCompleteNoticeTimer = 180;
-
-    const completeBtn = document.getElementById("completeSectorBtn");
-    if (completeBtn) completeBtn.style.display = "block";
-  } else {
-    spawnRescueCivilian();
-  }
 }
+
+
+function killCivilian(message = "Civilian died!") {
+  if (!activeCivilian || activeCivilian.dead) return;
+
+  activeCivilian.dead = true;
+  activeCivilian.following = false;
+  activeCivilian.dropped = false;
+  activeCivilian.vx = 0;
+  activeCivilian.vy = 0;
+  activeCivilian.deathTimer = 90;
+
+  setTimeout(() => {
+    setLose(message);
+  }, 900);
+}
+
 
 function updateCivilianEscort() {
   if (!isRoofChaseSector || !activeCivilian || activeCivilian.rescued) return;
+
+  if (activeCivilian.dead) {
+    if (activeCivilian.deathTimer > 0) {
+      activeCivilian.deathTimer--;
+    }
+    return;
+  }
 
   const playerNear =
     Math.abs((player.x + player.width / 2) - (activeCivilian.x + activeCivilian.width / 2)) < 85 &&
@@ -2923,7 +2985,11 @@ function updateCivilianEscort() {
 }
 
   if (activeCivilian.following) {
-    activeCivilian.x = player.x - player.facing * 38;
+    if (player.facing === 1) {
+  activeCivilian.x = player.x - 18;
+} else {
+  activeCivilian.x = player.x + 18;
+}
     activeCivilian.y = player.y + player.height - activeCivilian.height;
   } else {
     activeCivilian.vy += 0.5;
@@ -2939,8 +3005,7 @@ function updateCivilianEscort() {
     activeCivilian.health--;
 
     if (activeCivilian.health <= 0) {
-      setLose("Civilian died!");
-    }
+killCivilian("Civilian died!");    }
   }
 
   activeCivilian.fallStartY = activeCivilian.y;
@@ -2965,8 +3030,7 @@ if (fallDistance > 120) {
 activeCivilian.fallStartY = activeCivilian.y;
 
 if (activeCivilian.health <= 0) {
-  setLose("Civilian died!");
-}
+killCivilian("Civilian died!");}
       }
     }
   }
@@ -2980,12 +3044,38 @@ if (activeCivilian.health <= 0) {
     activeCivilian.y + activeCivilian.height >= ground.y - 4 &&
     Math.abs(femaleTitan.x - activeCivilian.x) < 140
   ) {
-    setLose("Female Titan killed the civilian!");
-  }
+killCivilian("Female Titan killed the civilian!");  }
 
   if (isCivilianInSafeZone(activeCivilian)) {
     rescueActiveCivilian();
   }
+
+
+  if (activeCivilian) {
+  const civilianShouldRun =
+    activeCivilian.following && Math.abs(player.vx) > 0.4;
+
+  if (civilianShouldRun) {
+    activeCivilian.frameTimer++;
+
+    if (activeCivilian.frameTimer >= 8) {
+      activeCivilian.frameTimer = 0;
+      activeCivilian.frame = (activeCivilian.frame + 1) % 4;
+    }
+  } else {
+    activeCivilian.frame = 0;
+    activeCivilian.frameTimer = 0;
+  }
+
+  if (activeCivilian.following) {
+    activeCivilian.facing = player.x < activeCivilian.x ? -1 : 1;
+  }
+}
+
+
+
+
+
 }
 
     function updateItems() {
@@ -3565,26 +3655,64 @@ function drawTitanNapeDebug() {
 function drawCivilianSafeZone() {
   if (!isRoofChaseSector || currentSectorNumber > 4) return;
 
-  const drawX = civilianSafeZoneX - camera.x;
-  const drawY = ground.y - 130;
-  const zoneHeight = 130;
+  const x = civilianSafeZoneX - camera.x;
+  const baseY = ground.y;
 
   ctx.save();
 
-  ctx.fillStyle = "rgba(0, 255, 135, 0.18)";
-  ctx.fillRect(drawX, drawY, civilianSafeZoneWidth, zoneHeight);
+  const glow = ctx.createRadialGradient(
+    x + civilianSafeZoneWidth / 2,
+    baseY - 8,
+    5,
+    x + civilianSafeZoneWidth / 2,
+    baseY - 8,
+    130
+  );
 
-  ctx.strokeStyle = "rgba(0, 255, 135, 0.95)";
+  glow.addColorStop(0, "rgba(80,255,150,0.35)");
+  glow.addColorStop(0.5, "rgba(80,255,150,0.14)");
+  glow.addColorStop(1, "rgba(80,255,150,0)");
+
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.ellipse(
+    x + civilianSafeZoneWidth / 2,
+    baseY - 8,
+    135,
+    28,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(110,255,170,0.9)";
   ctx.lineWidth = 3;
-  ctx.strokeRect(drawX, drawY, civilianSafeZoneWidth, zoneHeight);
+  ctx.beginPath();
+  ctx.moveTo(x, baseY - 6);
+  ctx.lineTo(x + civilianSafeZoneWidth, baseY - 6);
+  ctx.stroke();
 
   ctx.fillStyle = "rgba(0,0,0,0.55)";
-  ctx.fillRect(drawX - 8, drawY - 34, civilianSafeZoneWidth + 16, 26);
+  ctx.strokeStyle = "rgba(110,255,170,0.65)";
+  ctx.lineWidth = 1;
+  ctx.fillRect(x + 20, baseY - 132, 170, 28);
+  ctx.strokeRect(x + 20, baseY - 132, 170, 28);
 
-  ctx.fillStyle = "#00ff88";
-  ctx.font = "bold 15px Arial";
+  ctx.fillStyle = "#9cffc2";
+  ctx.font = "bold 13px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("SAFE ZONE", drawX + civilianSafeZoneWidth / 2, drawY - 16);
+  ctx.fillText("EVACUATION ZONE", x + 105, baseY - 113);
+
+  if (rescueSoldierSprite.complete) {
+    ctx.drawImage(
+      rescueSoldierSprite,
+      x - 58,
+      baseY - 150,
+      90,
+      150
+    );
+  }
 
   ctx.restore();
 }
@@ -3848,36 +3976,34 @@ function drawPlayer() {
   }
 }
 
-function drawCivilian() {
-  if (!isRoofChaseSector || !activeCivilian || activeCivilian.rescued) return;
+function drawCivilian(civilian) {
+  if (!civilian) return;
 
-  const x = activeCivilian.x - camera.x;
-  const y = activeCivilian.y;
-  const hpRatio = activeCivilian.health / 3;
+  let sprite = civilianSprites.idle;
+
+  if (civilian.dead) {
+    sprite = civilianSprites.dead;
+  } else if (civilian.rescued) {
+    sprite = civilianSprites.rescued;
+  } else if (femaleAttackMode === "warning" || civilianDangerTimer > 0) {
+    sprite = civilianSprites.scared;
+  } else if (civilian.following && Math.abs(player.vx) > 0.4) {
+  sprite = civilianRunFrames[civilian.frame % civilianRunFrames.length];
+}
+
+  const drawW = 70;
+const drawH = 110;
+  const drawX = civilian.x - camera.x - 35;
+const drawY = civilian.y + civilian.height - drawH;
 
   ctx.save();
 
-  ctx.fillStyle = "rgba(30,30,30,0.95)";
-  ctx.fillRect(x, y, activeCivilian.width, activeCivilian.height);
-
-  ctx.fillStyle = "#f2c28b";
-  ctx.beginPath();
-  ctx.arc(x + 11, y - 6, 8, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(0,0,0,0.7)";
-  ctx.fillRect(x - 6, y - 24, 34, 6);
-
-  ctx.fillStyle = hpRatio > 0.6 ? "#2ecc71" : hpRatio > 0.3 ? "#f1c40f" : "#e74c3c";
-  ctx.fillRect(x - 6, y - 24, 34 * hpRatio, 6);
-
-  ctx.strokeStyle = "white";
-  ctx.strokeRect(x - 6, y - 24, 34, 6);
-
-  if (!activeCivilian.following) {
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 11px Arial";
-    ctx.fillText("E", x + 6, y - 34);
+  if (civilian.facing === -1) {
+    ctx.translate(drawX + drawW, drawY);
+    ctx.scale(-1, 1);
+    ctx.drawImage(sprite, 0, 0, drawW, drawH);
+  } else {
+    ctx.drawImage(sprite, drawX, drawY, drawW, drawH);
   }
 
   ctx.restore();
@@ -4275,7 +4401,9 @@ drawGrappleSparks();
 
 drawOdmGasTrails();
 drawPlayer();
-drawCivilian();
+if (isRoofChaseSector && activeCivilian) {
+  drawCivilian(activeCivilian);
+}
 drawBloodEffects();
 
 drawVignette();
