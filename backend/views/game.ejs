@@ -3577,7 +3577,17 @@ function drawGround() {
     const x = p.x - camera.x;
     const y = p.y;
 
-    if (isCivilianRescueSector || isFemaleTitanFinalSector) {
+    if (currentBattle === 4) {
+      ctx.fillStyle = "rgba(36, 52, 71, 0.96)";
+      ctx.fillRect(x, y, p.width, p.height);
+
+      ctx.fillStyle = "rgba(120, 165, 215, 0.22)";
+      ctx.fillRect(x + 4, y + 2, p.width - 8, 3);
+
+      ctx.strokeStyle = "rgba(145, 185, 225, 0.42)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, p.width, p.height);
+    } else if (isCivilianRescueSector || isFemaleTitanFinalSector) {
       ctx.fillStyle = "rgba(218, 196, 150, 0.96)";
       ctx.fillRect(x, y, p.width, p.height);
 
