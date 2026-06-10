@@ -68,6 +68,22 @@ mechanics.
 The background music is used according to its stated license, with
 appropriate attribution where required.
 
+## Background Music
+
+### Medieval: Minstrel Dance
+- Artist: RandomMind
+- Source: OpenGameArt
+- License: CC0
+- Usage: Menu, map, profile, market and other interface pages
+- File: Loop version
+
+### Death Waltz
+- Artist: northivanastan
+- Source: OpenGameArt
+- License: CC0
+- Usage: HTML5 Canvas gameplay screen
+- File: Loop version
+
 
 ## Author
 
