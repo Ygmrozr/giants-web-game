@@ -82,7 +82,6 @@ appropriate attribution where required.
 - Source: OpenGameArt
 - License: CC0
 - Usage: HTML5 Canvas gameplay screen
-- File: Loop version
 
 
 ## Author
