@@ -1,2 +1,7 @@
 node_modules/
 .env
+diagram-files/
+diagram-files.zip
+proje-yapisi.txt
+*.zip
+.vs/
