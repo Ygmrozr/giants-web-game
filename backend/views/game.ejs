@@ -645,7 +645,7 @@ const grappleMinYByBattle = {
   1: 170,
   2: 80,
   3: 180,
-  4: 235,
+  4: 205,
   5: 180
 };
 
@@ -810,9 +810,8 @@ const annieSprites = {
 annieSprites.lying.src = "/images/titans/female/annie_lying.png";
 annieSprites.crystal.src = "/images/titans/female/annie_crystal.png";
 
-
-
-
+const lanternSprite = new Image();
+lanternSprite.src = "/images/items/lantern.png";
 
 
 ////////////civil sprites
@@ -846,6 +845,7 @@ const civilianRunFrames = [
   civilianSprites.run3,
   civilianSprites.run4
 ];
+
 
 
 
@@ -1633,6 +1633,219 @@ function drawVignette() {
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.restore();
+}
+
+function drawLanternLight() {
+  if (!isLanternSector) return;
+
+  const direction = player.facing;
+
+  const lightX =
+  player.x - camera.x + player.width / 2 + direction * 8;
+
+  const lightY =
+    player.y + player.height * 0.55;
+
+  const darknessCanvas = document.createElement("canvas");
+  darknessCanvas.width = canvas.width;
+  darknessCanvas.height = canvas.height;
+
+  const dctx = darknessCanvas.getContext("2d");
+
+  // 1) Karanlık sadece ayrı canvas'a çiziliyor
+  const skyDarkness = dctx.createLinearGradient(0, 0, 0, canvas.height);
+
+skyDarkness.addColorStop(0, "rgba(0,0,0,0.100)");
+skyDarkness.addColorStop(0.22, "rgba(0,0,0,0.55)");
+skyDarkness.addColorStop(0.45, "rgba(0,0,0,0.88)");
+skyDarkness.addColorStop(0.70, "rgba(0,0,0,0.97)");
+skyDarkness.addColorStop(1, "rgba(0,0,0,0.995)");
+
+dctx.fillStyle = skyDarkness;
+dctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 2) Fener alanında karanlığı tamamen siliyoruz
+  dctx.globalCompositeOperation = "destination-out";
+  dctx.filter = "blur(14px)";
+
+const lampCenterX = lightX + direction * 55;
+const lampCenterY = lightY + 8;
+
+// 1) Gaz lambasının ana ışığı: karakter etrafında oval
+const lampGlow = dctx.createRadialGradient(
+  lampCenterX,
+  lampCenterY,
+  15,
+  lampCenterX,
+  lampCenterY,
+  170
+);
+
+lampGlow.addColorStop(0, "rgba(255,255,255,1)");
+lampGlow.addColorStop(0.42, "rgba(255,255,255,0.95)");
+lampGlow.addColorStop(0.75, "rgba(255,255,255,0.55)");
+lampGlow.addColorStop(1, "rgba(255,255,255,0)");
+
+dctx.fillStyle = lampGlow;
+
+dctx.beginPath();
+dctx.ellipse(
+  lampCenterX,
+  lampCenterY,
+  180,
+  105,
+  0,
+  0,
+  Math.PI * 2
+);
+dctx.fill();
+
+// 2) Öne doğru hafif uzayan görüş alanı
+const beamLength = 120;
+const endX = lightX + direction * beamLength;
+
+const forwardGlow = dctx.createLinearGradient(
+  lightX,
+  lightY,
+  endX,
+  lightY
+);
+
+forwardGlow.addColorStop(0, "rgba(255,255,255,0.95)");
+forwardGlow.addColorStop(0.45, "rgba(255,255,255,0.75)");
+forwardGlow.addColorStop(1, "rgba(255,255,255,0)");
+
+dctx.fillStyle = forwardGlow;
+
+const startHalfHeight = 30;
+const endHalfHeight = 45;
+
+dctx.beginPath();
+dctx.moveTo(lightX, lightY - startHalfHeight);
+dctx.lineTo(endX, lightY - endHalfHeight);
+dctx.lineTo(endX, lightY + endHalfHeight);
+dctx.lineTo(lightX, lightY + startHalfHeight);
+dctx.closePath();
+dctx.fill();
+
+  // 4) Hazırlanan karanlık maskesi ana canvas'a basılır
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.drawImage(darknessCanvas, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+ctx.globalAlpha = 0.04;
+
+const lampTint = ctx.createLinearGradient(lightX, lightY, endX, lightY);
+lampTint.addColorStop(0, "rgba(255,180,70,1)");
+lampTint.addColorStop(0.45, "rgba(255,145,45,0.55)");
+lampTint.addColorStop(1, "rgba(255,120,30,0)");
+
+ctx.fillStyle = lampTint;
+
+ctx.beginPath();
+ctx.moveTo(lightX, lightY - startHalfHeight);
+
+ctx.lineTo(endX, lightY - endHalfHeight);
+ctx.lineTo(endX, lightY + endHalfHeight);
+ctx.lineTo(lightX, lightY + startHalfHeight);
+
+ctx.closePath();
+ctx.fill();
+
+ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawPlayerLantern() {
+  if (!isLanternSector) return;
+
+  const direction = player.facing;
+
+  const lanternW = 34;
+  const lanternH = 38;
+
+  // Karakter ölünce gaz lambası yere düşsün ve yan dursun
+  if (game.state === "lose" || player.health <= 0) {
+    const fallenX =
+      player.x -
+      camera.x +
+      player.width / 2 +
+      direction * 10;
+
+    const fallenY =
+      ground.y - 8;
+
+    ctx.save();
+
+    ctx.translate(fallenX, fallenY);
+
+    ctx.rotate(direction === 1 ? Math.PI / 2 : -Math.PI / 2);
+
+    ctx.drawImage(
+      lanternSprite,
+      -lanternW / 2,
+      -lanternH / 2,
+      lanternW,
+      lanternH
+    );
+
+    ctx.restore();
+
+    return;
+  }
+
+  const moving = Math.abs(player.vx) > 0.4;
+  const inAir = !player.onGround;
+
+  const time = performance.now() * 0.006;
+
+  let swing = 0;
+  let bob = 0;
+  let rotation = 0;
+
+  if (moving && !inAir) {
+    swing = Math.sin(time) * 5;
+    bob = Math.abs(Math.sin(time)) * 4;
+    rotation = Math.sin(time) * 0.16;
+  }
+
+  if (inAir) {
+    swing = -player.vx * 0.6;
+    bob = 3;
+    rotation = clamp(-player.vx * 0.035, -0.22, 0.22);
+  }
+
+  const lanternX =
+    player.x -
+    camera.x +
+    player.width / 2 +
+    direction * -14 -
+    direction * swing;
+
+  const lanternY =
+    player.y +
+    player.height * 0.60 +
+    bob;
+
+  ctx.save();
+
+  ctx.translate(lanternX, lanternY);
+
+  if (direction === -1) {
+    ctx.scale(-1, 1);
+  }
+
+  ctx.rotate(rotation);
+
+  ctx.drawImage(
+    lanternSprite,
+    -lanternW / 2,
+    -lanternH / 2,
+    lanternW,
+    lanternH
+  );
 
   ctx.restore();
 }
@@ -2529,7 +2742,14 @@ function drawComboCounter() {
   ctx.textAlign = "center";
 
   // Dış glow
-  const glow = ctx.createRadialGradient(0, 0, 10, 0, 0, 210);
+  const glow = ctx.createRadialGradient(
+ lightX,
+ lightY,
+ 0,
+ lightX,
+ lightY,
+ 45
+);
   glow.addColorStop(0, `rgba(255,55,25,${0.24 * alpha})`);
   glow.addColorStop(0.45, `rgba(255,165,55,${0.13 * alpha})`);
   glow.addColorStop(1, "rgba(0,0,0,0)");
@@ -4749,7 +4969,15 @@ drawGrappleLine();
 drawGrappleSparks();
 
 drawOdmGasTrails();
+
+if (!isLanternSector) {
+  drawVignette();
+}
+
+drawLanternLight();
+
 drawPlayer();
+drawPlayerLantern();
 
 if (isRoofChaseSector) {
   rescuedCivilians.forEach(drawCivilian);
@@ -4758,9 +4986,9 @@ if (isRoofChaseSector) {
     drawCivilian(activeCivilian);
   }
 }
+
 drawBloodEffects();
 
-drawVignette();
 drawComboCounter();
 drawHUD();
 drawObjectiveCompleteNotice();
@@ -4801,6 +5029,10 @@ drawTitanNapeDebug();
     const spawnGasCount = Number(gameMeta.dataset.spawnGasCount || 2);
     const currentBattle = Number(gameMeta.dataset.level || 1);
     const currentSectorNumber = Number(gameMeta.dataset.sector || 1);
+
+    const isLanternSector =
+  currentBattle === 4 && currentSectorNumber >= 1 && currentSectorNumber <= 5;
+
 
 
     const nightSpriteCache = new Map();
