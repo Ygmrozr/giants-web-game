@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Giants Game</title>
-  
+  <%- include("partials/music") %>
 <style>
   *{
     box-sizing:border-box;
@@ -608,6 +608,7 @@ body::before{
       <button id="nextSectorBtn" class="btn-next">Next Sector ❯</button>
     </div>
 
+    
   </div>
 </div>
 
@@ -685,6 +686,7 @@ maxRunSpeed: 5.3,
       attackTimer: 0,
       attackCooldown: 0,
       hitFlashTimer: 0,
+      stepSoundTimer: 0,
 
       grabbed: false,
       grabbedBy: null,
@@ -692,6 +694,7 @@ maxRunSpeed: 5.3,
       escapeTimer: 0,
 thrown: false,
 throwTimer: 0
+
     };
     
     const playerSprites = {
@@ -709,7 +712,9 @@ const playerAvatar = new Image();
 playerAvatar.src = "<%= user.avatar || '/images/default-avatar.png' %>";
 
 const selectedSkin = "<%= user.selectedSkin || 'default' %>";
-
+function isFemalePlayerSkin() {
+  return ["mikasa", "sasha", "historia"].includes(selectedSkin);
+}
 const playerSkinBase =
   selectedSkin === "default"
     ? "/images/player_skins/default"
@@ -769,6 +774,473 @@ itemSprites.boost.src = "/images/items/boost.png";
 
     const keys = {};
 
+
+    const sfx = {
+  attack: new Audio("/sounds/sfx/attack.mp3"),
+  titanHit: new Audio("/sounds/sfx/titan-hit.mp3"),
+  titanDeath: new Audio("/sounds/sfx/titan-death.mp3"),
+  itemPickup: new Audio("/sounds/sfx/item-pickup.mp3"),
+  coinPickup: new Audio("/sounds/sfx/coin-pickup.mp3"),
+  grapple: new Audio("/sounds/sfx/grapplea.mp3"),
+  playerHit: new Audio("/sounds/sfx/player-hit.mp3"),
+  playerHitFemale: new Audio("/sounds/sfx/player-hit-female.mp3"),
+  sectorComplete: new Audio("/sounds/sfx/sector-complete.mp3"),
+  missionFailed: new Audio("/sounds/sfx/mission-failed.mp3"),
+  civilianScream: new Audio("/sounds/sfx/civilian-scream.mp3"),
+  grappleImpact: new Audio("/sounds/sfx/grapple-impact.mp3"),
+bladeSwing: new Audio("/sounds/sfx/blade-swing.mp3"),
+napeKill: new Audio("/sounds/sfx/nape-kill.mp3"),
+titanStep: new Audio("/sounds/sfx/titan-step.mp3"),
+distantTitan: new Audio("/sounds/sfx/distant-titan.mp3"),
+bossRoar: new Audio("/sounds/sfx/boss-roar.mp3"),
+bossRage: new Audio("/sounds/sfx/boss-rage.mp3"),
+playerDeath: new Audio("/sounds/sfx/player-death.mp3"),
+crystalTransform: new Audio("/sounds/sfx/crystal-transform.mp3"),
+medkitPickup: new Audio("/sounds/sfx/medkit-pickup.mp3"),
+lowGas: new Audio("/sounds/sfx/low-gas.mp3"),
+titanSteam: new Audio("/sounds/sfx/titan-steam.mp3"),
+playerStep: new Audio("/sounds/sfx/player-step.mp3")
+
+};
+
+
+const heartbeatLoop = new Audio("/sounds/sfx/heartbeat.mp3");
+heartbeatLoop.loop = true;
+heartbeatLoop.volume = 0.25;
+
+const odmGasLoop = new Audio("/sounds/sfx/odm-gas-loop.mp3");
+odmGasLoop.loop = true;
+odmGasLoop.volume = 0.22;
+
+const rescueCrowdAmbience = new Audio("/sounds/sfx/crowd-ambience.mp3");
+rescueCrowdAmbience.loop = true;
+rescueCrowdAmbience.volume = 0.18;
+
+const sfxCooldowns = {};
+
+function playSfx(name, volume = 0.45, cooldown = 120) {
+  const baseSound = sfx[name];
+  if (!baseSound) return;
+
+  const now = performance.now();
+
+  if (sfxCooldowns[name] && now - sfxCooldowns[name] < cooldown) {
+    return;
+  }
+
+  sfxCooldowns[name] = now;
+
+  // Uzun ölüm sesinde aynı Audio nesnesini başa sarma, kopya çal
+  const cloneSounds = [
+  "titanDeath",
+  "playerStep",
+  "titanStep",
+  "bladeSwing",
+  "titanHit"
+];
+
+const sound = cloneSounds.includes(name)
+  ? baseSound.cloneNode()
+  : baseSound;
+
+  sound.volume = volume;
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
+
+const nightWindAmbience = new Audio("/sounds/sfx/night-wind.mp3");
+nightWindAmbience.loop = true;
+nightWindAmbience.volume = 0.16;
+
+const fireAmbience = new Audio("/sounds/sfx/fire-ambience.mp3");
+fireAmbience.loop = true;
+fireAmbience.volume = 0.18;
+
+function updateLowGasWarning() {
+  const lowGas =
+    game.state === "playing" &&
+    player.gas > 0 &&
+    player.gas <= player.maxGas * 0.20;
+
+  if (lowGas) {
+    lowGasWarningTimer = 30;
+
+    if (lowGasBeepTimer <= 0) {
+      playSfx("lowGas", 0.35, 1200);
+      lowGasBeepTimer = 90;
+    }
+  }
+
+  if (lowGasBeepTimer > 0) lowGasBeepTimer--;
+}
+
+
+function drawLowGasWarning() {
+  const lowGas =
+    game.state === "playing" &&
+    player.gas > 0 &&
+    player.gas <= player.maxGas * 0.20;
+
+  if (!lowGas) return;
+
+  const pulse =
+    0.5 + Math.sin(performance.now() * 0.012) * 0.5;
+
+  ctx.save();
+
+  ctx.textAlign = "center";
+  ctx.font = "bold 18px Arial";
+
+  ctx.strokeStyle = "rgba(0,0,0,0.85)";
+  ctx.lineWidth = 5;
+
+  ctx.fillStyle =
+    `rgba(110,210,255,${0.55 + pulse * 0.45})`;
+
+  const text = "LOW GAS";
+
+  ctx.strokeText(text, canvas.width / 2, 138);
+  ctx.fillText(text, canvas.width / 2, 138);
+
+  ctx.restore();
+}
+
+function updateBattleAmbienceSounds() {
+  if (game.state !== "playing") {
+    nightWindAmbience.pause();
+    fireAmbience.pause();
+    return;
+  }
+
+  if (currentBattle === 4) {
+    nightWindAmbience.play().catch(() => {});
+  } else {
+    nightWindAmbience.pause();
+    nightWindAmbience.currentTime = 0;
+  }
+
+  if (currentBattle === 5) {
+    fireAmbience.play().catch(() => {});
+  } else {
+    fireAmbience.pause();
+  }
+} 
+
+function updateGasPickupEffects() {
+  for (let i = gasPickupEffects.length - 1; i >= 0; i--) {
+    const e = gasPickupEffects[i];
+
+    e.life--;
+
+    for (let j = e.particles.length - 1; j >= 0; j--) {
+      const p = e.particles[j];
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.94;
+      p.vy *= 0.96;
+      p.size *= 1.025;
+      p.life--;
+
+      if (p.life <= 0) {
+        e.particles.splice(j, 1);
+      }
+    }
+
+    if (e.life <= 0 && e.particles.length === 0) {
+      gasPickupEffects.splice(i, 1);
+    }
+  }
+}
+
+function spawnTitanSteam(titan) {
+  const rect = getTitanDrawRect(titan);
+
+  const centerX = rect.x + rect.width / 2;
+  const centerY = rect.y + rect.height * 0.52;
+
+  const isBoss = titan.isBoss || titan.isFemaleTitan;
+
+  titanSteamEffects.push({
+    x: centerX,
+    y: centerY,
+    life: isBoss ? 150 : 120,
+    maxLife: isBoss ? 150 : 120,
+    radius: isBoss ? 55 : 38,
+    hazeAlpha: isBoss ? 0.34 : 0.26,
+    wisps: Array.from({ length: isBoss ? 36 : 24 }, () => ({
+      x: centerX + rand(-rect.width * 0.22, rect.width * 0.22),
+      y: centerY + rand(-rect.height * 0.18, rect.height * 0.18),
+      vx: rand(-0.45, 0.45),
+      vy: rand(-2.2, -0.7),
+      sizeX: rand(18, isBoss ? 42 : 30),
+      sizeY: rand(9, isBoss ? 22 : 16),
+      growth: rand(0.12, 0.28),
+      drift: rand(-0.02, 0.02),
+      alpha: rand(0.10, 0.22),
+      life: randInt(55, isBoss ? 150 : 120),
+      maxLife: randInt(55, isBoss ? 150 : 120),
+      rot: rand(-0.7, 0.7),
+      rotSpeed: rand(-0.015, 0.015)
+    })),
+    puffs: Array.from({ length: isBoss ? 16 : 10 }, () => ({
+      x: centerX + rand(-rect.width * 0.15, rect.width * 0.15),
+      y: centerY + rand(-rect.height * 0.12, rect.height * 0.12),
+      vx: rand(-0.25, 0.25),
+      vy: rand(-1.4, -0.5),
+      r: rand(20, isBoss ? 42 : 32),
+      growth: rand(0.18, 0.34),
+      alpha: rand(0.08, 0.16),
+      life: randInt(45, isBoss ? 120 : 95),
+      maxLife: randInt(45, isBoss ? 120 : 95)
+    }))
+  });
+
+  playSfx("titanSteam", isBoss ? 0.65 : 0.5, 250);
+}
+
+function updateTitanSteamEffects() {
+  for (let i = titanSteamEffects.length - 1; i >= 0; i--) {
+    const e = titanSteamEffects[i];
+
+    e.life--;
+    e.radius += 0.18;
+
+    for (let j = e.wisps.length - 1; j >= 0; j--) {
+      const w = e.wisps[j];
+
+      w.x += w.vx;
+      w.y += w.vy;
+      w.vx += w.drift;
+      w.vx *= 0.992;
+      w.vy *= 0.992;
+      w.sizeX += w.growth;
+      w.sizeY += w.growth * 0.55;
+      w.rot += w.rotSpeed;
+      w.life--;
+
+      if (w.life <= 0) {
+        e.wisps.splice(j, 1);
+      }
+    }
+
+    for (let j = e.puffs.length - 1; j >= 0; j--) {
+      const p = e.puffs[j];
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.99;
+      p.vy *= 0.992;
+      p.r += p.growth;
+      p.life--;
+
+      if (p.life <= 0) {
+        e.puffs.splice(j, 1);
+      }
+    }
+
+    if (e.life <= 0 && e.wisps.length === 0 && e.puffs.length === 0) {
+      titanSteamEffects.splice(i, 1);
+    }
+  }
+}
+
+function drawTitanSteamEffects() {
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+
+  for (const e of titanSteamEffects) {
+    const effectAlpha = Math.max(0, e.life / e.maxLife);
+
+    // Ana yumuşak merkez buhar
+    const coreGlow = ctx.createRadialGradient(
+      e.x - camera.x,
+      e.y,
+      8,
+      e.x - camera.x,
+      e.y,
+      e.radius * 2.8
+    );
+
+    coreGlow.addColorStop(0, `rgba(235,245,245,${e.hazeAlpha * effectAlpha})`);
+    coreGlow.addColorStop(0.35, `rgba(200,215,215,${e.hazeAlpha * 0.62 * effectAlpha})`);
+    coreGlow.addColorStop(1, "rgba(200,215,215,0)");
+
+    ctx.fillStyle = coreGlow;
+    ctx.beginPath();
+    ctx.arc(e.x - camera.x, e.y, e.radius * 2.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Büyük yumuşak bulutlar
+    for (const p of e.puffs) {
+      const alpha = Math.max(0, (p.life / p.maxLife) * p.alpha);
+
+      ctx.fillStyle = `rgba(220,230,230,${alpha})`;
+      ctx.beginPath();
+      ctx.ellipse(
+        p.x - camera.x,
+        p.y,
+        p.r * 1.55,
+        p.r * 0.9,
+        0,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    // İnce yükselen wispler
+    for (const w of e.wisps) {
+      const alpha = Math.max(0, (w.life / w.maxLife) * w.alpha);
+
+      ctx.save();
+      ctx.translate(w.x - camera.x, w.y);
+      ctx.rotate(w.rot);
+
+      const wispGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, w.sizeX);
+      wispGradient.addColorStop(0, `rgba(245,250,250,${alpha})`);
+      wispGradient.addColorStop(0.55, `rgba(220,230,230,${alpha * 0.55})`);
+      wispGradient.addColorStop(1, "rgba(220,230,230,0)");
+
+      ctx.fillStyle = wispGradient;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w.sizeX, w.sizeY, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
+  ctx.restore();
+}
+
+
+function updateBoostPickupEffects() {
+  for (let i = boostPickupEffects.length - 1; i >= 0; i--) {
+    const e = boostPickupEffects[i];
+
+    e.life--;
+    e.radius += 0.55;
+
+    for (let j = e.particles.length - 1; j >= 0; j--) {
+      const p = e.particles[j];
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy *= 0.96;
+      p.life--;
+
+      if (p.life <= 0) {
+        e.particles.splice(j, 1);
+      }
+    }
+
+    for (let j = e.streaks.length - 1; j >= 0; j--) {
+      const s = e.streaks[j];
+
+      s.y -= 1.4;
+      s.life--;
+
+      if (s.life <= 0) {
+        e.streaks.splice(j, 1);
+      }
+    }
+
+    if (e.life <= 0 && e.particles.length === 0 && e.streaks.length === 0) {
+      boostPickupEffects.splice(i, 1);
+    }
+  }
+}
+
+
+function updateCoinPickupEffects() {
+  for (let i = coinPickupEffects.length - 1; i >= 0; i--) {
+    const e = coinPickupEffects[i];
+
+    e.life--;
+
+    for (let j = e.particles.length - 1; j >= 0; j--) {
+      const p = e.particles[j];
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.03;
+      p.life--;
+
+      if (p.life <= 0) {
+        e.particles.splice(j, 1);
+      }
+    }
+
+    if (e.life <= 0 && e.particles.length === 0) {
+      coinPickupEffects.splice(i, 1);
+    }
+  }
+}
+
+
+function updateHealEffects() {
+  for (let i = healEffects.length - 1; i >= 0; i--) {
+    const e = healEffects[i];
+
+    e.life--;
+    e.radius += 0.45;
+
+    for (let j = e.particles.length - 1; j >= 0; j--) {
+      const p = e.particles[j];
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy *= 0.96;
+      p.life--;
+
+      if (p.life <= 0) {
+        e.particles.splice(j, 1);
+      }
+    }
+
+    if (e.life <= 0 && e.particles.length === 0) {
+      healEffects.splice(i, 1);
+    }
+  }
+}
+
+function updateOdmGasSound() {
+  const shouldPlay =
+    game.state === "playing" &&
+    (player.grappling || player.boostMode) &&
+    Math.abs(player.vx) + Math.abs(player.vy) > 3;
+
+  if (shouldPlay) {
+    odmGasLoop.play().catch(() => {});
+  } else {
+    odmGasLoop.pause();
+    odmGasLoop.currentTime = 0;
+  }
+}
+
+function updateHeartbeatSound() {
+  const lowHealth =
+    game.state === "playing" &&
+    player.health <= player.maxHealth * 0.30;
+
+  if (lowHealth) {
+    heartbeatLoop.volume = player.health <= 15 ? 0.45 : 0.25;
+    heartbeatLoop.play().catch(() => {});
+  } else {
+    heartbeatLoop.pause();
+    heartbeatLoop.currentTime = 0;
+  }
+}
+
+function updateRescueCrowdAmbience() {
+  if (isCivilianRescueSector && game.state === "playing") {
+    rescueCrowdAmbience.play().catch(() => {});
+  } else {
+    rescueCrowdAmbience.pause();
+    rescueCrowdAmbience.currentTime = 0;
+  }
+}
 
 /////////////////femal titan sprites
 const femaleTitanSprites = {
@@ -919,11 +1391,13 @@ rescueSoldierSprite.src = "/images/npcs/rescue_soldier.png";
     frameTimer: 0,
     deadTimer: 0,
     drawDead: false,
+    steamSpawned: false,
     faceDir: dir,
 bodyHitCount: 0,
 rageTimer: 0,
 rageDamageCooldown: 0,
-stepDustTimer: 0
+stepDustTimer: 0,
+
       };
     }
 
@@ -1046,6 +1520,9 @@ const rescueSettingsBySector = {
   const female = createTitan(850, 420, WORLD.width - 420, 1);
 
   female.isFemaleTitan = true;
+  if (currentBattle === 3 && currentSectorNumber === 5) {
+  female.isBoss = true;
+}
   female.height = 260;
   female.width = 105;
   female.spriteWidth = 190;
@@ -1079,6 +1556,7 @@ height: 34,
     following: false,
     rescued: false,
     dropped: false,
+    screamPlayed: false,
 
     health: 3,
 
@@ -1092,6 +1570,8 @@ height: 34,
     dead: false,
     deathTimer: 0
   };
+
+  
 }
 
 
@@ -1112,14 +1592,43 @@ function spawnRescueCivilian() {
       
       if (isFemaleTitanBattle) {
   titans.push(createFemaleTitan());
+  
   return;
 }
 
-      if (currentSectorNumber === 10) {
-        titans.push(createBossTitan());
-        return;
-      }
+      if (isBossSector) {
+  titans.push(createBossTitan());
+  playSfx("bossRoar", 0.55, 3000);
 
+  // Battle 3 özel boss/kurtarma yapısına sahip, ona normal dev eklemiyoruz
+  if (currentBattle !== 3) {
+    const supportTitanCount = 6;
+
+for (let i = 0; i < supportTitanCount; i++) {
+  const x = 650 + i * 420;
+
+      const minX = Math.max(500, x - 100);
+      const maxX = Math.min(WORLD.width - 120, x + 130);
+      const dir = i % 2 === 0 ? 1 : -1;
+
+      const titan = createTitan(x, minX, maxX, dir);
+
+      // Boss mapindeki normal devler biraz zayıf olsun
+      titan.maxHealth = Math.max(2, titan.maxHealth - 1);
+      titan.health = titan.maxHealth;
+      titan.damage = Math.max(4, Math.floor(titan.damage * 0.75));
+      titan.moveSpeed *= 0.88;
+
+      titan.frame = 0;
+      titan.frameTimer = 0;
+      titan.state = "walk";
+
+      titans.push(titan);
+    }
+  }
+
+  return;
+}
       for (let i = 0; i < spawnEnemyCount; i++) {
         const sectorOffset = ((currentBattle * 70) + (currentSectorNumber * 45)) % 180;
         const x = (titanSpawnSlots[i] || 650 + i * 290) + sectorOffset;
@@ -1198,10 +1707,10 @@ function spawnRescueCivilian() {
   const baseGasSlots = 2;
 
   const medkitSlot =
-    currentSectorNumber % 2 === 0 || currentSectorNumber === 10 ? 1 : 0;
+    currentSectorNumber % 2 === 0 || isBossSector ? 1 : 0;
 
   const boostSlot =
-    currentSectorNumber % 3 === 0 || currentSectorNumber === 10 ? 1 : 0;
+    currentSectorNumber % 3 === 0 || isBossSector ? 1 : 0;
 
   const normalCoinSlots =
     4 + currentBattle + Math.floor(currentSectorNumber / 3);
@@ -1222,11 +1731,11 @@ function spawnRescueCivilian() {
     items.push(createItem("gas", slotIndex++));
   }
 
-  if (currentSectorNumber % 2 === 0 || currentSectorNumber === 10) {
+  if (currentSectorNumber % 2 === 0 || isBossSector) {
     items.push(createItem("medkit", slotIndex++));
   }
 
-  if (currentSectorNumber % 3 === 0 || currentSectorNumber === 10) {
+  if (currentSectorNumber % 3 === 0 || isBossSector) {
     items.push(createItem("boost", slotIndex++));
   }
 
@@ -1272,6 +1781,8 @@ let comboTimer = 0;
 let comboDisplayTimer = 0;
 let bestCombo = 0;
 let savedBestCombo = 0;
+let lastKillTime = 0;
+const COMBO_WINDOW = 5000;
 
 let comboPopTimer = 0;
 let comboParticles = [];  
@@ -1326,6 +1837,16 @@ let femaleFinalPhase = "titan";
 let femaleExtractProgress = 0;
 let annieCrystalTimer = 0;
 let crystalEffectTimer = 0;
+let crystalEffectPlayed = false;
+let distantTitanTimer = 0;
+let healEffects = [];
+let gasPickupEffects = [];
+let boostPickupEffects = [];
+let coinPickupEffects = [];
+
+let titanSteamEffects = [];
+let lowGasWarningTimer = 0;
+let lowGasBeepTimer = 0;
 
 
 
@@ -1499,6 +2020,22 @@ if (p.type === "blackAsh") {
 
   ctx.restore();
 }
+
+
+function updateDistantTitanSound() {
+  if (game.state !== "playing") return;
+
+  if (distantTitanTimer > 0) {
+    distantTitanTimer--;
+    return;
+  }
+
+  if (Math.random() < 0.015) {
+    playSfx("distantTitan", 0.28, 4000);
+    distantTitanTimer = randInt(900, 1800);
+  }
+}
+
 
 function drawFogLayer() {
   ctx.save();
@@ -1850,6 +2387,203 @@ function drawPlayerLantern() {
   ctx.restore();
 }
 
+function drawGasPickupEffects() {
+  for (const e of gasPickupEffects) {
+    const alpha = e.life / e.maxLife;
+    const drawX = e.x - camera.x;
+    const drawY = e.y;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    // Yumuşak merkezi buhar parlaması
+    const glow = ctx.createRadialGradient(
+      drawX,
+      drawY,
+      8,
+      drawX,
+      drawY,
+      115
+    );
+
+    glow.addColorStop(0, `rgba(190,245,255,${0.20 * alpha})`);
+    glow.addColorStop(0.35, `rgba(120,220,255,${0.11 * alpha})`);
+    glow.addColorStop(1, "rgba(120,220,255,0)");
+
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.ellipse(drawX, drawY, 95, 58, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dairesel değil, dağılan gaz parçacıkları
+    for (const p of e.particles) {
+      const pAlpha = Math.max(0, p.life / p.maxLife);
+
+      ctx.fillStyle = `rgba(205,245,255,${0.42 * pAlpha})`;
+      ctx.beginPath();
+      ctx.ellipse(
+        p.x - camera.x,
+        p.y,
+        p.size * 2.4,
+        p.size * 0.85,
+        p.angle || 0,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+function drawBoostPickupEffects() {
+  for (const e of boostPickupEffects) {
+    const alpha = e.life / e.maxLife;
+    const drawX = e.x - camera.x;
+    const drawY = e.y;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    const glow = ctx.createRadialGradient(
+      drawX,
+      drawY,
+      0,
+      drawX,
+      drawY,
+      e.radius * 3
+    );
+
+    glow.addColorStop(0, `rgba(120,220,255,${0.38 * alpha})`);
+glow.addColorStop(0.45, `rgba(40,150,255,${0.20 * alpha})`);
+glow.addColorStop(1, "rgba(40,120,255,0)");
+
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(drawX, drawY, e.radius * 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (const s of e.streaks) {
+      const sAlpha = Math.max(0, s.life / s.maxLife);
+
+      ctx.strokeStyle = `rgba(120,220,255,${0.75 * sAlpha})`;
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(s.x - camera.x, s.y);
+      ctx.lineTo(s.x - camera.x, s.y - s.length);
+      ctx.stroke();
+    }
+
+    for (const p of e.particles) {
+      const pAlpha = Math.max(0, p.life / p.maxLife);
+
+      ctx.fillStyle = `rgba(145,230,255,${0.9 * pAlpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x - camera.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+
+function drawCoinPickupEffects() {
+  for (const e of coinPickupEffects) {
+    for (const p of e.particles) {
+      const alpha = p.life / p.maxLife;
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = `rgba(255,215,90,${alpha})`;
+
+      ctx.beginPath();
+      ctx.arc(p.x - camera.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+}
+
+function drawHealEffects() {
+  for (const e of healEffects) {
+    const alpha = e.life / e.maxLife;
+    const drawX = e.x - camera.x;
+    const drawY = e.y;
+
+    ctx.save();
+
+    ctx.globalCompositeOperation = "screen";
+
+    const glow = ctx.createRadialGradient(
+      drawX,
+      drawY,
+      0,
+      drawX,
+      drawY,
+      e.radius * 2.4
+    );
+
+    glow.addColorStop(0, `rgba(130,255,180,${0.52 * alpha})`);
+glow.addColorStop(0.45, `rgba(60,240,135,${0.28 * alpha})`);
+glow.addColorStop(1, "rgba(0,255,120,0)");
+
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(drawX, drawY, e.radius * 2.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let i = 0; i < e.particles.length; i++) {
+      const p = e.particles[i];
+      const pAlpha = Math.max(0, p.life / p.maxLife);
+
+      ctx.fillStyle = `rgba(155,255,190,${pAlpha})`;
+      ctx.beginPath();
+      ctx.arc(
+        p.x - camera.x,
+        p.y,
+        p.size,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+
+function drawBossRageAura() {
+  for (const titan of titans) {
+    if (!titan.alive || !titan.isBoss) continue;
+    if (titan.health > titan.maxHealth * 0.3) continue;
+
+    const rect = getTitanDrawRect(titan);
+    const x = rect.x + rect.width / 2 - camera.x;
+    const y = rect.y + rect.height / 2;
+
+    const pulse = 0.5 + Math.sin(performance.now() * 0.01) * 0.5;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    const aura = ctx.createRadialGradient(x, y, 10, x, y, rect.height * 0.75);
+    aura.addColorStop(0, `rgba(255,40,20,${0.22 + pulse * 0.12})`);
+    aura.addColorStop(0.45, `rgba(180,0,0,${0.12 + pulse * 0.08})`);
+    aura.addColorStop(1, "rgba(120,0,0,0)");
+
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rect.width * 1.15, rect.height * 0.62, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+
+
     function updateBloodEffects() {
   for (let i = bloodEffects.length - 1; i >= 0; i--) {
     const p = bloodEffects[i];
@@ -1879,6 +2613,8 @@ async function setLose(message) {
 
   game.state = "lose";
   game.message = message;
+  playSfx("playerDeath", 0.75, 5000);
+  playSfx("missionFailed", 0.65, 3000);
   player.vx = 0;
   player.vy = 0;
   player.grappling = false;
@@ -1913,6 +2649,7 @@ player.onGround = true;
 player.grabbedBy = null;
 player.escapeProgress = 0;
 player.escapeTimer = 0;
+player.stepSoundTimer = 0;
 
 comboCount = 0;
 comboTimer = 0;
@@ -1921,7 +2658,8 @@ bestCombo = 0;
 savedBestCombo = 0;
 comboPopTimer = 0;
 comboParticles.length = 0;
-
+lastKillTime = 0;
+crystalEffectPlayed = false;
 
 const resultPanel = document.getElementById("sectorResultPanel");
 
@@ -1945,6 +2683,7 @@ femaleAttackCooldown = currentRescueSetting.startCooldown || 420;
 femaleAttackZone = null;
 
 femaleAttackMode = "idle";
+
 femaleAttackTimer = 0;
 femaleAttackHitsNeeded = currentRescueSetting.hitsNeeded || 1;
 femaleAttackHits = 0;
@@ -2022,6 +2761,8 @@ if (completeBtn) {
   );
 
   player.grappling = true;
+  playSfx("grapple", 0.35);
+  playSfx("grappleImpact", 0.45, 120);
   player.grappleTarget = {
     x: target.x,
     y: target.y
@@ -2037,31 +2778,27 @@ if (completeBtn) {
 }
 
 function addKillCombo() {
-  if (comboTimer > 0) {
+  const now = performance.now();
+
+  if (now - lastKillTime <= COMBO_WINDOW) {
     comboCount++;
   } else {
     comboCount = 1;
   }
 
-  comboTimer = 300;
-  comboDisplayTimer = 120;
-  comboPopTimer = 16;
-  bestCombo = Math.max(bestCombo, comboCount);
-savedBestCombo = Math.max(savedBestCombo, bestCombo);
+  lastKillTime = now;
 
-  for (let i = 0; i < 14; i++) {
-    comboParticles.push({
-      x: canvas.width / 2,
-      y: 92,
-      vx: rand(-3.2, 3.2),
-      vy: rand(-2.2, 2.2),
-      life: randInt(18, 32),
-      maxLife: 32,
-      size: rand(2, 4)
-    });
+  comboTimer = 600;
+comboDisplayTimer = 180;
+  comboPopTimer = 12;
+
+  bestCombo = Math.max(bestCombo, comboCount);
+  savedBestCombo = Math.max(savedBestCombo, bestCombo);
+
+  if (comboParticles.length > 30) {
+    comboParticles.splice(0, comboParticles.length - 30);
   }
 }
-
 
 function getSlashHitbox() {
   const width = 46;
@@ -2189,6 +2926,7 @@ function attackTitanIfPossible(titan) {
   const bloodY = hitNape ? nape.y + nape.height / 2 : slash.y + slash.height / 2;
 
   spawnBlood(bloodX, bloodY, player.boostMode ? 18 : 10);
+  playSfx("titanHit", 0.3, 180);
 
   if (titan.isFemaleTitan && isRoofChaseSector && femaleAttackMode === "charge") {
     femaleAttackHits++;
@@ -2210,41 +2948,52 @@ function attackTitanIfPossible(titan) {
   player.vy = Math.min(player.vy, -2.8);
 
   if (titan.health <= 0 && validNapeKill) {
-    finalStrikeTimer = 20;
-    screenShakeTimer = 25;
-    game.timeScale = 0.35;
+  finalStrikeTimer = 26;
+  screenShakeTimer = Math.max(screenShakeTimer, 18);
 
-    setTimeout(() => {
-      game.timeScale = 1;
-    }, 120);
+  game.timeScale = 0.28;
 
-    titan.alive = false;
-    titan.state = "dead";
-    titan.deadTimer = 90;
-    titan.drawDead = true;
+  setTimeout(() => {
+    game.timeScale = 1;
+  }, 350);
 
-    killScore += titan.maxHealth * 140;
-    spawnBlood(bloodX, bloodY, 38);
-    titanKillCount++;
+  titan.alive = false;
+  titan.state = "dead";
+  titan.deadTimer = 300;
+  titan.drawDead = true;
+  titan.steamSpawned = false;
 
-    if (isFemaleTitanFinalSector && titan.isFemaleTitan) {
-      femaleFinalPhase = "fallenTitan";
-      femaleExtractProgress = 0;
-      annieCrystalTimer = 0;
-      addKillCombo();
-      return true;
-    }
+  spawnBlood(bloodX, bloodY, 38);
+
+  playSfx("titanDeath", 0.45, 1200);
+  playSfx("napeKill", 0.55, 500);
+
+  killScore += titan.maxHealth * 140;
+  titanKillCount++;
+
+  if (isFemaleTitanFinalSector && titan.isFemaleTitan) {
+    femaleFinalPhase = "fallenTitan";
+    femaleExtractProgress = 0;
+    annieCrystalTimer = 0;
 
     addKillCombo();
-    updateObjectiveProgress();
+    return true;
   }
+
+  addKillCombo();
+  updateObjectiveProgress();
+}
 
   return true;
 }
-    function damagePlayer(amount, titanX) {
+
+
+
+function damagePlayer(amount, titanX) {
       if (game.invincibleTimer > 0 || game.state !== "playing") return;
 
       player.health -= amount;
+      playSfx(isFemalePlayerSkin() ? "playerHitFemale" : "playerHit", 0.45);
       game.invincibleTimer = 65;
       player.hitFlashTimer = 18;
 
@@ -2342,8 +3091,10 @@ function loadBattleParallaxBackgrounds() {
   }
 
   if (player.attackCooldown <= 0) {
+    playSfx("bladeSwing", 0.4, 180);
     player.attackTimer = 10;
     player.attackCooldown = 16;
+    
   }
 }
 
@@ -2353,9 +3104,18 @@ function loadBattleParallaxBackgrounds() {
     });
 
     document.addEventListener("keyup", (e) => {
-      const key = e.key.toLowerCase();
-      keys[key] = false;
-    });
+  const key = e.key.toLowerCase();
+  keys[key] = false;
+
+  if (
+    key === "a" ||
+    key === "d" ||
+    key === "arrowleft" ||
+    key === "arrowright"
+  ) {
+    player.stepSoundTimer = 0;
+  }
+});
 
   
   
@@ -2411,14 +3171,21 @@ if (civilianDangerTimer > 0) {
   }
 
   if (comboTimer > 0) {
-    comboTimer--;
-  } else {
-    comboCount = 0;
-  }
+  comboTimer--;
+}
+
+if (lastKillTime > 0 && performance.now() - lastKillTime > COMBO_WINDOW) {
+  comboCount = 0;
+  lastKillTime = 0;
+}
 
   if (comboDisplayTimer > 0) {
     comboDisplayTimer--;
   }
+
+  if (comboPopTimer > 0) {
+  comboPopTimer--;
+}
 
   for (let i = comboParticles.length - 1; i >= 0; i--) {
   const p = comboParticles[i];
@@ -2713,10 +3480,48 @@ if (player.y > canvas.height + 220) {
       }
     }
 
-function drawComboCounter() {
-  if (comboTimer <= 0 || comboCount <= 1) return;
+  
+    function updatePlayerFootstepSound() {
+  const pressingDirection =
+    keys["a"] === true ||
+    keys["d"] === true ||
+    keys["arrowleft"] === true ||
+    keys["arrowright"] === true;
 
-  const timerRatio = Math.max(0, comboTimer / 300);
+  const isRunning =
+    game.state === "playing" &&
+    pressingDirection &&
+    player.onGround &&
+    !player.grabbed &&
+    !player.grappling;
+
+  if (!isRunning) {
+    player.stepSoundTimer = 0;
+    return;
+  }
+
+  if (player.stepSoundTimer > 0) {
+    player.stepSoundTimer--;
+    return;
+  }
+
+  playSfx("playerStep", 0.22, 0);
+
+  const speedRatio = Math.min(
+    1,
+    Math.abs(player.vx) / player.maxRunSpeed
+  );
+
+  player.stepSoundTimer = Math.round(
+    40 - speedRatio * 8
+  );
+}
+   
+
+function drawComboCounter() {
+  if (comboTimer <= 0 || comboDisplayTimer <= 0 || comboCount < 1) return;
+
+  const timerRatio = Math.max(0, comboTimer / 180);
   const fadeIn = Math.min(1, comboDisplayTimer / 18);
   const fadeOut = Math.min(1, comboTimer / 30);
   const alpha = Math.min(fadeIn, fadeOut);
@@ -2725,7 +3530,7 @@ function drawComboCounter() {
     ? 1 + comboPopTimer * 0.018
     : 1;
 
-  let title = "FIRST BLOOD";
+  let title = "TITAN KILL";
 
   if (comboCount >= 5) {
     title = "PERFECT STRIKE";
@@ -2743,12 +3548,12 @@ function drawComboCounter() {
 
   // Dış glow
   const glow = ctx.createRadialGradient(
- lightX,
- lightY,
- 0,
- lightX,
- lightY,
- 45
+  0,
+  0,
+  0,
+  0,
+  0,
+  210
 );
   glow.addColorStop(0, `rgba(255,55,25,${0.24 * alpha})`);
   glow.addColorStop(0.45, `rgba(255,165,55,${0.13 * alpha})`);
@@ -2842,6 +3647,12 @@ function drawComboCounter() {
   titan.state = "walk";
   titan.frameTimer++;
 
+  if (titan.state === "walk" && titan.alive) {
+  if (titan.frame === 1 || titan.frame === 3) {
+    playSfx("titanStep", 0.22, 450);
+  }
+}
+
   if (titan.frameTimer >= 30) {
     titan.frameTimer = 0;
     titan.frame = (titan.frame + 1) % titanWalkFrames.length;
@@ -2928,6 +3739,7 @@ function startFemaleCivilianAttack(titan) {
   civilianDangerTimer = civilianDangerMaxTimer;
 
   femaleAttackMode = "warning";
+
   femaleAttackTimer = setting.warningTime || 150;
   femaleAttackHits = 0;
   femaleAttackHitsNeeded = setting.hitsNeeded || 1;
@@ -2945,7 +3757,13 @@ function startFemalePlayerAttack(titan) {
   civilianDangerTimer = 0;
 
   femaleAttackMode = "warning";
-  femaleAttackTimer = Math.max(90, setting.warningTime || 130);
+
+if (!titan.attackRageSoundPlayed) {
+  playSfx("bossRage", 0.65, 3000);
+  titan.attackRageSoundPlayed = true;
+}
+
+femaleAttackTimer = Math.max(90, setting.warningTime || 130);
   femaleAttackHits = 0;
   femaleAttackHitsNeeded = setting.hitsNeeded || 1;
 
@@ -3079,11 +3897,12 @@ function updateFemaleTitanSpecialAttack(titan) {
 }
 
     if (femaleAttackTimer <= 0) {
-      femaleAttackMode = "idle";
-      femaleTargetCivilian = false;
-      civilianDangerTimer = 0;
-      titan.state = "walk";
-    }
+  femaleAttackMode = "idle";
+  femaleTargetCivilian = false;
+  civilianDangerTimer = 0;
+  titan.attackRageSoundPlayed = false;
+  titan.state = "walk";
+}
   }
 }
 
@@ -3163,6 +3982,7 @@ function updateChaseObjective() {
   if (player.x >= finalRoof.x - 40) {
     objectiveCompleted = true;
     objectiveCompleteNoticeTimer = 180;
+    playSfx("sectorComplete", 0.55, 2000);
 
     const completeBtn = document.getElementById("completeSectorBtn");
     if (completeBtn) {
@@ -3184,6 +4004,7 @@ function updateFemaleFinalSequence() {
     if (annieCrystalTimer <= 0) {
       femaleFinalPhase = "crystal";
       crystalEffectTimer = 150;
+      playSfx("crystalTransform", 0.65, 3000);
 
       objectiveCompleted = true;
       objectiveCompleteNoticeTimer = 180;
@@ -3246,23 +4067,41 @@ function updateTitans() {
     titan.isFemaleTitan &&
     isFemaleTitanFinalSector &&
     femaleFinalPhase === "fallenTitan"
-  ) {
+  ) 
+  {
     titan.drawDead = true;
     titan.deadTimer = 999999;
     return;
   }
 
   if (titan.deadTimer > 0) {
-    titan.deadTimer--;
-    titan.drawDead = true;
-  } else {
-    titan.drawDead = false;
+  titan.deadTimer--;
+  titan.drawDead = true;
+} else {
+  if (!titan.steamSpawned) {
+    spawnTitanSteam(titan);
+    titan.steamSpawned = true;
   }
 
-  return;
+  titan.drawDead = false;
+  titan.removeFromGame = true;
+}
+
+return;
 }
 
     updateTitanAnimation(titan);
+
+
+    if (
+  titan.isBoss &&
+  !titan.rageSoundPlayed &&
+  titan.health <= titan.maxHealth * 0.3
+) {
+  playSfx("bossRage", 0.6, 3000);
+  titan.rageSoundPlayed = true;
+}
+
 
     if (titan.stunTimer <= 0) {
       const playerCenterX = player.x + player.width / 2;
@@ -3318,6 +4157,10 @@ vy: rand(-0.25, -0.05)
         ) {
           player.grabbed = true;
           player.grabbedBy = titan;
+          if (!titan.grabRageSoundPlayed) {
+  playSfx("bossRage", 0.6, 3000);
+  titan.grabRageSoundPlayed = true;
+}
           player.escapeProgress = 0;
           player.escapeTimer = 120;
 
@@ -3352,8 +4195,17 @@ vy: rand(-0.25, -0.05)
         titan.attackFlashTimer = 12;
       }
     }
-  });
+    });
+
+  for (let i = titans.length - 1; i >= 0; i--) {
+    if (titans[i].removeFromGame) {
+      titans.splice(i, 1);
+    }
+  }
 }
+
+
+
 
 function isCivilianInSafeZone(civilian) {
   if (!civilian) return false;
@@ -3419,6 +4271,7 @@ activeCivilian.fallStartY = activeCivilian.y;
 
   game.state = "lose";
   game.message = message;
+  playSfx("playerDeath", 0.75, 5000);
   screenShakeTimer = 0;
 finalStrikeTimer = 0;
 game.timeScale = 1;
@@ -3580,6 +4433,13 @@ killCivilian("Female Titan killed the civilian!");  }
 
         if (rectsCollide(getPlayerRect(), itemRect)) {
           item.collected = true;
+          if (item.kind === "score") {
+  playSfx("coinPickup", 0.35, 80);
+} else if (item.kind === "medkit") {
+  // medkit sesi aşağıda özel çalacak
+} else {
+  playSfx("itemPickup", 0.4, 120);
+}
           itemScore += item.score;
           itemCollectedCount++;
 
@@ -3589,6 +4449,23 @@ killCivilian("Female Titan killed the civilian!");  }
 
           if (item.kind === "score") {
   collectedMedalCount += item.medals || 1;
+
+  coinPickupEffects.push({
+  x: item.x + item.width / 2,
+  y: item.y + item.height / 2,
+  life: 45,
+  maxLife: 45,
+  particles: Array.from({ length: 10 }, () => ({
+    x: item.x + item.width / 2,
+    y: item.y + item.height / 2,
+    vx: rand(-1.2, 1.2),
+    vy: rand(-1.8, -0.4),
+    size: rand(1.5, 3),
+    life: randInt(24, 45),
+    maxLife: 45
+  }))
+});
+
 }
 
           updateObjectiveProgress();
@@ -3598,11 +4475,69 @@ killCivilian("Female Titan killed the civilian!");  }
             player.boostTimer = 520;
             player.vx += 1.5 * player.facing;
             player.vy -= 1.5;
+              boostPickupEffects.push({
+    x: player.x + player.width / 2,
+    y: player.y + player.height * 0.48,
+    life: 130,
+maxLife: 130,
+radius: 30,
+    particles: Array.from({ length: 26 }, () => ({
+      x: player.x + player.width / 2 + rand(-34, 34),
+      y: player.y + player.height * 0.58 + rand(-26, 32),
+      vx: rand(-0.8, 0.8),
+      vy: rand(-2.0, -0.5),
+      size: rand(2, 5),
+      life: randInt(45, 95),
+      maxLife: 95
+    })),
+    streaks: Array.from({ length: 10 }, () => ({
+      x: player.x + player.width / 2 + rand(-38, 38),
+      y: player.y + player.height * 0.5 + rand(-42, 42),
+      length: rand(22, 48),
+      life: randInt(35, 80),
+      maxLife: 80
+    }))
+  });
           } else if (item.kind === "medkit") {
-            player.health = Math.min(player.maxHealth, player.health + item.heal);
-          } else if (item.kind === "gas") {
-            player.gas = Math.min(player.maxGas, player.gas + item.gas);
-          }
+  player.health = Math.min(player.maxHealth, player.health + item.heal);
+  playSfx("medkitPickup", 0.55, 300);
+
+  healEffects.push({
+  x: player.x + player.width / 2,
+  y: player.y + player.height * 0.45,
+  life: 95,
+  maxLife: 95,
+  radius: 24,
+  particles: Array.from({ length: 18 }, () => ({
+    x: player.x + player.width / 2 + rand(-28, 28),
+    y: player.y + player.height * 0.55 + rand(-20, 25),
+    vx: rand(-0.35, 0.35),
+    vy: rand(-1.4, -0.4),
+    size: rand(2, 4),
+    life: randInt(80, 130),
+maxLife: 130
+  }))
+});
+} else if (item.kind === "gas") {
+  player.gas = Math.min(player.maxGas, player.gas + item.gas);
+
+  gasPickupEffects.push({
+    x: player.x + player.width / 2,
+    y: player.y + player.height * 0.55,
+    life: 85,
+maxLife: 85,
+    particles: Array.from({ length: 22 }, () => ({
+      x: player.x + player.width / 2 + rand(-24, 24),
+      y: player.y + player.height * 0.6 + rand(-18, 22),
+      vx: rand(-1.4, 1.4),
+      vy: rand(-1.8, -0.4),
+      size: rand(3, 7),
+angle: rand(-0.8, 0.8),
+life: randInt(45, 85),
+maxLife: 85
+    }))
+  });
+}
         }
       });
     }
@@ -4493,6 +5428,11 @@ function drawCivilian(civilian) {
 
   const isScared =
     femaleAttackMode === "warning" || civilianDangerTimer > 0;
+    if (isScared && !civilian.screamPlayed) {
+  playSfx("civilianScream", 0.55, 1500);
+  civilian.screamPlayed = true;
+}
+    
 
   if (civilian.dead) {
     sprite = civilianSprites.dead;
@@ -4827,6 +5767,25 @@ if (isRoofChaseSector) {
     ctx.textAlign = "left";
   }
 
+  function drawLowGasWarning() {
+  if (player.gas > player.maxGas * 0.20 || game.state !== "playing") return;
+
+  const pulse = 0.5 + Math.sin(performance.now() * 0.012) * 0.5;
+
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "bold 18px Arial";
+  ctx.fillStyle = `rgba(120,220,255,${0.55 + pulse * 0.45})`;
+  ctx.strokeStyle = "rgba(0,0,0,0.8)";
+  ctx.lineWidth = 4;
+
+  const text = "LOW GAS";
+  ctx.strokeText(text, canvas.width / 2, 138);
+  ctx.fillText(text, canvas.width / 2, 138);
+
+  ctx.restore();
+}
+
   ctx.restore();
 }
 
@@ -4846,9 +5805,15 @@ function drawLowHealthEffect() {
   const healthRatio = player.health / player.maxHealth;
 
   if (healthRatio > 0.45) return;
-const alpha = healthRatio < 0.20
-  ? (1 - healthRatio) * 0.75
-  : (1 - healthRatio) * 0.45;
+
+  const pulse =
+    0.5 + Math.sin(performance.now() * 0.008) * 0.5;
+
+  const baseAlpha = healthRatio < 0.20
+    ? (1 - healthRatio) * 0.75
+    : (1 - healthRatio) * 0.45;
+
+  const alpha = baseAlpha + pulse * 0.12;
 
   const gradient = ctx.createRadialGradient(
     canvas.width / 2,
@@ -4859,7 +5824,7 @@ const alpha = healthRatio < 0.20
     canvas.width * 0.75
   );
 
-  gradient.addColorStop(0, `rgba(0,0,0,0)`);
+  gradient.addColorStop(0, "rgba(0,0,0,0)");
   gradient.addColorStop(1, `rgba(120,0,0,${alpha})`);
 
   ctx.fillStyle = gradient;
@@ -4899,9 +5864,6 @@ const alpha = healthRatio < 0.20
       return;
     }
 
-    objectiveCompleted = true;
-    objectiveCompleteNoticeTimer = 180;
-
     const completeBtn = document.getElementById("completeSectorBtn");
     if (completeBtn) {
       completeBtn.style.display = "block";
@@ -4926,7 +5888,19 @@ const alpha = healthRatio < 0.20
     function update() {
   updateTimers();
   updatePlayer();
+  updatePlayerFootstepSound();
   updateTitans();
+  updateRescueCrowdAmbience();
+  updateOdmGasSound();
+  updateBattleAmbienceSounds();
+updateDistantTitanSound();
+updateHeartbeatSound();
+updateHealEffects();
+updateGasPickupEffects();
+updateBoostPickupEffects();
+updateLowGasWarning();
+ updateCoinPickupEffects();
+  updateTitanSteamEffects();
 
   updateFemaleTitanPush(getFemaleTitan());
   updateFemaleTitanSpecialAttack(getFemaleTitan());
@@ -4958,6 +5932,8 @@ drawStompDusts();
 drawPlatforms();
 drawItems();
 drawTitans();
+drawTitanSteamEffects();
+drawBossRageAura();
 drawFemaleFinalSequence();
 drawFemaleAttackWarning();
 drawCivilianSafeZone();
@@ -4978,6 +5954,14 @@ drawLanternLight();
 
 drawPlayer();
 drawPlayerLantern();
+drawHealEffects();
+drawGasPickupEffects();
+drawBoostPickupEffects();
+drawCoinPickupEffects();
+drawLowGasWarning();
+
+
+
 
 if (isRoofChaseSector) {
   rescuedCivilians.forEach(drawCivilian);
@@ -4989,12 +5973,13 @@ if (isRoofChaseSector) {
 
 drawBloodEffects();
 
-drawComboCounter();
 drawHUD();
+
 drawObjectiveCompleteNotice();
 drawLowHealthEffect();
 drawFinalStrikeEffect();
 drawGameMessage();
+
 
 const gradient = ctx.createRadialGradient(
   600, 325, 180,
@@ -5007,6 +5992,8 @@ gradient.addColorStop(1, "rgba(0,0,0,0.35)");
 ctx.fillStyle = gradient;
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+drawComboCounter();
+
 
 <% if (devMode) { %>
 drawTitanNapeDebug();
@@ -5015,8 +6002,16 @@ drawTitanNapeDebug();
         ctx.restore();
     }
 
-    function gameLoop() {
-  update();
+    let updateAccumulator = 0;
+
+function gameLoop() {
+  updateAccumulator += game.timeScale;
+
+  if (updateAccumulator >= 1) {
+    update();
+    updateAccumulator -= 1;
+  }
+
   draw();
   requestAnimationFrame(gameLoop);
 }
@@ -5032,6 +6027,11 @@ drawTitanNapeDebug();
 
     const isLanternSector =
   currentBattle === 4 && currentSectorNumber >= 1 && currentSectorNumber <= 5;
+
+  const isBossSector =
+  currentSectorNumber === 10 ||
+  (currentBattle === 3 && currentSectorNumber === 5);
+
 
 
 
@@ -5258,6 +6258,7 @@ async function submitSectorCompletion() {
 }
 
 document.getElementById("completeSectorBtn").addEventListener("click", () => {
+  playSfx("sectorComplete", 0.7, 2000);
   openSectorResultPanel();
 });
 
@@ -5275,6 +6276,16 @@ document.getElementById("nextSectorBtn").addEventListener("click", async () => {
   const data = await submitSectorCompletion();
   if (!data || !data.success) return alert("Sector could not be saved.");
   window.location.href = `/game/${data.nextLevel}/${data.nextSector}`;
+});
+
+window.addEventListener("beforeunload", () => {
+  rescueCrowdAmbience.pause();
+  rescueCrowdAmbience.currentTime = 0;
+});
+
+window.addEventListener("beforeunload", () => {
+  nightWindAmbience.pause();
+  fireAmbience.pause();
 });
 
 game.state = "playing";

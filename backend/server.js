@@ -625,7 +625,8 @@ const isUnlocked =
       sector,
       levelData,
       sectorData,
-      devMode: canBypass
+      devMode: canBypass,
+      musicSrc: "/sounds/game-music.mp3"
     });
   } catch (error) {
     console.error("Game route error:", error);

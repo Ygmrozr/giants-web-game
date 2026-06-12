@@ -1,5 +1,5 @@
 <audio id="bgMusic" loop preload="auto">
-  <source src="/sounds/menu-music.mp3" type="audio/mpeg">
+  <source src="<%= typeof musicSrc !== 'undefined' ? musicSrc : '/sounds/menu-music.mp3' %>" type="audio/mpeg">
 </audio>
 
 <script>
@@ -9,14 +9,22 @@
 
     const MUSIC_TIME_KEY = "bgMusicTime";
     const MUSIC_PLAYING_KEY = "bgMusicPlaying";
+    const MUSIC_SRC_KEY = "bgMusicSrc";
+
+    const currentSrc = music.querySelector("source")?.getAttribute("src") || "";
 
     function restoreMusic() {
+      const savedSrc = localStorage.getItem(MUSIC_SRC_KEY);
       const savedTime = localStorage.getItem(MUSIC_TIME_KEY);
       const isPlaying = localStorage.getItem(MUSIC_PLAYING_KEY);
 
-      if (savedTime) {
+      if (savedSrc === currentSrc && savedTime) {
         music.currentTime = parseFloat(savedTime) || 0;
+      } else {
+        music.currentTime = 0;
       }
+
+      localStorage.setItem(MUSIC_SRC_KEY, currentSrc);
 
       if (isPlaying !== "false") {
         music.volume = 0.3;
@@ -38,6 +46,7 @@
 
     window.addEventListener("beforeunload", () => {
       localStorage.setItem(MUSIC_TIME_KEY, music.currentTime);
+      localStorage.setItem(MUSIC_SRC_KEY, currentSrc);
     });
 
     window.addEventListener("click", unlockAndPlay, { once: true });
