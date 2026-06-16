@@ -1,521 +1,1015 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Market</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scout Selection</title>
   <%- include("partials/music") %>
+<%- include("partials/top-controls") %>
 
   <style>
+    :root{
+      --bg:#0d0f0c;
+      --panel:#191b17;
+      --panel-2:#23261f;
+      --paper:#c5b58f;
+      --paper-soft:#ddd0ae;
+      --ink:#241d15;
+      --line:rgba(223,207,169,.24);
+      --line-strong:rgba(223,207,169,.52);
+      --gold:#b99a58;
+      --green:#637258;
+      --red:#7d3e36;
+      --white:#e9e4d5;
+      --muted:#9e998d;
+    }
+
     *{ box-sizing:border-box; }
+
+    html,body{ min-height:100%; }
 
     body{
       margin:0;
       min-height:100vh;
-      padding:40px 0;
       display:flex;
       justify-content:center;
-      align-items:flex-start;
-      background:#111;
-      color:white;
-      font-family:Arial, Helvetica, sans-serif;
-      background-image:url("/images/image2.jpg");
-      background-size:cover;
-      background-position:center;
-      background-attachment:fixed;
+      align-items:center;
+      padding:24px;
+      color:var(--white);
+      font-family:Georgia, "Times New Roman", serif;
+      background:
+        linear-gradient(rgba(8,10,8,.22), rgba(7,8,7,.42)),
+        url("/images/image4.png") center/cover fixed;
+      overflow-x:hidden;
     }
 
-    .box{
-      width:980px;
-      max-width:94vw;
-      background:rgba(0,0,0,0.74);
-      padding:32px 36px;
-      border-radius:18px;
-      box-shadow:0 0 30px rgba(0,0,0,0.45);
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(190,162,104,.06), transparent 36%),
+        linear-gradient(90deg, rgba(0,0,0,.22), transparent 18%, transparent 82%, rgba(0,0,0,.22));
     }
 
-    h1{
-      text-align:center;
-      margin:0 0 12px;
-      font-size:34px;
+    .selection-shell{
+      position:relative;
+      width:min(1040px, 96vw);
+      min-height:650px;
+      max-height:94vh;
+      overflow:auto;
+      background:
+        linear-gradient(145deg, rgba(34,35,29,.74), rgba(14,15,13,.80)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.008) 0 1px, transparent 1px 7px);
+      border:1px solid rgba(190,164,108,.45);
+      box-shadow:
+        0 28px 80px rgba(0,0,0,.64),
+        0 0 0 7px rgba(10,11,12,.76),
+        inset 0 0 55px rgba(0,0,0,.34);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
     }
 
-    .coins{
-      text-align:center;
-      margin-bottom:24px;
-      font-size:18px;
-      font-weight:bold;
+    .selection-shell::before{
+      content:"";
+      position:absolute;
+      inset:9px;
+      pointer-events:none;
+      border:1px solid rgba(214,192,145,.13);
     }
 
-    .market-grid{
+    .selection-shell::after{
+      content:"✦";
+      position:absolute;
+      top:8px;
+      left:50%;
+      z-index:35;
+      transform:translateX(-50%);
+      color:rgba(185,154,88,.72);
+      font-size:12px;
+      text-shadow:0 0 10px rgba(185,154,88,.25);
+      pointer-events:none;
+    }
+
+    .heading::after{
+      content:"";
+      position:absolute;
+      left:28px;
+      right:28px;
+      bottom:0;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(185,154,88,.48), transparent);
+    }
+
+    .panel-head h2::before{
+      content:"◆";
+      margin-right:7px;
+      color:rgba(185,154,88,.72);
+      font-size:8px;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:30;
+      min-height:54px;
       display:grid;
-      grid-template-columns:repeat(3, 1fr);
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
       gap:16px;
-      margin-top:24px;
+      padding:10px 20px;
+      background:linear-gradient(180deg, rgba(21,23,19,.82), rgba(10,11,10,.86));
+      border-bottom:1px solid var(--line);
+      backdrop-filter:blur(10px);
     }
 
-    .item{
-      min-height:230px;
+    .division-mark{
       display:flex;
-      flex-direction:column;
       align-items:center;
-      justify-content:flex-start;
-      text-align:center;
-      gap:8px;
-      background:rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.08);
-      border-radius:14px;
-      padding:16px 12px;
+      gap:10px;
+      min-width:0;
     }
 
-    .skin-preview{
-      width:82px;
-      height:105px;
-      object-fit:contain;
-      margin-bottom:6px;
+    .division-emblem{
+      width:29px;
+      height:29px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(215,193,145,.45);
+      color:var(--gold);
+      transform:rotate(45deg);
+      flex:0 0 auto;
     }
 
-    .item-title{
-      font-weight:bold;
-      font-size:16px;
-      line-height:1.2;
-    }
+    .division-emblem span{ transform:rotate(-45deg); font-size:13px; }
 
-    .item-price{
-      font-size:14px;
-      opacity:.95;
-    }
-
-    .owned{
+    .division-copy strong{
+      display:block;
       font-size:13px;
-      opacity:.9;
+      letter-spacing:1.6px;
+      text-transform:uppercase;
     }
 
-    .selected{
-      color:#ffd86b;
-      font-weight:bold;
-      opacity:1;
+    .division-copy small{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.7px;
     }
 
-    .actions{
-      margin-top:auto;
-      min-height:37px;
+    .balance{
       display:flex;
-      align-items:flex-end;
+      align-items:center;
       justify-content:center;
+      gap:8px;
+      min-width:205px;
+      padding:8px 13px;
+      color:#eed9a7;
+      background:rgba(208,176,111,.07);
+      border:1px solid rgba(208,176,111,.30);
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:.3px;
     }
 
-    .actions form{ margin:0; }
-
-    button{
-      border:none;
-      border-radius:8px;
-      padding:9px 15px;
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
-      font-family:inherit;
+    .topnav{
+      display:flex;
+      justify-content:flex-end;
+      gap:13px;
+      flex-wrap:wrap;
     }
 
-    .buy{ background:#2ecc71; }
-    .select{ background:#3498db; }
+    .topnav a{
+      color:#d8d0c1;
+      text-decoration:none;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.35px;
+    }
 
-    .chest-section{
-      width:100%;
-      margin:34px auto 18px;
-      text-align:center;
+    .topnav a:hover{ color:#fff; }
+
+    .heading{
+      position:relative;
+      z-index:1;
+      padding:22px 28px 17px;
+      border-bottom:1px solid rgba(220,202,165,.15);
+    }
+
+    .heading-label{
+      color:#bda775;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:2.2px;
+      text-transform:uppercase;
+    }
+
+    .heading h1{
+      margin:5px 0 5px;
+      color:#f2eee4;
+      font-size:34px;
+      line-height:1;
+      font-weight:700;
+      letter-spacing:.5px;
+    }
+
+    .heading p{
+      margin:0;
+      max-width:690px;
+      color:#aaa499;
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .selection-layout{
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-columns:minmax(0, 1.13fr) minmax(320px, .87fr);
+      gap:18px;
+      padding:19px 20px 22px;
+    }
+
+    .roster-panel,
+    .profile-panel{
+      border:1px solid rgba(218,199,159,.18);
+      background:rgba(18,20,16,.42);
+    }
+
+    .panel-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-height:40px;
+      padding:9px 12px;
+      border-bottom:1px solid rgba(218,199,159,.15);
+      background:rgba(0,0,0,.12);
+    }
+
+    .panel-head h2{
+      margin:0;
+      color:#ddd3bd;
+      font-size:13px;
+      letter-spacing:1.3px;
+      text-transform:uppercase;
+    }
+
+    .panel-head span{
+      color:#817c73;
+      font-size:11px;
+    }
+
+    .warrior-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:8px;
+      padding:10px;
+    }
+
+    .warrior-card{
+      position:relative;
+      min-height:168px;
+      padding:8px 7px 9px;
       display:flex;
       flex-direction:column;
       align-items:center;
-      justify-content:center;
+      text-align:center;
+      color:#ddd6c8;
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(0,0,0,.08));
+      border:1px solid rgba(218,199,159,.13);
+      cursor:pointer;
+      transition:transform .16s ease, border-color .16s ease, background .16s ease;
     }
+
+    .warrior-card:hover{
+      transform:translateY(-2px);
+      border-color:rgba(218,199,159,.36);
+      background:linear-gradient(180deg, rgba(218,199,159,.10), rgba(0,0,0,.14));
+    }
+
+    .warrior-card.active{
+      border-color:rgba(185,154,88,.78);
+      box-shadow:inset 0 0 0 1px rgba(185,154,88,.22), 0 0 18px rgba(185,154,88,.09);
+    }
+
+    .warrior-card.selected-card::before{
+      content:"ACTIVE";
+      position:absolute;
+      top:6px;
+      right:6px;
+      z-index:2;
+      padding:2px 5px;
+      color:#e7ddc8;
+      background:#56634d;
+      border:1px solid rgba(220,235,204,.25);
+      font-size:9px;
+      font-weight:700;
+      letter-spacing:.7px;
+    }
+
+    .card-portrait{
+      width:86px;
+      height:103px;
+      display:grid;
+      place-items:end center;
+      overflow:hidden;
+      margin-bottom:6px;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(221,204,167,.12), transparent 55%),
+        linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.22));
+      border-bottom:1px solid rgba(214,196,157,.15);
+    }
+
+    .card-portrait img{
+      width:77px;
+      height:98px;
+      object-fit:contain;
+      filter:drop-shadow(0 8px 6px rgba(0,0,0,.42));
+    }
+
+    .warrior-name{
+      max-width:100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      color:#eee8dc;
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .warrior-state{
+      min-height:14px;
+      margin-top:3px;
+      color:#9e978b;
+      font-size:9px;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+
+    .warrior-state.locked{ color:#b28b62; }
+    .warrior-state.active-state{ color:#94ad81; }
+
+    .profile-panel{
+      position:sticky;
+      top:73px;
+      align-self:start;
+      min-height:484px;
+      overflow:hidden;
+    }
+
+    .profile-visual{
+      position:relative;
+      height:320px;
+      display:grid;
+      place-items:end center;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(214,192,145,.14), transparent 36%),
+        linear-gradient(180deg, rgba(73,76,72,.16), rgba(6,8,9,.44)),
+        repeating-linear-gradient(90deg, transparent 0 39px, rgba(255,255,255,.012) 40px);
+      border-bottom:1px solid rgba(218,199,159,.18);
+    }
+
+    .profile-visual::after{
+      content:"";
+      position:absolute;
+      inset:18px;
+      pointer-events:none;
+      border:1px solid rgba(224,208,174,.10);
+    }
+
+    .large-preview{
+      position:relative;
+      z-index:1;
+      width:230px;
+      height:292px;
+      object-fit:contain;
+      object-position:center bottom;
+      filter:drop-shadow(0 18px 14px rgba(0,0,0,.62));
+      transition:opacity .14s ease, transform .14s ease;
+    }
+
+    .preview-fade{ opacity:.15; transform:translateY(5px); }
+
+    .profile-copy{
+      padding:15px 16px 16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.06));
+    }
+
+    .profile-kicker{
+      color:#9b917f;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:1.5px;
+      text-transform:uppercase;
+    }
+
+    .profile-name{
+      margin:4px 0 4px;
+      color:#f1ebdf;
+      font-size:27px;
+      line-height:1;
+    }
+
+    .profile-meta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px solid rgba(218,199,159,.13);
+      color:#a9a297;
+      font-size:11px;
+    }
+
+    .profile-price{ color:#d1b777; font-weight:700; }
+
+    .profile-actions{
+      margin-top:13px;
+      min-height:36px;
+    }
+
+    .profile-actions form{ margin:0; }
+
+    .action-btn{
+      width:100%;
+      min-height:36px;
+      border:1px solid rgba(221,204,169,.28);
+      color:#eee8dc;
+      font-family:inherit;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.75px;
+      text-transform:uppercase;
+      cursor:pointer;
+    }
+
+    .action-btn.buy{ background:linear-gradient(180deg, #795039, #533424); }
+    .action-btn.select{ background:linear-gradient(180deg, #657458, #46513e); }
+    .action-btn.current{ color:#b8b2a8; background:#25282a; cursor:default; }
+    .action-btn:hover:not(.current){ filter:brightness(1.1); }
+
+    .supplies{
+      position:relative;
+      z-index:1;
+      margin:0 20px 22px;
+      border:1px solid rgba(218,199,159,.17);
+      background:rgba(18,20,16,.34);
+    }
+
+    .supply-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:8px;
+      padding:10px;
+    }
+
+    .supply-card{
+  display:grid;
+  grid-template-columns:115px minmax(0, 1fr);
+  gap:12px;
+  align-items:center;
+  min-height:118px;
+  padding:10px;
+  overflow:hidden;
+  background:rgba(18,20,16,.36);
+  border:1px solid rgba(218,199,159,.12);
+}
 
     .chest-submit{
-      background:none;
-      border:none;
-      padding:0;
-      cursor:pointer;
-      border-radius:14px;
-    }
+  width:110px;
+  height:100px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:none;
+  background:none;
+  padding:0;
+  cursor:pointer;
+}
 
     .chest-img{
-      width:150px;
-      height:auto;
-      display:block;
-      cursor:pointer;
-      transition:transform .15s ease, filter .15s ease;
+  object-fit:contain;
+  filter:drop-shadow(0 7px 7px rgba(0,0,0,.48));
+  transition:
+    transform .18s ease,
+    filter .18s ease;
+}
+
+.chest-img-scout{
+  width:98px;
+  height:98px;
+}
+
+.chest-img-elite{
+  width:98px;
+  height:98px;
+}
+
+.chest-img-legend{
+  width:98px;
+  height:98px;
+}
+
+.supply-card > div:last-child{
+  min-width:0;
+  position:relative;
+  z-index:2;
+}
+
+.supply-title,
+.supply-price,
+.supply-desc,
+.chest-error{
+  position:relative;
+  z-index:2;
+}
+
+    .chest-submit:hover .chest-img{
+  transform:translateY(-4px) scale(1.04);
+  filter:
+    brightness(1.10)
+    drop-shadow(0 10px 10px rgba(0,0,0,.55));
+}
+
+    .supply-title{
+      color:#e8e0d1;
+      font-size:13px;
+      font-weight:700;
     }
 
-    .chest-img:hover{
-      transform:scale(1.06);
-      filter:brightness(1.1);
+    .supply-price{
+      margin-top:3px;
+      color:#c5aa6d;
+      font-size:11px;
+      font-weight:700;
     }
 
-    .chest-submit.disabled,
-    .chest-submit:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-      filter:grayscale(0.5);
-    }
-
-    .chest-submit.disabled .chest-img,
-    .chest-submit:disabled .chest-img{
-      transform:none;
-      filter:grayscale(.6);
-      cursor:not-allowed;
+    .supply-desc{
+      margin-top:3px;
+      color:#8e887f;
+      font-size:10px;
+      line-height:1.4;
     }
 
     .chest-error{
-      min-height:20px;
-      margin-top:8px;
-      color:#ff7676;
-      font-size:14px;
-      font-weight:bold;
-      text-align:center;
-    }
-
-    .chest-title{
-      font-size:22px;
-      font-weight:bold;
-      margin-top:8px;
-    }
-
-    .chest-price{
-      color:#ffd86b;
-      font-weight:bold;
+      min-height:12px;
       margin-top:3px;
+      color:#d1776e;
+      font-size:9px;
+      font-weight:700;
     }
 
-    .chest-desc{
-      max-width:560px;
-      font-size:13px;
-      margin-top:6px;
-      opacity:.9;
-      line-height:1.35;
+    .footer-row{
+      position:relative;
+      z-index:1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:0 20px 18px;
     }
 
     .back-link{
-      display:block;
-      width:max-content;
-      margin-top:28px;
-      color:white;
-      font-weight:bold;
+      color:#bdb5a8;
       text-decoration:none;
+      font-size:12px;
+      font-weight:700;
     }
 
-    .back-link:hover{ text-decoration:underline; }
+    .back-link:hover{ color:#fff; }
+
+    .footer-note{
+      color:#66635e;
+      font-size:9px;
+      letter-spacing:.45px;
+      text-transform:uppercase;
+    }
 
     .chest-modal{
       display:none;
       position:fixed;
       inset:0;
-      background:rgba(0,0,0,0.62);
       z-index:99999;
       align-items:center;
       justify-content:center;
       padding:20px;
+      background:rgba(3,5,6,.84);
+      backdrop-filter:blur(6px);
     }
 
     .chest-modal.show{ display:flex; }
 
     .chest-modal-box{
       position:relative;
-      width:560px;
-      max-width:92vw;
-      background:rgba(0,0,0,0.88);
-      border:1px solid rgba(255,255,255,0.25);
-      border-radius:18px;
-      padding:34px 32px;
+      width:420px;
+      max-width:94vw;
+      padding:27px 28px 22px;
       text-align:center;
-      color:white;
-      box-shadow:0 0 35px rgba(0,0,0,0.65);
+      color:var(--ink);
+      background:linear-gradient(145deg, #d7c6a3, #bda77f);
+      border:2px solid #5a422d;
+      box-shadow:0 24px 70px rgba(0,0,0,.65), inset 0 0 38px rgba(73,48,27,.16);
+    }
+
+    .chest-modal-box::before{
+      content:"SUPPLY REPORT";
+      display:block;
+      margin-bottom:5px;
+      color:#6d5233;
+      font-size:9px;
+      font-weight:700;
+      letter-spacing:2px;
+    }
+
+    .chest-modal-box h1{
+      margin:0 0 8px;
+      font-size:28px;
     }
 
     .chest-close{
       position:absolute;
-      top:12px;
-      right:14px;
-      width:34px;
-      height:34px;
-      border:none;
-      border-radius:50%;
+      top:8px;
+      right:9px;
+      width:28px;
+      height:28px;
+      border:1px solid rgba(65,45,29,.28);
+      background:rgba(255,255,255,.16);
+      color:#342619;
+      font-size:18px;
       cursor:pointer;
-      background:rgba(255,255,255,0.12);
-      color:white;
-      font-size:22px;
-      font-weight:bold;
-      line-height:1;
-      padding:0;
     }
 
     .chest-open-img{
-      width:150px;
-      height:150px;
-      object-fit:contain;
-      margin:6px auto 12px;
-      display:block;
-    }
+  width:180px;
+  height:150px;
+  object-fit:contain;
+  display:block;
+  margin:8px auto 10px;
+  filter:drop-shadow(0 12px 14px rgba(0,0,0,.35));
+}
 
     .reward-img{
-      width:110px;
-      height:110px;
+      width:86px;
+      height:86px;
       object-fit:contain;
-      margin:14px auto;
       display:none;
+      margin:9px auto;
+      padding:5px;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(70,49,32,.24);
     }
 
     .reward-rarity{
       display:inline-block;
-      margin:10px 0 16px;
-      padding:6px 14px;
-      border-radius:999px;
-      font-size:13px;
-      font-weight:bold;
+      margin:6px 0 10px;
+      padding:4px 10px;
+      border:1px solid rgba(70,48,31,.28);
+      font-size:9px;
+      font-weight:700;
+      letter-spacing:.8px;
       text-transform:uppercase;
     }
 
-    .reward-rarity.common{
-      color:#ddd;
-      background:rgba(180,180,180,.18);
-      border:1px solid rgba(220,220,220,.35);
-    }
+    .reward-rarity.common{ color:#544b40; background:rgba(120,110,95,.08); }
+    .reward-rarity.rare{ color:#35546b; background:rgba(73,112,142,.11); }
+    .reward-rarity.epic{ color:#6f466f; background:rgba(119,73,119,.11); }
+    .reward-rarity.legendary{ color:#7b5b19; background:rgba(164,122,32,.12); }
 
-    .reward-rarity.rare{
-      color:#74c7ff;
-      background:rgba(52,152,219,.22);
-      border:1px solid rgba(116,199,255,.45);
-    }
-
-    .reward-rarity.epic{
-      color:#d89cff;
-      background:rgba(155,89,182,.24);
-      border:1px solid rgba(216,156,255,.45);
-    }
-
-    .reward-rarity.legendary{
-      color:#ffd84d;
-      background:rgba(241,196,15,.24);
-      border:1px solid rgba(255,216,77,.55);
-    }
+    #rewardDesc{ color:#55412f; font-size:13px; line-height:1.5; }
 
     .chest-modal-actions{
       display:flex;
       justify-content:center;
-      gap:12px;
-      margin-top:24px;
+      gap:8px;
+      margin-top:15px;
       flex-wrap:wrap;
     }
 
     .chest-modal-actions a,
     .chest-modal-actions button{
-      border:none;
-      color:white;
+      padding:8px 12px;
+      border:1px solid rgba(50,35,23,.3);
+      color:#f0e7d7;
       text-decoration:none;
-      font-weight:bold;
-      padding:10px 14px;
-      border-radius:8px;
-      cursor:pointer;
       font-family:inherit;
-      font-size:14px;
+      font-size:11px;
+      font-weight:700;
+      cursor:pointer;
     }
 
-    .chest-modal-actions a{ background:#3498db; }
-    .chest-modal-actions button{ background:#2ecc71; }
+    .chest-modal-actions a{ background:#4d5b45; }
+    .chest-modal-actions button{ background:#6d4631; }
 
-    @media (max-width:850px){
-      .market-grid{ grid-template-columns:repeat(2, 1fr); }
+    @media (max-width:860px){
+      body{ align-items:flex-start; padding:12px; }
+      .topbar{ grid-template-columns:1fr; text-align:center; }
+      .division-mark,.topnav{ justify-content:center; }
+      .selection-layout{ grid-template-columns:1fr; }
+      .profile-panel{ position:relative; top:auto; }
+      .profile-visual{ height:285px; }
+      .supply-grid{ grid-template-columns:1fr; }
     }
 
     @media (max-width:560px){
-      .box{ padding:24px 18px; }
-      .market-grid{ grid-template-columns:1fr; }
+      .warrior-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .heading{ padding:18px 18px 14px; }
+      .heading h1{ font-size:26px; }
+      .selection-layout{ padding:12px; }
+      .supplies{ margin:0 12px 16px; }
+      .footer-row{ padding:0 12px 14px; }
+      .footer-note{ display:none; }
     }
-
-
-    .chest-grid{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:18px;
-  margin:34px 0 22px;
-}
-
-.chest-card{
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.18);
-  border-radius:16px;
-  padding:18px 14px;
-  text-align:center;
-}
-
-.chest-img{
-  width:120px;
-  height:120px;
-  object-fit:contain;
-}
-
-.chest-title{
-  font-size:20px;
-  font-weight:bold;
-  margin-top:8px;
-}
-
-.chest-price{
-  color:#ffd86b;
-  font-weight:bold;
-  margin-top:4px;
-}
-
-.chest-desc{
-  font-size:13px;
-  opacity:.85;
-  margin-top:6px;
-  min-height:42px;
-}
-
-.chest-error{
-  min-height:20px;
-  margin-top:8px;
-  color:#ff7676;
-  font-size:13px;
-  font-weight:bold;
-}
   </style>
 </head>
 
 <body>
-  <div class="box">
-    <% const ownedSkins = Array.isArray(user.ownedSkins) ? user.ownedSkins : ["default"]; %>
+  <% const ownedSkins = Array.isArray(user.ownedSkins) ? user.ownedSkins : ["default"]; %>
+  <% const initiallySelected = marketItems.find(item => item.key === user.selectedSkin) || marketItems[0]; %>
 
-    <h1>Market</h1>
-
-    <div class="coins" id="coinBalance" data-coins="<%= user.coins || 0 %>">
-      Keşif Madalyonu: <%= user.coins || 0 %>
-    </div>
-
-    <div class="market-grid">
-      <% marketItems.forEach(item => { %>
-        <div class="item">
-          <% if(item.preview){ %>
-            <img
-              src="<%= item.preview %>"
-              alt="<%= item.name %>"
-              class="skin-preview"
-            >
-          <% } %>
-
-          <div class="item-title"><%= item.name %></div>
-          <div class="item-price">Fiyat: <%= item.price %> Keşif Madalyonu</div>
-
-          <% if(ownedSkins.includes(item.key)){ %>
-            <div class="owned">Owned</div>
-          <% } %>
-
-          <% if(user.selectedSkin === item.key){ %>
-            <div class="owned selected">Selected</div>
-          <% } %>
-
-          <div class="actions">
-            <% if(!ownedSkins.includes(item.key)){ %>
-              <form action="/market/buy/<%= item.key %>" method="POST">
-                <button class="buy" type="submit">Buy</button>
-              </form>
-            <% } else if(user.selectedSkin !== item.key) { %>
-              <form action="/market/select/<%= item.key %>" method="POST">
-                <button class="select" type="submit">Select</button>
-              </form>
-            <% } %>
-          </div>
+  <main class="selection-shell">
+    <header class="topbar">
+      <div class="division-mark">
+        <div class="division-emblem"><span>✦</span></div>
+        <div class="division-copy">
+          <strong>Scout Regiment</strong>
+          <small>Scout Regiment Barracks</small>
         </div>
-      <% }) %>
-    </div>
+      </div>
 
-    <div class="chest-grid">
-  <% const chests = [
-    {
-      key: "scout",
-      name: "Scout Chest",
-      price: 1,
-      img: "/images/ui/chest_scout.png",
-      desc: "Temel ödüller, Keşif Madalyonu ve rare karakter rozetleri."
-    },
-    {
-      key: "elite",
-      name: "Elite Chest",
-      price: 2,
-      img: "/images/ui/chest_elite.png",
-      desc: "Daha iyi ödüller, item hakları ve epic karakter rozetleri."
-    },
-    {
-      key: "legend",
-      name: "Legend Chest",
-      price: 3,
-      img: "/images/ui/chest_legend.png",
-      desc: "En değerli ödüller, revive hakkı ve legendary rozet şansı."
-    }
-  ]; %>
+      <div class="balance" id="coinBalance" data-coins="<%= user.coins || 0 %>">
+        Scout Medallions: <%= user.coins || 0 %>
+      </div>
 
-  <% chests.forEach(chest => { %>
-    <div class="chest-card">
-      <form class="chestForm" data-chest-type="<%= chest.key %>">
-        <button 
-          type="submit" 
-          class="chest-submit"
-          data-price="<%= chest.price %>"
-        >
-          <img src="<%= chest.img %>" alt="<%= chest.name %>" class="chest-img">
-        </button>
-      </form>
+      <nav class="topnav">
+        <a href="/profile">Profile</a>
+      </nav>
+    </header>
 
-      <div class="chest-title"><%= chest.name %></div>
-      <div class="chest-price"><%= chest.price %> Keşif Madalyonu</div>
-      <div class="chest-desc"><%= chest.desc %></div>
-      <div class="chest-error"></div>
-    </div>
-  <% }) %>
-</div>
+    <section class="heading">
+      <div class="heading-label">Select Your Active Scout</div>
+      <h1>Choose Your Scout</h1>
+      <p>Review the available scouts, inspect their field appearance and assign the scout who will join the next expedition.</p>
+    </section>
 
-    <a href="/menu" class="back-link">← Back to Menu</a>
-  </div>
+    <section class="selection-layout">
+      <div class="roster-panel">
+        <div class="panel-head">
+          <h2>Available Scouts</h2>
+          <span><%= marketItems.length %> Registered Scouts</span>
+        </div>
+
+        <div class="warrior-grid" id="warriorGrid">
+          <% marketItems.forEach((item, index) => { %>
+            <% const isOwned = ownedSkins.includes(item.key); %>
+            <% const isSelected = user.selectedSkin === item.key; %>
+            <article
+              class="warrior-card <%= isSelected ? 'selected-card active' : '' %>"
+              tabindex="0"
+              role="button"
+              data-key="<%= item.key %>"
+              data-name="<%= item.name %>"
+              data-preview="<%= item.preview || '' %>"
+              data-price="<%= item.price %>"
+              data-owned="<%= isOwned ? 'true' : 'false' %>"
+              data-selected="<%= isSelected ? 'true' : 'false' %>"
+            >
+              <div class="card-portrait">
+                <% if(item.preview){ %>
+                  <img src="<%= item.preview %>" alt="<%= item.name %>">
+                <% } %>
+              </div>
+
+              <div class="warrior-name"><%= item.name %></div>
+
+              <% if(isSelected){ %>
+                <div class="warrior-state active-state">Assigned to Squad</div>
+              <% } else if(isOwned){ %>
+                <div class="warrior-state">Available</div>
+              <% } else { %>
+                <div class="warrior-state locked">Locked · <%= item.price %> <%= item.price === 1 ? "Scout Medallion" : "Scout Medallions" %></div>
+              <% } %>
+            </article>
+          <% }) %>
+        </div>
+      </div>
+
+      <aside class="profile-panel">
+        <div class="panel-head">
+          <h2>Scout Preview</h2>
+          <span id="profileStatus"><%= ownedSkins.includes(initiallySelected.key) ? 'Unlocked' : 'Locked' %></span>
+        </div>
+
+        <div class="profile-visual">
+          <img
+            id="largePreview"
+            class="large-preview"
+            src="<%= initiallySelected.preview || '' %>"
+            alt="<%= initiallySelected.name %>"
+          >
+        </div>
+
+        <div class="profile-copy">
+          <div class="profile-kicker">Scout Record</div>
+          <h2 class="profile-name" id="profileName"><%= initiallySelected.name %></h2>
+
+          <div class="profile-meta">
+            <span id="profileOwnership"><%= ownedSkins.includes(initiallySelected.key) ? 'Ready for Expedition' : 'Locked' %></span>
+            <span class="profile-price" id="profilePrice"><%= initiallySelected.price %> <%= initiallySelected.price === 1 ? "Scout Medallion" : "Scout Medallions" %></span>
+          </div>
+
+          <div class="profile-actions" id="profileActions"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="supplies">
+      <div class="panel-head">
+        <h2>Supply Crates</h2>
+        <span>Optional Rewards and Badges</span>
+      </div>
+
+      <% const chests = [
+  {
+    key: "scout",
+    name: "Scout Chest",
+    price: 1,
+    closedImg: "/images/ui/chests/scout_closed.png",
+    openImg: "/images/ui/chests/scout_open.png",
+    desc: "Basic rewards and a chance to receive a rare badge."
+  },
+  {
+    key: "elite",
+    name: "Elite Chest",
+    price: 3,
+    closedImg: "/images/ui/chests/elite_closed.png",
+    openImg: "/images/ui/chests/elite_open.png",
+    desc: "Improved rewards with a higher chance of epic items."
+  },
+  {
+    key: "legend",
+    name: "Legend Chest",
+    price: 5,
+    closedImg: "/images/ui/chests/legend_closed.png",
+    openImg: "/images/ui/chests/legend_open.png",
+    desc: "Premium rewards with a chance to receive legendary items."
+  }
+]; %>
+
+      <div class="supply-grid">
+        <% chests.forEach(chest => { %>
+          <div class="supply-card">
+            <form
+  class="chestForm"
+  data-chest-type="<%= chest.key %>"
+  data-open-image="<%= chest.openImg %>"
+>
+  <button
+    type="submit"
+    class="chest-submit"
+    data-price="<%= chest.price %>"
+  >
+    <img
+      src="<%= chest.closedImg %>"
+      alt="<%= chest.name %>"
+      class="chest-img chest-img-<%= chest.key %>"
+    >
+  </button>
+</form>
+
+            <div>
+              <div class="supply-title"><%= chest.name %></div>
+              <div class="supply-price"><%= chest.price %> <%= chest.price === 1 ? "Scout Medallion" : "Scout Medallions" %></div>
+              <div class="supply-desc"><%= chest.desc %></div>
+              <div class="chest-error"></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <footer class="footer-row">
+      <div class="footer-note">Only One Scout May Be Assigned at a Time</div>
+    </footer>
+  </main>
 
   <div id="chestModal" class="chest-modal">
     <div class="chest-modal-box">
       <button id="chestCloseBtn" class="chest-close" type="button">×</button>
 
-      <h1>Sandık Açıldı!</h1>
+      <h1>Crate Opened</h1>
 
       <img
-        src="/images/ui/chest_open.png"
-        alt="Sandık Açıldı"
-        class="chest-open-img"
-      >
-
+  id="openedChestImg"
+  src="/images/ui/chests/scout_open.png"
+  alt="Opened Chest"
+  class="chest-open-img"
+>
       <img id="rewardImg" class="reward-img" src="" alt="Reward">
 
       <h2 id="rewardTitle"></h2>
-
       <div id="rewardRarity" class="reward-rarity common"></div>
-
       <p id="rewardDesc"></p>
 
       <div class="chest-modal-actions">
-        <button id="openAnotherChestBtn" type="button">Tekrar Aç</button>
-        <a href="/profile">Profilde Gör</a>
+        <button id="openAnotherChestBtn" type="button">Open Again</button>
+        <a href="/profile">View Profile</a>
       </div>
     </div>
   </div>
 
   <script>
-    
-    let lastChestType = "scout";
+    const warriorCards = [...document.querySelectorAll(".warrior-card")];
+    const largePreview = document.getElementById("largePreview");
+    const profileName = document.getElementById("profileName");
+    const profileStatus = document.getElementById("profileStatus");
+    const profileOwnership = document.getElementById("profileOwnership");
+    const profilePrice = document.getElementById("profilePrice");
+    const profileActions = document.getElementById("profileActions");
 
-const chestModal = document.getElementById("chestModal");
-const chestCloseBtn = document.getElementById("chestCloseBtn");
-const openAnotherChestBtn = document.getElementById("openAnotherChestBtn");
-const coinBalance = document.getElementById("coinBalance");
-const rewardImg = document.getElementById("rewardImg");
-const rewardTitle = document.getElementById("rewardTitle");
-const rewardRarity = document.getElementById("rewardRarity");
-const rewardDesc = document.getElementById("rewardDesc");
-    const CHEST_PRICE = 1;
+    function renderWarriorProfile(card) {
+      if (!card) return;
+
+      warriorCards.forEach(item => item.classList.remove("active"));
+      card.classList.add("active");
+
+      const key = card.dataset.key;
+      const name = card.dataset.name;
+      const preview = card.dataset.preview;
+      const price = Number(card.dataset.price || 0);
+      const owned = card.dataset.owned === "true";
+      const selected = card.dataset.selected === "true";
+
+      largePreview.classList.add("preview-fade");
+
+      setTimeout(() => {
+        largePreview.src = preview;
+        largePreview.alt = name;
+        largePreview.classList.remove("preview-fade");
+      }, 90);
+
+      profileName.textContent = name;
+      profileStatus.textContent = selected ? "Active" : owned ? "Unlocked" : "Locked";
+      profileOwnership.textContent = selected
+        ? "Currently Assigned"
+        : owned
+          ? "Ready for Expedition"
+          : "Locked";
+      profilePrice.textContent = formatScoutMedallions(price);
+
+      if (selected) {
+        profileActions.innerHTML = `
+          <button class="action-btn current" type="button" disabled>Currently Assigned</button>
+        `;
+      } else if (owned) {
+        profileActions.innerHTML = `
+          <form action="/market/select/${encodeURIComponent(key)}" method="POST">
+            <button class="action-btn select" type="submit">Assign Scout</button>
+          </form>
+        `;
+      } else {
+        profileActions.innerHTML = `
+          <form action="/market/buy/${encodeURIComponent(key)}" method="POST">
+            <button class="action-btn buy" type="submit">Unlock for ${formatScoutMedallions(price)}</button>
+          </form>
+        `;
+      }
+    }
+
+    warriorCards.forEach(card => {
+      card.addEventListener("click", () => renderWarriorProfile(card));
+      card.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          renderWarriorProfile(card);
+        }
+      });
+    });
+
+    renderWarriorProfile(
+      document.querySelector('.warrior-card[data-selected="true"]') || warriorCards[0]
+    );
+
+    let lastChestType = "scout";
+    let lastChestOpenImage =
+  "/images/ui/chests/scout_open.png";
+
+    const chestModal = document.getElementById("chestModal");
+    const chestCloseBtn = document.getElementById("chestCloseBtn");
+    const openAnotherChestBtn = document.getElementById("openAnotherChestBtn");
+    const coinBalance = document.getElementById("coinBalance");
+    const rewardImg = document.getElementById("rewardImg");
+    const rewardTitle = document.getElementById("rewardTitle");
+    const openedChestImg = document.getElementById("openedChestImg");
+    const rewardRarity = document.getElementById("rewardRarity");
+    const rewardDesc = document.getElementById("rewardDesc");
+
+    function formatScoutMedallions(amount) {
+      const value = Number(amount) || 0;
+      return `${value} ${value === 1 ? "Scout Medallion" : "Scout Medallions"}`;
+    }
 
     function getCurrentCoins() {
       return Number(coinBalance?.dataset.coins || 0);
@@ -523,35 +1017,37 @@ const rewardDesc = document.getElementById("rewardDesc");
 
     function setCurrentCoins(amount) {
       if (!coinBalance) return;
-
       coinBalance.dataset.coins = amount;
-      coinBalance.textContent = "Keşif Madalyonu: " + amount;
+      coinBalance.textContent = "Scout Medallions: " + amount;
     }
 
-  
+    async function openChest(
+  chestType = "scout",
+  errorBox = null,
+  openImage = "/images/ui/chests/scout_open.png"
+) {
 
-    async function openChest(chestType = "scout", errorBox = null) { 
-      
       lastChestType = chestType;
+      lastChestOpenImage = openImage;
 
-       try {
-    if (errorBox) errorBox.textContent = "";
+if (openedChestImg) {
+  openedChestImg.src = openImage;
+}
 
+      try {
+        if (errorBox) errorBox.textContent = "";
 
         const response = await fetch(`/chest/open/${chestType}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    }
-  });
-
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
 
         const data = await response.json();
 
         if (!data.success) {
-  if (errorBox) errorBox.textContent = data.message || "Sandık açılamadı.";
-  return;
-}
+          if (errorBox) errorBox.textContent = data.message || "Crate could not be opened.";
+          return;
+        }
 
         const result = data.result;
 
@@ -561,88 +1057,84 @@ const rewardDesc = document.getElementById("rewardDesc");
 
         rewardImg.style.display = "none";
         rewardImg.src = "";
-
         rewardRarity.className = "reward-rarity " + (result.rarity || "common");
         rewardRarity.textContent = result.rarity || "common";
 
         if (result.type === "coins") {
-          rewardTitle.textContent = "+" + result.coinsGained + " Keşif Madalyonu";
-          rewardDesc.textContent = "Sandıktan Keşif Madalyonu kazandın.";
+          rewardTitle.textContent = "+" + formatScoutMedallions(result.coinsGained);
+          rewardDesc.textContent = formatScoutMedallions(result.coinsGained) + " added to your account.";
         }
 
         if (result.type === "badge" && result.badge) {
           rewardImg.style.display = "block";
           rewardImg.src = result.badge.icon;
-
           rewardTitle.textContent = result.badge.name;
           rewardRarity.className = "reward-rarity " + result.badge.rarity;
           rewardRarity.textContent = result.badge.rarity;
 
-          if (result.duplicate) {
-            rewardDesc.textContent =
-              "Bu karakter rozeti zaten sende vardı. Telafi ödülü: +" +
-              result.coinsGained +
-              " Keşif Madalyonu";
-          } else {
-            rewardDesc.textContent = "Yeni karakter rozeti koleksiyonuna eklendi!";
-          }
+          rewardDesc.textContent = result.duplicate
+            ? "Duplicate badge converted into +" + formatScoutMedallions(result.coinsGained) + "."
+            : "New character badge added to your collection.";
         }
 
         chestModal.classList.add("show");
       } catch (error) {
         console.error("CHEST OPEN MODAL ERROR:", error);
-        if (errorBox) errorBox.textContent = "Sandık açılırken hata oluştu. Console'a bak.";
+        if (errorBox) errorBox.textContent = "An error occurred while opening the crate.";
       }
     }
 
-
     document.querySelectorAll(".chestForm").forEach(form => {
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
+  form.addEventListener("submit", event => {
+    event.preventDefault();
 
     const chestType = form.dataset.chestType;
+    const openImage = form.dataset.openImage;
+
     const button = form.querySelector(".chest-submit");
     const price = Number(button.dataset.price || 0);
-    const errorBox = form.closest(".chest-card").querySelector(".chest-error");
+
+    const errorBox = form
+      .closest(".supply-card")
+      .querySelector(".chest-error");
 
     if (getCurrentCoins() < price) {
-      errorBox.textContent = "Yeterli Keşif Madalyonu yok.";
+      errorBox.textContent =
+        "You do not have enough Scout Medallions.";
       return;
     }
 
     errorBox.textContent = "";
-openChest(chestType, errorBox);
+
+    openChest(
+      chestType,
+      errorBox,
+      openImage
+    );
   });
 });
 
-    if (chestCloseBtn) {
-      chestCloseBtn.addEventListener("click", () => {
-        chestModal.classList.remove("show");
-      });
-    }
+    chestCloseBtn?.addEventListener("click", () => chestModal.classList.remove("show"));
 
-    if (chestModal) {
-      chestModal.addEventListener("click", (e) => {
-        if (e.target === chestModal) {
-          chestModal.classList.remove("show");
-        }
-      });
-    }
+    chestModal?.addEventListener("click", event => {
+      if (event.target === chestModal) chestModal.classList.remove("show");
+    });
 
-    if (openAnotherChestBtn) {
-      openAnotherChestBtn.addEventListener("click", () => {
-        chestModal.classList.remove("show");
-        openChest(lastChestType);
-      });
-    }
+    openAnotherChestBtn?.addEventListener("click", () => {
+  chestModal.classList.remove("show");
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && chestModal.classList.contains("show")) {
+  openChest(
+    lastChestType,
+    null,
+    lastChestOpenImage
+  );
+});
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && chestModal.classList.contains("show")) {
         chestModal.classList.remove("show");
       }
     });
-
-    
   </script>
 </body>
 </html>

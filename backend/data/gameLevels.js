@@ -104,7 +104,7 @@ const gameLevels = {
       7: { objectiveType: "kill", objectiveText: "Defeat 5 giants", enemyCount: 5, reward: 110},
       8: { objectiveType: "kill", objectiveText: "Defeat 6 giants", enemyCount: 6, reward: 120},
       9: { objectiveType: "kill", objectiveText: "Defeat 7 giants", enemyCount: 7, reward: 140},
-      10: { objectiveType: "collect", objectiveText: "Defeat the boss giant", targetitem: 1, enemyCount: 1, reward: 200}
+      10: { objectiveType: "kill", objectiveText: "Defeat the boss giant", enemyCount: 1, reward: 200}
     }
   }
 };

@@ -1,150 +1,570 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Leaderboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scout Regiment Rankings</title>
   <%- include("partials/music") %>
+<%- include("partials/top-controls") %>
+
   <style>
-    body{
+    :root{
+      --night:#0b0d0b;
+      --panel:#171912;
+      --panel-2:#22251d;
+      --parchment:#d8c799;
+      --parchment-soft:#b8a77c;
+      --bronze:#92703e;
+      --bronze-light:#c5a366;
+      --army:#4b5540;
+      --army-light:#69765c;
+      --blood:#6e2923;
+      --line:rgba(206,178,119,.28);
+      --cream:#efe5cb;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html,body{
       margin:0;
+      min-height:100%;
+    }
+
+    body{
       min-height:100vh;
+      padding:24px 16px;
       display:flex;
       justify-content:center;
       align-items:center;
-      background:#111;
-      color:white;
-      font-family:Arial, Helvetica, sans-serif;
-      background-image:url("/images/image5.jpg");
-      background-size:cover;
-      background-position:center;
+      color:var(--cream);
+      font-family:Georgia,"Times New Roman",serif;
+      background:
+        linear-gradient(rgba(8,10,8,.22),rgba(8,10,8,.42)),
+        url("/images/image5.png") center/cover fixed;
+      overflow-x:hidden;
     }
 
-    .box{
-      width:980px;
-      max-width:92vw;
-      background:rgba(0,0,0,0.75);
-      padding:40px;
-      border-radius:12px;
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 0%,rgba(199,164,92,.06),transparent 36%),
+        repeating-linear-gradient(90deg,rgba(255,255,255,.006) 0 1px,transparent 1px 5px);
+      mix-blend-mode:screen;
+    }
+
+    .ranking-shell{
+      position:relative;
+      width:min(1220px,96vw);
+      overflow:hidden;
+      border:1px solid rgba(201,167,99,.46);
+      background:
+        linear-gradient(180deg,rgba(31,32,25,.74),rgba(12,13,10,.80));
+      box-shadow:
+        0 28px 74px rgba(0,0,0,.66),
+        inset 0 0 0 4px rgba(50,37,23,.70),
+        inset 0 0 0 6px rgba(151,115,64,.16);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+    }
+
+    .ranking-shell::before,
+    .ranking-shell::after{
+      content:"";
+      position:absolute;
+      width:72px;
+      height:72px;
+      border-color:rgba(210,183,126,.62);
+      pointer-events:none;
+      z-index:4;
+    }
+
+    .ranking-shell::before{
+      top:12px;
+      left:12px;
+      border-top:2px solid;
+      border-left:2px solid;
+    }
+
+    .ranking-shell::after{
+      right:12px;
+      bottom:12px;
+      border-right:2px solid;
+      border-bottom:2px solid;
+    }
+
+    .archive-mark{
+      position:absolute;
+      right:38px;
+      top:118px;
+      font-size:78px;
+      opacity:.035;
+      transform:rotate(-12deg);
+      pointer-events:none;
+      user-select:none;
+    }
+
+    .header{
+      position:relative;
+      padding:30px 34px 24px;
+      text-align:center;
+      border-bottom:1px solid var(--line);
+      background:
+        linear-gradient(90deg,transparent,rgba(105,118,92,.10),transparent),
+        rgba(0,0,0,.06);
+    }
+
+    .header-kicker{
+      display:inline-block;
+      margin-bottom:8px;
+      color:var(--bronze-light);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:4px;
+      text-transform:uppercase;
     }
 
     h1{
-      text-align:center;
-      margin-bottom:25px;
+      margin:0;
+      color:#efe1b8;
+      font-size:clamp(30px,4.2vw,48px);
+      letter-spacing:3px;
+      text-transform:uppercase;
+      text-shadow:0 2px 0 #21180f,0 0 18px rgba(189,151,80,.2);
+    }
+
+    .header-subtitle{
+      margin:8px 0 0;
+      color:rgba(238,226,192,.68);
+      font-size:13px;
+      letter-spacing:1.5px;
+    }
+
+    .header-emblem{
+      position:absolute;
+      top:50%;
+      width:54px;
+      height:54px;
+      display:grid;
+      place-items:center;
+      transform:translateY(-50%);
+      border:1px solid rgba(199,167,109,.38);
+      border-radius:50%;
+      color:var(--bronze-light);
+      background:rgba(0,0,0,.22);
+      font-size:23px;
+      box-shadow:inset 0 0 18px rgba(0,0,0,.35);
+    }
+
+    .header-emblem.left{ left:32px; }
+    .header-emblem.right{ right:32px; }
+
+    .table-wrap{
+      position:relative;
+      padding:26px;
+      overflow-x:auto;
+      background:rgba(5,6,5,.06);
     }
 
     table{
       width:100%;
-      border-collapse:collapse;
-      background:rgba(255,255,255,0.08);
-      overflow:hidden;
-      border-radius:10px;
+      min-width:980px;
+      border-collapse:separate;
+      border-spacing:0 8px;
     }
 
-    th, td{
-      padding:14px;
+    thead th{
+      padding:11px 10px;
+      color:#d6c59b;
+      font-size:11px;
+      letter-spacing:1.45px;
+      text-transform:uppercase;
+      white-space:nowrap;
+      border-top:1px solid rgba(199,167,109,.22);
+      border-bottom:1px solid rgba(199,167,109,.22);
+      background:rgba(76,86,64,.24);
+    }
+
+    tbody tr{
+      background:linear-gradient(90deg,rgba(18,20,16,.42),rgba(10,11,9,.24));
+      transition:transform .18s ease,background .18s ease,box-shadow .18s ease;
+    }
+
+    tbody tr:hover{
+      transform:translateY(-1px);
+      background:linear-gradient(90deg,rgba(107,120,93,.26),rgba(155,119,68,.14));
+      box-shadow:0 6px 18px rgba(0,0,0,.26);
+    }
+
+    tbody tr:nth-child(1){
+      background:linear-gradient(90deg,rgba(205,162,68,.16),rgba(14,15,12,.24));
+    }
+
+    tbody tr:nth-child(2){
+      background:linear-gradient(90deg,rgba(184,194,204,.12),rgba(14,15,12,.22));
+    }
+
+    tbody tr:nth-child(3){
+      background:linear-gradient(90deg,rgba(172,100,54,.13),rgba(14,15,12,.22));
+    }
+
+    tbody tr:nth-child(-n+3) td{
+      border-top-color:rgba(210,183,126,.11);
+      border-bottom-color:rgba(210,183,126,.11);
+    }
+
+    tbody td{
+      padding:12px 10px;
       text-align:center;
-      border-bottom:1px solid rgba(255,255,255,0.08);
+      color:#e8dec7;
+      font-size:13px;
+      border-top:1px solid rgba(255,255,255,.045);
+      border-bottom:1px solid rgba(255,255,255,.045);
     }
 
-    th{
-      background:rgba(255,255,255,0.12);
-      font-size:14px;
+    tbody td:first-child{
+      border-left:1px solid rgba(255,255,255,.045);
+      border-radius:4px 0 0 4px;
     }
 
-    tr:hover{
-      background:rgba(255,255,255,0.07);
-    }
-
-    a{
-      display:inline-block;
-      margin-top:20px;
-      color:white;
-      text-decoration:none;
-      font-weight:bold;
-    }
-
-    td a{
-      color:white;
-      text-decoration:none;
-      font-weight:bold;
-      margin-top:0;
-    }
-
-    td a:hover{
-      text-decoration:underline;
-      color:#00d8ff;
-    }
-
-    .power{
-      font-weight:bold;
-      color:#ffd166;
+    tbody td:last-child{
+      border-right:1px solid rgba(255,255,255,.045);
+      border-radius:0 4px 4px 0;
     }
 
     .rank{
-      font-weight:bold;
-      font-size:16px;
+      width:78px;
+      color:#f0d9a4;
+      font-size:15px;
+      font-weight:800;
     }
 
+    .rank-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:40px;
+      height:34px;
+      padding:0 8px;
+      border:1px solid rgba(199,167,109,.30);
+      background:rgba(0,0,0,.26);
+      box-shadow:inset 0 0 10px rgba(0,0,0,.25);
+    }
+
+    .rank-stack{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+
+    .rank-badge.top-1{ color:#f0cf70; border-color:rgba(240,207,112,.56); }
+    .rank-badge.top-2{ color:#d3d5d7; border-color:rgba(211,213,215,.48); }
+    .rank-badge.top-3{ color:#c88a58; border-color:rgba(200,138,88,.52); }
+
+    .rank-medal{
+      position:relative;
+      width:28px;
+      height:28px;
+      display:inline-grid;
+      place-items:center;
+      border-radius:50%;
+      font-size:12px;
+      font-weight:900;
+      color:#24190d;
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.22),
+        inset 0 -5px 8px rgba(0,0,0,.22),
+        0 3px 8px rgba(0,0,0,.42);
+    }
+
+    .rank-medal::before,
+    .rank-medal::after{
+      content:"";
+      position:absolute;
+      top:22px;
+      width:7px;
+      height:12px;
+      background:currentColor;
+      clip-path:polygon(0 0,100% 0,72% 100%,50% 76%,28% 100%);
+      opacity:.78;
+      z-index:-1;
+    }
+
+    .rank-medal::before{ left:5px; transform:rotate(8deg); }
+    .rank-medal::after{ right:5px; transform:rotate(-8deg); }
+
+    .medal-gold{
+      color:#b5841f;
+      background:radial-gradient(circle at 35% 30%,#fff0a8 0 12%,#e3bd55 35%,#9f711e 100%);
+      border:1px solid #f0cf70;
+    }
+
+    .medal-silver{
+      color:#8f969c;
+      background:radial-gradient(circle at 35% 30%,#ffffff 0 12%,#d3d8dc 38%,#858d93 100%);
+      border:1px solid #d9dde0;
+    }
+
+    .medal-bronze{
+      color:#8a4f25;
+      background:radial-gradient(circle at 35% 30%,#f1ba78 0 12%,#bd7440 38%,#6f3b20 100%);
+      border:1px solid #d38a55;
+    }
+
+    .player-cell{
+      min-width:230px;
+      text-align:left;
+    }
+
+    .player-link{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+      color:inherit;
+      text-decoration:none;
+    }
+
+    .avatar-frame{
+      position:relative;
+      width:50px;
+      height:50px;
+      flex:0 0 50px;
+      padding:3px;
+      border:1px solid rgba(199,167,109,.55);
+      background:linear-gradient(145deg,#6d5433,#2e2418);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 3px 10px rgba(0,0,0,.36);
+      transform:rotate(-1deg);
+    }
+
+    .avatar-frame::after{
+      content:"";
+      position:absolute;
+      inset:3px;
+      border:1px solid rgba(255,255,255,.12);
+      pointer-events:none;
+    }
+
+    .player-avatar{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+      object-position:center;
+      background:#2a2a24;
+      filter:saturate(.84) contrast(1.05);
+    }
+
+    .player-info{ min-width:0; }
+
+    .player-name{
+      display:block;
+      max-width:170px;
+      overflow:hidden;
+      color:#f0e5c9;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:.4px;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+      transition:color .18s ease;
+    }
+
+    .player-link:hover .player-name{ color:var(--bronze-light); }
+
+    .player-label{
+      display:block;
+      margin-top:3px;
+      color:rgba(224,210,177,.48);
+      font-size:10px;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
+    }
+
+    .power{
+      color:#d8b765;
+      font-weight:900;
+    }
+
+    .metric-pill{
+      display:inline-block;
+      min-width:46px;
+      padding:5px 8px;
+      border:1px solid rgba(199,167,109,.18);
+      background:rgba(0,0,0,.18);
+      font-weight:700;
+    }
+
+    .badge-data{ line-height:1.35; }
+    .badge-data strong{ color:#d9bf83; }
+
     .empty-row td{
-      opacity:.85;
-      padding:22px;
+      padding:34px;
+      color:rgba(236,224,197,.65);
+      text-align:center;
+      font-style:italic;
+    }
+
+    .footer-actions{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:0 26px 26px;
+    }
+
+    .back-link{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      color:#e6d6af;
+      text-decoration:none;
+      font-weight:800;
+      letter-spacing:.6px;
+      border:1px solid rgba(199,167,109,.32);
+      background:rgba(0,0,0,.20);
+    }
+
+    .back-link:hover{
+      color:#fff0c6;
+      border-color:rgba(199,167,109,.62);
+      background:rgba(76,86,64,.24);
+    }
+
+    .record-note{
+      color:rgba(224,210,177,.48);
+      font-size:11px;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    @media (max-width:760px){
+      body{ padding:16px 10px; }
+      .header-emblem{ display:none; }
+      .header{ padding:24px 18px 18px; }
+      .table-wrap{ padding:14px; }
+      .footer-actions{
+        padding:0 14px 18px;
+        flex-direction:column-reverse;
+        align-items:stretch;
+      }
+      .back-link{ justify-content:center; }
+      .record-note{ text-align:center; }
     }
   </style>
 </head>
+
 <body>
-  <div class="box">
-    <h1>Leaderboard</h1>
+  <main class="ranking-shell">
+    <div class="archive-mark">⚔</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Username</th>
-          <th>Level</th>
-          <th>Güç Puanı</th>
-          <th>Tamamlanan Sector</th>
-          <th>Titan Kills</th>
-          <th>Rozet</th>
-          <th>Keşif Madalyonu</th>
-        </tr>
-      </thead>
+    <header class="header">
+      <div class="header-emblem left">⚔</div>
+      <div class="header-emblem right">✦</div>
 
-      <tbody>
-        <% if(!topScores || topScores.length === 0){ %>
-          <tr class="empty-row">
-            <td colspan="7">No scores yet.</td>
-          </tr>
-        <% } %>
+      <span class="header-kicker">Scout Regiment Soldier Records</span>
+      <h1>Leaderboard</h1>
+      <p class="header-subtitle">Operational Performance and Field Ranking Archive</p>
+    </header>
 
-        <% topScores.forEach((entry, index) => { %>
+    <section class="table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td class="rank">
-              <% if(index === 0){ %>🥇<% } %>
-              <% if(index === 1){ %>🥈<% } %>
-              <% if(index === 2){ %>🥉<% } %>
-              <%= index + 1 %>
-            </td>
-
-            <td>
-              <% if(entry._id){ %>
-                <a href="/user/<%= entry._id %>"><%= entry.username %></a>
-              <% } else { %>
-                <span><%= entry.username %></span>
-              <% } %>
-            </td>
-
-            <td><%= entry.level || 1 %></td>
-            <td class="power"><%= entry.leaderboardPower || 0 %></td>
-            <td><%= entry.completedSectorCount || 0 %></td>
-            <td><%= entry.titanKills || 0 %></td>
-            <td><%= entry.badgeCount || 0 %> adet / <%= entry.badgeScore || 0 %> puan</td>
-            <td><%= entry.coins || 0 %></td>
+            <th>Rank</th>
+            <th>Soldier</th>
+            <th>Level</th>
+            <th>Power</th>
+            <th>Completed Sectors</th>
+            <th>Titan Kills</th>
+            <th>Badges</th>
+            <th>Scout Medallions</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
 
-    <a href="/menu">← Back to Menu</a>
-  </div>
+        <tbody>
+          <% if(!topScores || topScores.length === 0){ %>
+            <tr class="empty-row">
+              <td colspan="8">No field records are available yet.</td>
+            </tr>
+          <% } %>
+
+          <% topScores.forEach((entry, index) => { %>
+            <tr>
+              <td class="rank">
+                <% const romanRanks = ["Ⅰ","Ⅱ","Ⅲ","Ⅳ","Ⅴ","Ⅵ","Ⅶ","Ⅷ","Ⅸ","Ⅹ"]; %>
+                <span class="rank-stack">
+                  <% if(index < 3){ %>
+                    <span class="rank-medal <%= index === 0 ? 'medal-gold' : index === 1 ? 'medal-silver' : 'medal-bronze' %>">
+                      ★
+                    </span>
+                  <% } %>
+
+                  <span class="rank-badge <%= index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : '' %>">
+                    <%= romanRanks[index] || (index + 1) %>
+                  </span>
+                </span>
+              </td>
+
+              <td class="player-cell">
+                <% if(entry._id){ %>
+                  <a class="player-link" href="/user/<%= entry._id %>">
+                    <div class="avatar-frame">
+                      <img
+                        class="player-avatar"
+                        src="<%= entry.avatar || '/images/default-avatar.png' %>"
+                        alt="<%= entry.username %> profile photo"
+                        onerror="this.onerror=null;this.src='/images/default-avatar.png';"
+                      >
+                    </div>
+                    <div class="player-info">
+                      <span class="player-name"><%= entry.username %></span>
+                      <span class="player-label">Registered Soldier</span>
+                    </div>
+                  </a>
+                <% } else { %>
+                  <div class="player-link">
+                    <div class="avatar-frame">
+                      <img
+                        class="player-avatar"
+                        src="<%= entry.avatar || '/images/default-avatar.png' %>"
+                        alt="<%= entry.username %> profile photo"
+                        onerror="this.onerror=null;this.src='/images/default-avatar.png';"
+                      >
+                    </div>
+                    <div class="player-info">
+                      <span class="player-name"><%= entry.username %></span>
+                      <span class="player-label">Registered Soldier</span>
+                    </div>
+                  </div>
+                <% } %>
+              </td>
+
+              <td><span class="metric-pill"><%= entry.level || 1 %></span></td>
+              <td class="power"><%= entry.leaderboardPower || 0 %></td>
+              <td><span class="metric-pill"><%= entry.completedSectorCount || 0 %></span></td>
+              <td><span class="metric-pill"><%= entry.titanKills || 0 %></span></td>
+              <td class="badge-data">
+                <% const badgeCount = Number(entry.badgeCount || 0); %>
+                <% const badgePoints = Number(entry.badgeScore || 0); %>
+                <strong><%= badgeCount %></strong> <%= badgeCount === 1 ? "badge" : "badges" %><br>
+                <span><%= badgePoints %> <%= badgePoints === 1 ? "point" : "points" %></span>
+              </td>
+              <td><span class="metric-pill"><%= entry.coins || 0 %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="footer-actions">
+      <a href="/menu" class="back-link">← Back To Menu</a>
+      <span class="record-note">Official Field Record · Scout Regiment Archive</span>
+    </footer>
+  </main>
 </body>
 </html>

@@ -296,53 +296,18 @@ function getLeaderboardPower(user) {
   );
 }
 
-
-
 function getLevelFromScore(score){
-  if(score >= 12000) return 10;
-  if(score >= 9000) return 9;
-  if(score >= 7500) return 8;
-  if(score >= 6200) return 7;
-  if(score >= 5000) return 6;
-  if(score >= 4000) return 5;
-  if(score >= 3000) return 4;
-  if(score >= 2000) return 3;
-  if(score >= 1000) return 2;
-  return 1;
+  const safeScore = Math.max(0, Number(score) || 0);
+  return Math.floor(Math.sqrt(safeScore / 500)) + 1;
 }
 
-function getLevelMinScore(level){
-  const levelTable = {
-    1: 0,
-    2: 1000,
-    3: 2000,
-    4: 3000,
-    5: 4000,
-    6: 5000,
-    7: 6200,
-    8: 7500,
-    9: 9000,
-    10: 12000
-  };
 
-  return levelTable[level] || 12000;
+function getLevelMinScore(level){
+  return Math.pow(level - 1, 2) * 500;
 }
 
 function getNextLevelScore(level){
-  const levelTable = {
-    1: 1000,
-    2: 2000,
-    3: 3000,
-    4: 4000,
-    5: 5000,
-    6: 6200,
-    7: 7500,
-    8: 9000,
-    9: 12000,
-    10: 14000
-  };
-
-  return levelTable[level] || 14000;
+  return Math.pow(level, 2) * 500;
 }
 
 function getTitleByKills(titanKills) {
@@ -405,19 +370,14 @@ function getBadgeByKey(key) {
 function getLevelRewards(level){
   const rewards = [];
 
-  // her level coin
-  rewards.push(`${level * 50} coins`);
+  rewards.push(`${level * 50} Scout Medallions`);
 
-  if(level === 3){
-    rewards.push("New Title: Titan's Nightmare");
+  if(level % 5 === 0){
+    rewards.push("Veteran Scout Bonus");
   }
 
-  if(level === 5){
-    rewards.push("Character Unlocked: Armin");
-  }
-
-  if(level === 10){
-    rewards.push("Character Unlocked: Mikasa");
+  if(level % 10 === 0){
+    rewards.push("Elite Scout Milestone");
   }
 
   return rewards;
@@ -837,9 +797,6 @@ app.post("/save-score", requireAuth, async (req,res)=>{
       return res.status(404).json({ success:false, message:"User not found" });
     }
 
-    if(!Array.isArray(user.unlockedCharacters)){
-      user.unlockedCharacters = ["eren"];
-    }
 
     if(!Array.isArray(user.unlockedTitles)){
       user.unlockedTitles = ["Recruit"];
@@ -877,21 +834,9 @@ if (newBestCombo > currentBestCombo) {
     const newLevel = getLevelFromScore(user.totalScore);
     user.level = newLevel;
 
-    let unlockedCharacter = null;
-
     if(newLevel > oldLevel){
       req.session.levelUp = `Level Up! Level ${newLevel}`;
       req.session.levelRewards = getLevelRewards(newLevel);
-    }
-
-    if(user.level >= 5 && !user.unlockedCharacters.includes("armin")){
-      user.unlockedCharacters.push("armin");
-      unlockedCharacter = "armin";
-    }
-
-    if(user.level >= 10 && !user.unlockedCharacters.includes("mikasa")){
-      user.unlockedCharacters.push("mikasa");
-      unlockedCharacter = "mikasa";
     }
 
     user.unlockedTitles = getUnlockedTitlesByKills(user.titanKills);
@@ -908,7 +853,6 @@ if (newBestCombo > currentBestCombo) {
     return res.json({
       success: true,
       unlockedTitle,
-      unlockedCharacter,
       totalScore: user.totalScore,
       highestScore: user.highestScore,
       bestCombo: user.bestCombo,
@@ -957,10 +901,14 @@ return res.render("register",{error:"Username or email already in use",success:n
 const hashedPassword = await bcrypt.hash(password,10)
 // kullanıcı oluştur
 const user = new User({
-username,
-email,
-password:hashedPassword
-})
+  username,
+  email,
+  password: hashedPassword,
+
+  // New accounts always start with the default soldier.
+  ownedSkins: ["default"],
+  selectedSkin: "default"
+});
 await user.save()
 
 
@@ -968,15 +916,109 @@ await user.save()
 const verifyLink = `http://localhost:5000/verify/${user._id}`
 
 await transporter.sendMail({
-from:process.env.EMAIL_USER,
-to:email,
-subject:"Email Verification",
+  from: process.env.EMAIL_USER,
+  to: email,
+  subject: "Verify Your Giants Game Account",
 
-html:`
-<h2>Verify email</h2>
-<a href="${verifyLink}">Verify your email and log in.</a>
-`
-})
+  html: `
+  <div style="background:#f4efe6;padding:40px;font-family:Arial,sans-serif;">
+    <div style="
+      max-width:650px;
+      margin:auto;
+      background:#ffffff;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 8px 25px rgba(0,0,0,.12);
+    ">
+
+      <div style="
+        background:#2b2b2b;
+        padding:35px;
+        text-align:center;
+      ">
+        <h1 style="
+          color:#f5e6c8;
+          margin:0;
+          font-size:32px;
+        ">
+          TITANS GAME
+        </h1>
+
+        <p style="
+          color:#cdb78f;
+          margin-top:10px;
+        ">
+          Scout Regiment Registration
+        </p>
+      </div>
+
+      <div style="padding:40px;color:#333;">
+
+        <h2 style="margin-top:0;">
+          Welcome, Scout!
+        </h2>
+
+        <p>
+          Thank you for joining Giants Game.
+          Before entering the battlefield, you must verify your email address.
+        </p>
+
+        <p>
+          Click the button below to activate your account:
+        </p>
+
+        <div style="text-align:center;margin:35px 0;">
+          <a href="${verifyLink}"
+             style="
+              background:#8b5e34;
+              color:white;
+              text-decoration:none;
+              padding:15px 36px;
+              border-radius:8px;
+              display:inline-block;
+              font-weight:bold;
+              font-size:16px;
+             ">
+            VERIFY ACCOUNT
+          </a>
+        </div>
+
+        <p style="font-size:14px;color:#666;">
+          If the button does not work, copy the link below into your browser:
+        </p>
+
+        <div style="
+          background:#f6f6f6;
+          padding:12px;
+          border-radius:8px;
+          word-break:break-all;
+          font-size:13px;
+          color:#555;
+        ">
+          ${verifyLink}
+        </div>
+
+        <hr style="
+          margin:30px 0;
+          border:none;
+          border-top:1px solid #e0e0e0;
+        ">
+
+        <p style="
+          font-size:12px;
+          color:#888;
+          line-height:1.7;
+        ">
+          This message was sent automatically by Giants Game.<br>
+          If you did not create an account, you may safely ignore this email.
+        </p>
+
+      </div>
+    </div>
+  </div>
+  `
+});
+
 
 // register sayfasında mesaj göster
 return res.render("register",{
@@ -1161,8 +1203,13 @@ app.get("/menu", requireAuth, async (req,res)=>{
     const level = getLevelFromScore(user.totalScore);
     const currentMin = getLevelMinScore(level);
     const nextLevel = getNextLevelScore(level);
-    const progress = (user.totalScore - currentMin) / (nextLevel - currentMin);
-
+    const progress = Math.max(
+  0,
+  Math.min(
+    1,
+    (user.totalScore - currentMin) / (nextLevel - currentMin)
+  )
+);
     const titleUnlocked = req.session.titleUnlocked || null;
     const levelUp = req.session.levelUp || null;
     const levelRewards = req.session.levelRewards || null;
@@ -1199,8 +1246,13 @@ app.get("/map", requireAuth, async (req,res)=>{
     const currentMin = getLevelMinScore(level);
     const nextLevel = getNextLevelScore(level);
 
-    const progress =
-      (user.totalScore - currentMin) / (nextLevel - currentMin);
+    const progress = Math.max(
+  0,
+  Math.min(
+    1,
+    (user.totalScore - currentMin) / (nextLevel - currentMin)
+  )
+);
 
     const titleUnlocked = req.session.titleUnlocked || null;
     req.session.titleUnlocked = null;
@@ -1293,42 +1345,77 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
       user.coins += Number(medals || 0) * 10;
     }
 
-    const gradeRank = { D: 1, C: 2, B: 3, A: 4, S: 5, "S+": 6 };
+    const gradeRank = {
+  D: 1,
+  C: 2,
+  B: 3,
+  A: 4,
+  S: 5,
+  "S+": 6
+};
 
-    const newGradeData = {
-      sectorKey,
-      bestCombo: Number(bestCombo) || 0,
-      titanKills: Number(titanKills) || 0,
-      medals: Number(medals) || 0,
-      score: Number(score) || 0,
-      grade: calculateSectorGrade({ bestCombo, titanKills, medals, score })
-    };
+const newGradeData = {
+  sectorKey,
+  bestCombo: Number(bestCombo) || 0,
+  titanKills: Number(titanKills) || 0,
+  medals: Number(medals) || 0,
+  score: Number(score) || 0,
+  grade: calculateSectorGrade({
+    bestCombo,
+    titanKills,
+    medals,
+    score
+  })
+};
 
-    let sectorGrade = user.sectorGrades.find(item => item.sectorKey === sectorKey);
+let sectorGrade = user.sectorGrades.find(
+  item => item.sectorKey === sectorKey
+);
 
-    if (!sectorGrade) {
-      user.sectorGrades.push(newGradeData);
-      user.totalScore = (user.totalScore || 0) + Number(score || 0);
-    } else if (Number(score || 0) > Number(sectorGrade.score || 0)) {
-      const scoreDifference = Number(score || 0) - Number(sectorGrade.score || 0);
-      user.totalScore = (user.totalScore || 0) + scoreDifference;
-    }
+let savedSectorGrade;
 
-    if (
-      !sectorGrade ||
-      gradeRank[newGradeData.grade] > gradeRank[sectorGrade.grade] ||
-      Number(newGradeData.score) > Number(sectorGrade.score || 0)
-    ) {
-      if (sectorGrade) {
-        sectorGrade.bestCombo = newGradeData.bestCombo;
-        sectorGrade.titanKills = newGradeData.titanKills;
-        sectorGrade.medals = newGradeData.medals;
-        sectorGrade.score = Math.max(Number(sectorGrade.score || 0), Number(newGradeData.score || 0));
-        if (gradeRank[newGradeData.grade] > gradeRank[sectorGrade.grade]) {
-  sectorGrade.grade = newGradeData.grade;
+if (!sectorGrade) {
+  user.sectorGrades.push(newGradeData);
+
+  user.totalScore =
+    (user.totalScore || 0) + newGradeData.score;
+
+  savedSectorGrade = newGradeData;
+} else {
+  const oldScore = Number(sectorGrade.score) || 0;
+  const oldGradeValue = gradeRank[sectorGrade.grade] || 0;
+  const newGradeValue = gradeRank[newGradeData.grade] || 0;
+
+  const gradeImproved =
+    newGradeValue > oldGradeValue;
+
+  const sameGradeWithHigherScore =
+    newGradeValue === oldGradeValue &&
+    newGradeData.score > oldScore;
+
+  // Total score stores the best sector score.
+  if (newGradeData.score > oldScore) {
+    user.totalScore =
+      (user.totalScore || 0) +
+      (newGradeData.score - oldScore);
+  }
+
+  // Replace the complete sector record only when the result is better.
+  if (gradeImproved || sameGradeWithHigherScore) {
+    sectorGrade.grade = newGradeData.grade;
+    sectorGrade.score = newGradeData.score;
+    sectorGrade.bestCombo = newGradeData.bestCombo;
+    sectorGrade.titanKills = newGradeData.titanKills;
+    sectorGrade.medals = newGradeData.medals;
+  } else if (newGradeData.score > oldScore) {
+    // Keep the better grade, but store the higher score.
+    sectorGrade.score = newGradeData.score;
+  }
+
+  savedSectorGrade = sectorGrade;
 }
-      }
-    }
+
+  
 
     user.titanKills = (user.titanKills || 0) + Number(titanKills || 0);
     user.itemsCollected = (user.itemsCollected || 0) + Number(itemsCollected || 0);
@@ -1336,6 +1423,8 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
     if (!user.highestScore || Number(score || 0) > user.highestScore) {
       user.highestScore = Number(score || 0);
     }
+    const newUserLevel = getLevelFromScore(user.totalScore);
+user.level = newUserLevel;
 
     await Score.create({
       userId: user._id,
@@ -1386,7 +1475,9 @@ app.post("/game/:level/:sector/complete", requireAuth, async (req, res) => {
       totalScore: user.totalScore,
       titanKills: user.titanKills,
       itemsCollected: user.itemsCollected,
-      sectorGrade: newGradeData.grade
+      
+      sectorGrade: savedSectorGrade.grade,
+sectorBestScore: savedSectorGrade.score
     });
 
   } catch (err) {
@@ -1415,8 +1506,8 @@ app.get("/titles", requireAuth, async (req,res)=>{
 });
 
 ////////// leaderboard
-app.get("/leaderboard", requireAuth, async (req,res)=>{
-  try{
+app.get("/leaderboard", requireAuth, async (req, res) => {
+  try {
     const users = await User.find({}).lean();
 
     const leaderboardUsers = users
@@ -1428,54 +1519,86 @@ app.get("/leaderboard", requireAuth, async (req,res)=>{
         const badgeScore = getBadgeScore(user);
         const leaderboardPower = getLeaderboardPower(user);
 
+        let avatar = user.avatar || "/images/default-avatar.png";
+
+        avatar = String(avatar)
+          .replace(/\\/g, "/")
+          .replace(/^public\//, "");
+
+        if (!avatar.startsWith("/")) {
+          avatar = "/" + avatar;
+        }
+
         return {
           _id: user._id,
           username: user.username,
+          avatar,
           titanKills: user.titanKills || 0,
           coins: user.coins || 0,
           completedSectorCount,
-          badgeCount: Array.isArray(user.ownedBadges) ? user.ownedBadges.length : 0,
+          badgeCount: Array.isArray(user.ownedBadges)
+            ? user.ownedBadges.length
+            : 0,
           badgeScore,
           leaderboardPower,
-          level: user.level || 1,
+          level: getLevelFromScore(user.totalScore || 0)
         };
       })
       .sort((a, b) => b.leaderboardPower - a.leaderboardPower)
       .slice(0, 10);
 
-    return res.render("leaderboard", { topScores: leaderboardUsers });
-  }catch(err){
+    return res.render("leaderboard", {
+      topScores: leaderboardUsers
+    });
+  } catch (err) {
     console.log("LEADERBOARD ERROR:", err);
     return res.redirect("/menu");
   }
 });
 
 ////////// public user profile
-app.get("/user/:id", requireAuth, async (req,res)=>{
-  try{
-    if(!mongoose.isValidObjectId(req.params.id)){
-      return res.redirect("/leaderboard")
+app.get("/user/:id", requireAuth, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.redirect("/leaderboard");
     }
 
-    const user = await User.findById(req.params.id)
+    const user = await User.findById(req.params.id);
 
-    if(!user){
-      return res.redirect("/leaderboard")
+    if (!user) {
+      return res.redirect("/leaderboard");
     }
 
     const scores = await Score.find({ userId: user._id })
       .sort({ score: -1 })
-      .limit(3)
+      .limit(3);
+
+    const completedSectorCount = Array.isArray(user.completedSectors)
+      ? user.completedSectors.length
+      : 0;
+
+    const ownedBadgeItems = badgePool.filter(badge =>
+      Array.isArray(user.ownedBadges) &&
+      user.ownedBadges.includes(badge.key)
+    );
+
+    const badgeScore = getBadgeScore(user);
 
     return res.render("profile", {
       profileUser: user.toObject ? user.toObject() : user,
-      scores
-    })
-  }catch(err){
-    console.log("PUBLIC PROFILE ERROR:", err)
-    return res.redirect("/leaderboard")
+      scores,
+      completedSectorCount,
+      ownedBadgeItems,
+      badgeScore,
+      isOwnProfile:
+        String(req.session.user.id) === String(user._id)
+    });
+
+  } catch (err) {
+    console.log("PUBLIC PROFILE ERROR:", err);
+    return res.redirect("/leaderboard");
   }
-})
+});
 
 ///////reset password
 app.get("/reset-password/:id",(req,res)=>{

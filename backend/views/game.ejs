@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Giants Game</title>
   <%- include("partials/music") %>
+<%- include("partials/top-controls") %>
 <style>
   *{
     box-sizing:border-box;
@@ -150,6 +151,63 @@ body::before{
 #completeSectorBtn:hover{
   filter:brightness(1.18);
   transform:translateY(-1px);
+}
+
+.game-over-actions{
+  display:none;
+  position:absolute;
+  left:50%;
+  top:535px;
+  transform:translateX(-50%);
+  z-index:35;
+  gap:16px;
+  justify-content:center;
+  align-items:center;
+  padding:10px 14px;
+  background:rgba(3,4,5,0.38);
+  border:1px solid rgba(218,178,91,0.22);
+  box-shadow:0 18px 40px rgba(0,0,0,0.42);
+  backdrop-filter:blur(3px);
+}
+
+.game-over-actions button{
+  min-width:154px;
+  height:44px;
+  padding:0 18px;
+  border:1px solid rgba(236,190,88,0.78);
+  color:white;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:1.15px;
+  cursor:pointer;
+  text-transform:uppercase;
+  box-shadow:
+    0 0 0 2px rgba(0,0,0,0.62),
+    0 14px 26px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -14px 24px rgba(0,0,0,0.28);
+  transition:.18s ease;
+}
+
+.game-over-actions button:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.18);
+}
+
+.game-over-actions button:active{
+  transform:translateY(0);
+}
+
+.game-over-retry{
+  background:linear-gradient(180deg, #8f231c, #4a0907);
+}
+
+.game-over-menu{
+  background:linear-gradient(180deg, #4a463c, #151515);
+}
+
+.game-over-map{
+  background:linear-gradient(180deg, #105f95, #061f39);
 }
 
 .sector-result-panel{
@@ -520,10 +578,16 @@ body::before{
   A/D Move · W Jump · Space Attack · Mouse Grapple · E Carry Civilian · G Drop · R Restart
 </div>
 
-<div id="scoreText" style="display:none;">Keşif Madalyonu: 0</div>
+<div id="scoreText" style="display:none;">Scout Medallion: 0</div>
 
 <div class="game-canvas-wrap">
   <canvas id="gameCanvas" width="1200" height="650"></canvas>
+
+  <div id="gameOverActions" class="game-over-actions">
+    <button id="gameOverRetryBtn" class="game-over-retry">↻ Retry</button>
+    <button id="gameOverMenuBtn" class="game-over-menu">⌂ Main Menu</button>
+    <button id="gameOverMapBtn" class="game-over-map">▣ Map</button>
+  </div>
 
   <button id="completeSectorBtn" class="complete-sector-canvas-btn">
     COMPLETE SECTOR
@@ -1114,7 +1178,6 @@ function drawTitanSteamEffects() {
   ctx.restore();
 }
 
-
 function updateBoostPickupEffects() {
   for (let i = boostPickupEffects.length - 1; i >= 0; i--) {
     const e = boostPickupEffects[i];
@@ -1152,7 +1215,6 @@ function updateBoostPickupEffects() {
   }
 }
 
-
 function updateCoinPickupEffects() {
   for (let i = coinPickupEffects.length - 1; i >= 0; i--) {
     const e = coinPickupEffects[i];
@@ -1177,7 +1239,6 @@ function updateCoinPickupEffects() {
     }
   }
 }
-
 
 function updateHealEffects() {
   for (let i = healEffects.length - 1; i >= 0; i--) {
@@ -1282,8 +1343,329 @@ const annieSprites = {
 annieSprites.lying.src = "/images/titans/female/annie_lying.png";
 annieSprites.crystal.src = "/images/titans/female/annie_crystal.png";
 
+
+////////////
+const armoredTitanSprites = {
+  idle: new Image(),
+  walk1: new Image(),
+  walk2: new Image(),
+  walk3: new Image(),
+  walk4: new Image(),
+  walk5: new Image(),
+  attack: new Image(),
+  hurt: new Image(),
+  dead: new Image()
+};
+
+armoredTitanSprites.idle.src = "/images/titans/armored/01_idle.png";
+armoredTitanSprites.walk1.src = "/images/titans/armored/02_walk_1.png";
+armoredTitanSprites.walk2.src = "/images/titans/armored/03_walk_2.png";
+armoredTitanSprites.walk3.src = "/images/titans/armored/04_walk_3.png";
+armoredTitanSprites.walk4.src = "/images/titans/armored/05_walk_4.png";
+armoredTitanSprites.walk5.src = "/images/titans/armored/05_walk_5.png";
+armoredTitanSprites.attack.src = "/images/titans/armored/07_attack.png";
+armoredTitanSprites.hurt.src = "/images/titans/armored/08_hurt.png";
+armoredTitanSprites.dead.src = "/images/titans/armored/09_dead.png";
+
+const armoredTitanWalkFrames = [
+  armoredTitanSprites.walk1,
+  armoredTitanSprites.walk2,
+  armoredTitanSprites.walk3,
+  armoredTitanSprites.walk4,
+  armoredTitanSprites.walk5
+];
+
+
+const beastTitanSprites = {
+  idle: new Image(),
+  walk1: new Image(),
+  walk2: new Image(),
+  walk3: new Image(),
+  walk4: new Image(),
+  walk5: new Image(),
+  attack: new Image(),
+  hurt: new Image(),
+  dead: new Image()
+};
+
+beastTitanSprites.idle.src = "/images/titans/beast/01_idle.png";
+beastTitanSprites.walk1.src = "/images/titans/beast/02_walk_1.png";
+beastTitanSprites.walk2.src = "/images/titans/beast/03_walk_2.png";
+beastTitanSprites.walk3.src = "/images/titans/beast/04_walk_3.png";
+beastTitanSprites.walk4.src = "/images/titans/beast/05_walk_4.png";
+beastTitanSprites.walk5.src = "/images/titans/beast/05_walk_5.png";
+beastTitanSprites.attack.src = "/images/titans/beast/07_attack.png";
+beastTitanSprites.hurt.src = "/images/titans/beast/08_hurt.png";
+beastTitanSprites.dead.src = "/images/titans/beast/09_dead.png";
+
+const beastTitanWalkFrames = [
+  beastTitanSprites.walk1,
+  beastTitanSprites.walk2,
+  beastTitanSprites.walk3,
+  beastTitanSprites.walk4,
+  beastTitanSprites.walk5
+];
+
+
+
 const lanternSprite = new Image();
 lanternSprite.src = "/images/items/lantern.png";
+
+
+
+const colossalBgSprite = new Image();
+colossalBgSprite.src = "/images/battle5-colossal-bg.png"; 
+// transparan arkaplanlı dev sprite önerilir
+
+const COLOSSAL_PARALLAX_SPEED = 0.15;
+
+let colossalBg = {
+  active: false,
+
+  // Haritanın başlangıcından biraz önce başlasın
+  x: -420,
+  y: 20,
+
+  width: 430,
+  height: 650,
+
+  speed: 0.42,
+  alpha: 0.56,
+
+  bobOffset: 0,
+  stepTimer: 0,
+  stepInterval: 170,
+  steamTimer: 0,
+
+  finished: false
+};
+
+let colossalSteamParticles = [];
+
+function resetColossalBackgroundTitan() {
+  colossalBg.active = isBattle5Sector();
+
+  colossalBg.x = -420;
+  colossalBg.y = 20;
+
+  colossalBg.speed = 0.42;
+  colossalBg.alpha = 0.56;
+
+  colossalBg.bobOffset = 0;
+  colossalBg.stepTimer = 0;
+  colossalBg.stepInterval = 170;
+  colossalBg.steamTimer = 0;
+  colossalBg.finished = false;
+
+  colossalSteamParticles = [];
+}
+
+function updateColossalBackgroundTitan() {
+  if (
+    !colossalBg.active ||
+    colossalBg.finished ||
+    game.state !== "playing"
+  ) {
+    updateColossalSteamParticles();
+    return;
+  }
+
+  // Haritanın başından sonuna doğru ilerler
+  colossalBg.x += colossalBg.speed;
+
+  const time = performance.now() * 0.0014;
+  colossalBg.bobOffset = Math.sin(time) * 3;
+
+  colossalBg.stepTimer++;
+  colossalBg.steamTimer++;
+
+  // Haritanın sonuna ulaşınca durur
+  if (colossalBg.x >= WORLD.width + 250) {
+    colossalBg.x = WORLD.width + 250;
+    colossalBg.finished = true;
+  }
+
+  // Yürüyüş sırasında omuz ve sırt buharı
+  if (colossalBg.steamTimer >= 15) {
+    colossalBg.steamTimer = 0;
+
+    spawnColossalSteam(
+      colossalBg.x + colossalBg.width * 0.48 +
+        randomRange(-25, 25),
+
+      colossalBg.y + colossalBg.height * 0.20 +
+        randomRange(-18, 18),
+
+      2
+    );
+  }
+
+  // Ağır adım efekti
+  if (colossalBg.stepTimer >= colossalBg.stepInterval) {
+    colossalBg.stepTimer = 0;
+
+    spawnColossalSteam(
+      colossalBg.x + colossalBg.width * 0.43,
+      colossalBg.y + colossalBg.height * 0.30,
+      7
+    );
+
+    spawnColossalSteam(
+      colossalBg.x + colossalBg.width * 0.58,
+      colossalBg.y + colossalBg.height * 0.23,
+      5
+    );
+
+    screenShakeTimer = Math.max(screenShakeTimer, 3);
+  }
+
+  updateColossalSteamParticles();
+}
+
+function randomRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function spawnColossalSteam(x, y, amount = 5) {
+  for (let i = 0; i < amount; i++) {
+    colossalSteamParticles.push({
+      x,
+      y,
+      vx: randomRange(-0.5, 0.5),
+      vy: randomRange(-2.8, -1.2),
+      size: randomRange(18, 42),
+      alpha: randomRange(0.18, 0.34),
+      life: randomRange(50, 90),
+      maxLife: 90
+    });
+  }
+}
+
+function updateColossalSteamParticles() {
+  for (let i = colossalSteamParticles.length - 1; i >= 0; i--) {
+    const p = colossalSteamParticles[i];
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    p.alpha *= 0.985;
+    p.size += 0.22;
+
+    if (p.life <= 0 || p.alpha <= 0.01) {
+      colossalSteamParticles.splice(i, 1);
+    }
+  }
+}
+
+function drawColossalSteamParticles() {
+  for (const p of colossalSteamParticles) {
+    const px =
+  p.x -
+  camera.x * COLOSSAL_PARALLAX_SPEED;
+    const py = p.y;
+
+    const alpha = Math.max(0, (p.life / p.maxLife) * p.alpha);
+
+    const grad = ctx.createRadialGradient(
+      px, py, 0,
+      px, py, p.size
+    );
+
+    grad.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    grad.addColorStop(0.45, `rgba(220,220,220,${alpha * 0.75})`);
+    grad.addColorStop(1, "rgba(80,80,80,0)");
+
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawColossalBackgroundTitan() {
+  if (
+    !colossalBg.active ||
+    !colossalBgSprite.complete ||
+    colossalBgSprite.naturalWidth === 0
+  ) {
+    return;
+  }
+
+  const drawX =
+    colossalBg.x -
+    camera.x * COLOSSAL_PARALLAX_SPEED;
+
+  const drawY =
+    colossalBg.y +
+    colossalBg.bobOffset;
+
+  // Ekran dışında olduğunda gereksiz çizim yapma
+  if (
+    drawX + colossalBg.width < -100 ||
+    drawX > canvas.width + 100
+  ) {
+    return;
+  }
+
+  ctx.save();
+
+  ctx.globalAlpha = colossalBg.alpha;
+
+  const glowX = drawX + colossalBg.width * 0.5;
+  const glowY = drawY + colossalBg.height * 0.34;
+
+  const glow = ctx.createRadialGradient(
+    glowX,
+    glowY,
+    0,
+    glowX,
+    glowY,
+    colossalBg.width * 0.72
+  );
+
+  glow.addColorStop(
+    0,
+    "rgba(255,135,55,0.13)"
+  );
+
+  glow.addColorStop(
+    0.45,
+    "rgba(255,75,20,0.07)"
+  );
+
+  glow.addColorStop(
+    1,
+    "rgba(0,0,0,0)"
+  );
+
+  ctx.fillStyle = glow;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    glowX,
+    glowY,
+    colossalBg.width * 0.72,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.drawImage(
+    colossalBgSprite,
+    drawX,
+    drawY,
+    colossalBg.width,
+    colossalBg.height
+  );
+
+  ctx.restore();
+
+  drawColossalSteamParticles();
+}
 
 
 ////////////civil sprites
@@ -1309,8 +1691,6 @@ civilianSprites.rescued.src = "/images/civilians/07_rescued.png";
 civilianSprites.dead.src = "/images/civilians/08_dead.png";
 civilianSprites.carried.src = "/images/civilians/09_carried.png";
 
-
-
 const civilianRunFrames = [
   civilianSprites.run1,
   civilianSprites.run2,
@@ -1318,11 +1698,9 @@ const civilianRunFrames = [
   civilianSprites.run4
 ];
 
-
-
-
 const rescueSoldierSprite = new Image();
 rescueSoldierSprite.src = "/images/npcs/rescue_soldier.png";
+
 
 
     function rand(min, max) {
@@ -1440,7 +1818,6 @@ const platformSlots = itemSlots
   }));
 
 
-
 // Battle 3 sector ayarları
 const rescueSettingsBySector = {
   // Sector 1 öğretici: Dişi Dev sivile saldırmaz, sadece takip baskısı verir.
@@ -1500,23 +1877,46 @@ const rescueSettingsBySector = {
 };
 
     function createBossTitan() {
-      const boss = createTitan(3450, 3300, 3650, -1);
+      const isEarlyBattleBoss = currentBattle === 1 || currentBattle === 2;
 
-      boss.height = 170;
-      boss.width = 75;
-      boss.spriteWidth = 135;
-      boss.spriteHeight = 210;
+      const boss = createTitan(
+        isEarlyBattleBoss ? WORLD.width - 520 : 3450,
+        isEarlyBattleBoss ? 90 : 3300,
+        isEarlyBattleBoss ? WORLD.width - 170 : 3650,
+        -1
+      );
+
+      if (isEarlyBattleBoss) {
+        // Battle 1 ve 2 bossları artık diğer özel bosslar gibi büyük görünür
+        // ve Dişi Dev mantığına benzer şekilde bölümün başından sonuna devriye gezer.
+        boss.height = 270;
+        boss.width = 112;
+        boss.spriteWidth = 215;
+        boss.spriteHeight = 315;
+        boss.maxHealth = 22 + currentBattle * 5;
+        boss.damage = 19 + currentBattle * 2;
+        boss.moveSpeed = 1.05 + currentBattle * 0.08;
+        boss.fullMapPatrolBoss = true;
+      } else {
+        boss.height = 170;
+        boss.width = 75;
+        boss.spriteWidth = 135;
+        boss.spriteHeight = 210;
+        boss.maxHealth = 12 + currentBattle * 3;
+        boss.damage = 15 + currentBattle * 2;
+        boss.moveSpeed = 0.55 + currentBattle * 0.06;
+      }
+
       boss.y = ground.y - boss.height;
-      boss.maxHealth = 12 + currentBattle * 3;
       boss.health = boss.maxHealth;
-      boss.damage = 15 + currentBattle * 2;
-      boss.moveSpeed = 0.55 + currentBattle * 0.06;
       boss.isBoss = true;
+      boss.dir = -1;
+      boss.faceDir = -1;
 
       return boss;
     }
 
-    function createFemaleTitan() {
+  function createFemaleTitan() {
   const female = createTitan(850, 420, WORLD.width - 420, 1);
 
   female.isFemaleTitan = true;
@@ -1574,8 +1974,6 @@ height: 34,
   
 }
 
-
-
 function spawnRescueCivilian() {
   if (civilianQueue.length <= 0) {
     activeCivilian = null;
@@ -1586,10 +1984,87 @@ function spawnRescueCivilian() {
   activeCivilian = createCivilian();
 }
 
+function createArmoredTitan() {
+  const armored = createTitan(3400, 90, WORLD.width - 160, -1);
+
+  armored.isArmoredTitan = true;
+  armored.isBoss = true;
+
+  armored.height = 280;
+  armored.width = 115;
+  armored.spriteWidth = 220;
+  armored.spriteHeight = 320;
+  armored.y = ground.y - armored.height;
+
+  armored.maxHealth = 35;
+  armored.health = armored.maxHealth;
+  armored.damage = 22;
+  armored.moveSpeed = 1.25;
+
+  armored.dir = -1;
+  armored.faceDir = -1;
+
+  armored.specialAttackCooldown = 180;
+  armored.specialAttackMode = "idle";
+  armored.specialAttackTimer = 0;
+  armored.chargeDamageCooldown = 0;
+
+  // Oyuncunun birkaç vuruşundan sonra uzun süre sersemler.
+  armored.staggerHitCount = 0;
+  armored.staggerHitsNeeded = 4;
+  armored.staggerDuration = 260;
+  armored.staggerCooldown = 0;
+  armored.staggerImmunityTimer = 0;
+
+  return armored;
+}
+
+function createBeastTitan() {
+  // Dişi Dev gibi haritanın iki ucu arasında devriye gezer.
+  const beast = createTitan(850, 90, WORLD.width - 160, 1);
+
+  beast.isBeastTitan = true;
+  beast.isBoss = true;
+
+  beast.height = 300;
+  beast.width = 125;
+  beast.spriteWidth = 240;
+  beast.spriteHeight = 340;
+  beast.y = ground.y - beast.height;
+
+  beast.maxHealth = 42;
+  beast.health = beast.maxHealth;
+  beast.damage = 24;
+  beast.moveSpeed = 1.05;
+
+  beast.dir = 1;
+  beast.faceDir = 1;
+
+  // Taş atma kaldırıldı; bunun yerine uyarılı yakın alan saldırısı yapar.
+  beast.specialAttackCooldown = 210;
+  beast.specialAttackMode = "idle";
+  beast.specialAttackTimer = 0;
+  beast.meleeDamageDone = false;
+
+  return beast;
+}
+
 
     function spawnTitansBySector() {
       titans.length = 0;
-      
+
+      if (currentBattle === 4 && currentSectorNumber === 10) {
+  titans.push(createBeastTitan());
+  playSfx("bossRoar", 0.65, 3000);
+  return;
+}
+
+      if (currentBattle === 5 && currentSectorNumber === 10) {
+  titans.push(createArmoredTitan());
+  playSfx("bossRoar", 0.65, 3000);
+  return;
+}
+
       if (isFemaleTitanBattle) {
   titans.push(createFemaleTitan());
   
@@ -1754,8 +2229,6 @@ for (let i = 0; i < supportTitanCount; i++) {
   }
 }
 
-
-
     function setupSectorContent() {
       spawnTitansBySector();
       spawnItemsBySector();
@@ -1848,7 +2321,10 @@ let titanSteamEffects = [];
 let lowGasWarningTimer = 0;
 let lowGasBeepTimer = 0;
 
+let lastChestOpenImage =
+  "/images/ui/chests/scout_open.png";
 
+let bossSpecialWarning = null;
 
     function spawnBlood(x, y, count = 10) {
   for (let i = 0; i < count; i++) {
@@ -2021,7 +2497,6 @@ if (p.type === "blackAsh") {
   ctx.restore();
 }
 
-
 function updateDistantTitanSound() {
   if (game.state !== "playing") return;
 
@@ -2035,7 +2510,6 @@ function updateDistantTitanSound() {
     distantTitanTimer = randInt(900, 1800);
   }
 }
-
 
 function drawFogLayer() {
   ctx.save();
@@ -2436,6 +2910,7 @@ function drawGasPickupEffects() {
     ctx.restore();
   }
 }
+
 function drawBoostPickupEffects() {
   for (const e of boostPickupEffects) {
     const alpha = e.life / e.maxLife;
@@ -2582,9 +3057,7 @@ function drawBossRageAura() {
   }
 }
 
-
-
-    function updateBloodEffects() {
+  function updateBloodEffects() {
   for (let i = bloodEffects.length - 1; i >= 0; i--) {
     const p = bloodEffects[i];
 
@@ -2887,10 +3360,23 @@ function attackTitanIfPossible(titan) {
   }
 
   if (!hitNape) {
-    damage = 0.5;
+    // Zırhlı Dev'in gövde zırhı hasarı azaltır ama tamamen engellemez.
+    // Böylece can barı her başarılı vuruşta görünür biçimde azalır.
+    if (titan.isArmoredTitan) {
+      damage = Math.max(1, damage * 0.75);
+    } else {
+      damage = 0.5;
+    }
+
     titan.bodyHitCount++;
 
-    if (titan.bodyHitCount >= 3) {
+    // Zırhlı ve Maymun Dev kendi özel davranışlarını kullandığı için
+    // normal devlerin üç gövde vuruşu sonrası öfkelenme davranışına girmez.
+    if (
+      !titan.isArmoredTitan &&
+      !titan.isBeastTitan &&
+      titan.bodyHitCount >= 3
+    ) {
       titan.rageTimer = 35;
       titan.bodyHitCount = 0;
       titan.attackCooldown = 0;
@@ -2907,18 +3393,70 @@ function attackTitanIfPossible(titan) {
 
   titan.health -= damage;
 
+  // Son vuruş mutlaka arkadan enseye gelmelidir.
   if (titan.health <= 0 && !validNapeKill) {
     titan.health = 1;
+  }
+
+  let armoredStaggerTriggered = false;
+
+  if (
+    titan.isArmoredTitan &&
+    titan.staggerCooldown <= 0 &&
+    titan.staggerImmunityTimer <= 0
+  ) {
+    titan.staggerHitCount = (titan.staggerHitCount || 0) + 1;
+
+    if (titan.staggerHitCount >= (titan.staggerHitsNeeded || 4)) {
+      titan.staggerHitCount = 0;
+      titan.staggerCooldown = 460;
+      titan.staggerImmunityTimer = 560;
+      titan.stunTimer = titan.staggerDuration || 150;
+      titan.state = "hurt";
+      titan.attackFlashTimer = 0;
+      titan.rageTimer = 0;
+
+      // Hücumunu kes ve oyuncuya ensesine geçme fırsatı ver.
+      titan.specialAttackMode = "idle";
+      titan.specialAttackTimer = 0;
+      titan.specialAttackCooldown = Math.max(titan.specialAttackCooldown || 0, 180);
+      bossSpecialWarning = null;
+
+      armoredStaggerTriggered = true;
+      screenShakeTimer = Math.max(screenShakeTimer, 12);
+    }
+  }
+
+  if (
+    (titan.isArmoredTitan || titan.isBeastTitan) &&
+    !armoredStaggerTriggered &&
+    titan.stunTimer <= 0
+  ) {
+    titan.counterHitCount = (titan.counterHitCount || 0) + 1;
+
+    if (titan.counterHitCount >= (titan.counterHitsNeeded || 3)) {
+      titan.counterHitCount = 0;
+      titan.specialAttackMode = "warning";
+      titan.specialAttackTimer = titan.isArmoredTitan ? 55 : 60;
+      titan.specialAttackCooldown = 0;
+      titan.attackFlashTimer = titan.specialAttackTimer;
+      bossSpecialWarning = {
+        text: titan.isArmoredTitan ? "ARMORED TITAN COUNTER!" : "BEAST TITAN COUNTER!",
+        timer: titan.specialAttackTimer,
+        type: titan.isArmoredTitan ? "charge" : "beast"
+      };
+    }
   }
 
   titan.hitCooldown = hitNape ? 16 : 8;
   titan.bloodTimer = 10;
 
-  if (hitNape) {
-    titan.stunTimer = 20;
+  if (armoredStaggerTriggered || (titan.isArmoredTitan && titan.stunTimer > 20)) {
+    titan.state = "hurt";
+  } else if (hitNape) {
+    titan.stunTimer = Math.max(titan.stunTimer, 20);
     titan.state = "hurt";
   } else if (titan.rageTimer <= 0) {
-    titan.stunTimer = 0;
     titan.state = "walk";
   }
 
@@ -2948,46 +3486,44 @@ function attackTitanIfPossible(titan) {
   player.vy = Math.min(player.vy, -2.8);
 
   if (titan.health <= 0 && validNapeKill) {
-  finalStrikeTimer = 26;
-  screenShakeTimer = Math.max(screenShakeTimer, 18);
+    finalStrikeTimer = 26;
+    screenShakeTimer = Math.max(screenShakeTimer, 18);
 
-  game.timeScale = 0.28;
+    game.timeScale = 0.28;
 
-  setTimeout(() => {
-    game.timeScale = 1;
-  }, 350);
+    setTimeout(() => {
+      game.timeScale = 1;
+    }, 350);
 
-  titan.alive = false;
-  titan.state = "dead";
-  titan.deadTimer = 300;
-  titan.drawDead = true;
-  titan.steamSpawned = false;
+    titan.alive = false;
+    titan.state = "dead";
+    titan.deadTimer = 300;
+    titan.drawDead = true;
+    titan.steamSpawned = false;
 
-  spawnBlood(bloodX, bloodY, 38);
+    spawnBlood(bloodX, bloodY, 38);
 
-  playSfx("titanDeath", 0.45, 1200);
-  playSfx("napeKill", 0.55, 500);
+    playSfx("titanDeath", 0.45, 1200);
+    playSfx("napeKill", 0.55, 500);
 
-  killScore += titan.maxHealth * 140;
-  titanKillCount++;
+    killScore += titan.maxHealth * 140;
+    titanKillCount++;
 
-  if (isFemaleTitanFinalSector && titan.isFemaleTitan) {
-    femaleFinalPhase = "fallenTitan";
-    femaleExtractProgress = 0;
-    annieCrystalTimer = 0;
+    if (isFemaleTitanFinalSector && titan.isFemaleTitan) {
+      femaleFinalPhase = "fallenTitan";
+      femaleExtractProgress = 0;
+      annieCrystalTimer = 0;
+
+      addKillCombo();
+      return true;
+    }
 
     addKillCombo();
-    return true;
+    updateObjectiveProgress();
   }
-
-  addKillCombo();
-  updateObjectiveProgress();
-}
 
   return true;
 }
-
-
 
 function damagePlayer(amount, titanX) {
       if (game.invincibleTimer > 0 || game.state !== "playing") return;
@@ -3022,7 +3558,7 @@ function damagePlayer(amount, titanX) {
 
   player.onGround = true;
 
-  setLose("Canın bitti!");
+  setLose("Your health is depleted.");
 }
 }
     }
@@ -3231,6 +3767,8 @@ if (lastKillTime > 0 && performance.now() - lastKillTime > COMBO_WINDOW) {
     if (t.stunTimer > 0) t.stunTimer--;
     if (t.rageTimer > 0) t.rageTimer--;
     if (t.rageDamageCooldown > 0) t.rageDamageCooldown--;
+    if (t.staggerCooldown > 0) t.staggerCooldown--;
+    if (t.staggerImmunityTimer > 0) t.staggerImmunityTimer--;
   });
 
   if (finalStrikeTimer > 0) finalStrikeTimer--;
@@ -4052,7 +4590,234 @@ function handleFemaleFinalExtractionAttack() {
 }
 
 
+function isSpecialBoss(titan) {
+  return titan.isArmoredTitan || titan.isBeastTitan;
+}
 
+function updateSpecialBossMovement(titan) {
+  // Sadece gerçek sersemleme sırasında hareket etme.
+  // Kısa hitCooldown artık bossları kilitlemez; böylece sürekli vurup
+  // saldırılarını iptal etmek mümkün olmaz.
+  if (titan.stunTimer > 0) {
+    titan.state = "hurt";
+    return;
+  }
+
+  if (titan.isBeastTitan) {
+    // Maymun Dev taş atmaz ve oyuncuyu sürekli takip etmez.
+    // Dişi Dev gibi haritanın iki ucu arasında sola-sağa devriye gezer.
+    if (titan.specialAttackMode === "warning") {
+      titan.state = "attack";
+      titan.attackFlashTimer = 12;
+      return;
+    }
+
+    if (titan.specialAttackMode === "charge") {
+      const playerCenterX = player.x + player.width / 2;
+      const titanCenterX = titan.x + titan.width / 2;
+
+      titan.dir = playerCenterX < titanCenterX ? -1 : 1;
+      titan.faceDir = titan.dir;
+      titan.state = "attack";
+      titan.x += titan.dir * titan.moveSpeed * 3.45;
+
+      if (titan.chargeDamageCooldown > 0) {
+        titan.chargeDamageCooldown--;
+      }
+
+      const titanRect = {
+        x: titan.x,
+        y: titan.y,
+        width: titan.width,
+        height: titan.height
+      };
+
+      if (
+        rectsCollide(getPlayerRect(), titanRect) &&
+        titan.chargeDamageCooldown <= 0 &&
+        !player.grabbed
+      ) {
+        damagePlayer(titan.damage + 8, titan.x + titan.width / 2);
+        screenShakeTimer = Math.max(screenShakeTimer, 13);
+        titan.chargeDamageCooldown = 90;
+        titan.chargeTouchedPlayer = true;
+        titan.specialAttackMode = "idle";
+        titan.specialAttackCooldown = 240;
+        titan.state = "walk";
+      }
+
+      titan.x = clamp(titan.x, 90, WORLD.width - 160);
+      return;
+    }
+
+    if (titan.x <= titan.minX) titan.dir = 1;
+    if (titan.x >= titan.maxX) titan.dir = -1;
+
+    titan.faceDir = titan.dir;
+    titan.x += titan.dir * titan.moveSpeed * 1.15;
+    titan.x = clamp(titan.x, titan.minX, titan.maxX);
+    titan.state = "walk";
+    return;
+  }
+
+  // Zırhlı Dev her zaman oyuncuya yönelir.
+  const playerCenterX = player.x + player.width / 2;
+  const titanCenterX = titan.x + titan.width / 2;
+
+  titan.dir = playerCenterX < titanCenterX ? -1 : 1;
+  titan.faceDir = titan.dir;
+
+  if (titan.specialAttackMode === "warning") {
+    titan.state = "attack";
+    titan.attackFlashTimer = 12;
+    return;
+  }
+
+  if (titan.specialAttackMode === "charge") {
+    titan.state = "attack";
+    titan.x += titan.dir * titan.moveSpeed * 3.2;
+
+    if (titan.chargeDamageCooldown > 0) {
+      titan.chargeDamageCooldown--;
+    }
+
+    const titanRect = {
+      x: titan.x,
+      y: titan.y,
+      width: titan.width,
+      height: titan.height
+    };
+
+    if (
+      rectsCollide(getPlayerRect(), titanRect) &&
+      titan.chargeDamageCooldown <= 0 &&
+      !player.grabbed
+    ) {
+      damagePlayer(30, titan.x + titan.width / 2);
+      screenShakeTimer = Math.max(screenShakeTimer, 14);
+      titan.chargeDamageCooldown = 90;
+      titan.chargeTouchedPlayer = true;
+      titan.specialAttackMode = "idle";
+      titan.specialAttackCooldown = 250;
+      titan.state = "walk";
+    }
+
+    titan.x = clamp(titan.x, 90, WORLD.width - 160);
+    return;
+  }
+
+  titan.state = "walk";
+  titan.x += titan.dir * titan.moveSpeed * 0.95;
+  titan.x = clamp(titan.x, 90, WORLD.width - 160);
+}
+
+function updateArmoredTitanSpecialAttack(titan) {
+  if (!titan.alive || titan.stunTimer > 0) return;
+
+  if (titan.specialAttackCooldown > 0) {
+    titan.specialAttackCooldown--;
+  }
+
+  if (titan.specialAttackMode === "idle") {
+    if (titan.specialAttackCooldown <= 0) {
+      titan.specialAttackMode = "warning";
+      titan.specialAttackTimer = 95;
+      titan.attackFlashTimer = 95;
+
+      bossSpecialWarning = {
+        text: "ARMORED TITAN CHARGE!",
+        timer: 95,
+        type: "charge"
+      };
+
+      playSfx("bossRage", 0.6, 2500);
+    }
+
+    return;
+  }
+
+  if (titan.specialAttackMode === "warning") {
+    titan.specialAttackTimer--;
+
+    if (titan.specialAttackTimer <= 0) {
+      titan.specialAttackMode = "charge";
+      // Oyuncuya değene kadar hızlı gelmeye çalışır; süre sadece güvenlik sınırı.
+      titan.specialAttackTimer = 220;
+      titan.chargeDamageCooldown = 0;
+      titan.chargeTouchedPlayer = false;
+      screenShakeTimer = Math.max(screenShakeTimer, 8);
+    }
+
+    return;
+  }
+
+  if (titan.specialAttackMode === "charge") {
+    titan.specialAttackTimer--;
+
+    if (titan.specialAttackTimer <= 0) {
+      titan.specialAttackMode = "idle";
+      titan.specialAttackCooldown = 250;
+      titan.state = "walk";
+    }
+  }
+}
+
+function updateBeastTitanSpecialAttack(titan) {
+  if (!titan.alive || titan.stunTimer > 0) return;
+
+  if (titan.specialAttackCooldown > 0) {
+    titan.specialAttackCooldown--;
+  }
+
+  if (titan.specialAttackMode === "idle") {
+    if (titan.specialAttackCooldown <= 0) {
+      titan.specialAttackMode = "warning";
+      titan.specialAttackTimer = 85;
+      titan.chargeDamageCooldown = 0;
+      titan.chargeTouchedPlayer = false;
+      titan.attackFlashTimer = 85;
+
+      bossSpecialWarning = {
+        text: "BEAST TITAN CHARGE!",
+        timer: 85,
+        type: "beast"
+      };
+
+      playSfx("bossRage", 0.55, 2500);
+    }
+
+    return;
+  }
+
+  if (titan.specialAttackMode === "warning") {
+    titan.specialAttackTimer--;
+    titan.state = "attack";
+    titan.attackFlashTimer = 12;
+
+    if (titan.specialAttackTimer <= 0) {
+      titan.specialAttackMode = "charge";
+      // Oyuncuya değene kadar hızlı gelir; süre sadece güvenlik sınırı.
+      titan.specialAttackTimer = 220;
+      titan.chargeDamageCooldown = 0;
+      titan.chargeTouchedPlayer = false;
+      screenShakeTimer = Math.max(screenShakeTimer, 8);
+    }
+
+    return;
+  }
+
+  if (titan.specialAttackMode === "charge") {
+    titan.specialAttackTimer--;
+    titan.state = "attack";
+    titan.attackFlashTimer = 12;
+
+    if (titan.specialAttackTimer <= 0) {
+      titan.specialAttackMode = "idle";
+      titan.specialAttackCooldown = 240;
+      titan.state = "walk";
+    }
+  }
+}
 
 function updateTitans() {
   if (game.state !== "playing") return;
@@ -4091,6 +4856,49 @@ return;
 }
 
     updateTitanAnimation(titan);
+
+    if (isSpecialBoss(titan)) {
+      // Önce oyuncunun vuruşunu işle. Eski akışta buradaki erken return
+      // nedeniyle Zırhlı ve Maymun Dev hiç hasar almıyordu.
+      if (player.attackTimer > 0) {
+        attackTitanIfPossible(titan);
+      }
+
+      if (!titan.alive) return;
+
+      updateSpecialBossMovement(titan);
+
+      if (titan.isArmoredTitan) {
+        updateArmoredTitanSpecialAttack(titan);
+      }
+
+      if (titan.isBeastTitan) {
+        updateBeastTitanSpecialAttack(titan);
+      }
+
+      // Zırhlı ve Maymun Dev oyuncuya ulaştığında normal temas saldırısı da yapabilir.
+      if ((titan.isArmoredTitan || titan.isBeastTitan) && titan.stunTimer <= 0) {
+        const titanRect = {
+          x: titan.x,
+          y: titan.y,
+          width: titan.width,
+          height: titan.height
+        };
+
+        if (
+          rectsCollide(getPlayerRect(), titanRect) &&
+          titan.specialAttackMode !== "warning" &&
+          titan.specialAttackMode !== "charge" &&
+          titan.attackCooldown <= 0
+        ) {
+          damagePlayer(titan.damage, titan.x + titan.width / 2);
+          titan.attackCooldown = titan.isArmoredTitan ? 55 : 65;
+          titan.attackFlashTimer = 12;
+        }
+      }
+
+      return;
+    }
 
 
     if (
@@ -4669,7 +5477,7 @@ async function updateFinish() {
 const parallaxSettings = {
   1: [
     { img: bg1, speed: 0.10, x: 0, y: -50 },
-    { img: bg2, speed: 0.20, x: 0, y: -50 },
+    { img: bg2, speed: 0.20, x: 0, y: -30 },
     { img: bg3, speed: 0.30, x: 0, y: 183 },
     { img: bg4, speed: 0.50, x: 0, y: 270 }
   ],
@@ -4696,25 +5504,46 @@ const parallaxSettings = {
 ],
 
   5: [
-    { img: bg1, speed: 0.10, x: 0, y: -50 },
-    { img: bg2, speed: 0.20, x: 0, y: -50 },
-    { img: bg3, speed: 0.30, x: 0, y: 183 },
-    { img: bg4, speed: 0.50, x: 0, y: 270 }
+    { img: bg1, speed: 0.10, x: -250, y: -300 },
+    { img: bg2, speed: 0.20, x: 0, y: -150 },
+    { img: bg3, speed: 0.30, x: -55, y: -10 },
+    { img: bg4, speed: 0.50, x: 0, y: -130 }
   ]
 };
 
+function drawParallaxLayer(layer) {
+  if (
+    !layer ||
+    !layer.img.complete ||
+    layer.img.naturalWidth === 0
+  ) {
+    return;
+  }
+
+  ctx.drawImage(
+    layer.img,
+    layer.x - camera.x * layer.speed,
+    layer.y
+  );
+}
+
 function drawParallax() {
-  const settings = parallaxSettings[currentBattle] || parallaxSettings[1];
+  const settings =
+    parallaxSettings[currentBattle] ||
+    parallaxSettings[1];
 
-  settings.forEach(layer => {
-    if (!layer.img.complete || layer.img.naturalWidth === 0) return;
+  // Layer 1: en uzak gökyüzü/arka plan
+  drawParallaxLayer(settings[0]);
 
-    ctx.drawImage(
-      layer.img,
-      layer.x - camera.x * layer.speed,
-      layer.y
-    );
-  });
+  // Muazzam Dev Layer 1 ve Layer 2 arasında
+  if (isBattle5Sector()) {
+    drawColossalBackgroundTitan();
+  }
+
+  // Layer 2 ve sonraki katmanlar
+  for (let i = 1; i < settings.length; i++) {
+    drawParallaxLayer(settings[i]);
+  }
 }
 
 function drawGround() {
@@ -4871,46 +5700,35 @@ function drawGround() {
 }
 
     function getTitanImage(titan) {
-
-      if (titan.isFemaleTitan) {
-  if (!titan.alive || titan.state === "dead") {
-    return femaleTitanSprites.dead;
+  if (titan.isFemaleTitan) {
+    if (!titan.alive || titan.state === "dead") return femaleTitanSprites.dead;
+    if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") return femaleTitanSprites.hurt;
+    if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") return femaleTitanSprites.attack;
+    if (titan.state === "walk") return femaleTitanWalkFrames[titan.frame % femaleTitanWalkFrames.length];
+    return femaleTitanSprites.idle;
   }
 
-  if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") {
-    return femaleTitanSprites.hurt;
+  if (titan.isArmoredTitan) {
+    if (!titan.alive || titan.state === "dead") return armoredTitanSprites.dead;
+    if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") return armoredTitanSprites.hurt;
+    if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") return armoredTitanSprites.attack;
+    if (titan.state === "walk") return armoredTitanWalkFrames[titan.frame % armoredTitanWalkFrames.length];
+    return armoredTitanSprites.idle;
   }
 
-  if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") {
-    return femaleTitanSprites.attack;
+  if (titan.isBeastTitan) {
+    if (!titan.alive || titan.state === "dead") return beastTitanSprites.dead;
+    if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") return beastTitanSprites.hurt;
+    if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") return beastTitanSprites.attack;
+    if (titan.state === "walk") return beastTitanWalkFrames[titan.frame % beastTitanWalkFrames.length];
+    return beastTitanSprites.idle;
   }
 
-  if (titan.state === "walk") {
-    return femaleTitanWalkFrames[titan.frame % femaleTitanWalkFrames.length];
-  }
-
-  return femaleTitanSprites.idle;
-}
-
-  if (!titan.alive || titan.state === "dead") {
-    return titanSprites.dead;
-  }
-
-  if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") {
-    return titanSprites.hurt;
-  }
-
-  if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") {
-    return titanSprites.attack;
-  }
-
-  if (titan.state === "walk") {
-    return titanWalkFrames[titan.frame % titanWalkFrames.length];
-  }
-
-  if (titan.state === "idle2") {
-    return titanSprites.idle2;
-  }
+  if (!titan.alive || titan.state === "dead") return titanSprites.dead;
+  if (titan.hitCooldown > 0 || titan.stunTimer > 0 || titan.state === "hurt") return titanSprites.hurt;
+  if (titan.attackFlashTimer > 0 || titan.attackCooldown > 28 || titan.state === "attack") return titanSprites.attack;
+  if (titan.state === "walk") return titanWalkFrames[titan.frame % titanWalkFrames.length];
+  if (titan.state === "idle2") return titanSprites.idle2;
 
   return titanSprites.idle1;
 }
@@ -5079,6 +5897,9 @@ drawHeight = titan.height * TITAN_DRAW_SCALE;
     }
   });
 }
+
+
+
 function drawTitanNapeDebug() {
   titans.forEach(titan => {
     if (!titan.alive) return;
@@ -5519,7 +6340,7 @@ function drawFemaleAttackWarning() {
       : `SİVİLİ KORU! KARŞI SALDIRI ${femaleAttackHits}/${femaleAttackHitsNeeded}`;
   } else {
     text = femaleAttackMode === "warning"
-      ? "DİŞİ DEV SALDIRIYA HAZIRLANIYOR!"
+      ? "FEMALE TITAN ATTACKING!"
       : `COUNTER ATTACK! ${femaleAttackHits}/${femaleAttackHitsNeeded}`;
   }
 
@@ -5584,8 +6405,41 @@ function drawBar(x, y, w, h, value, max, fillColor, label) {
   ctx.fillText(label, x - 55, y + h - 5);
 }
 
+function drawBossSpecialWarning() {
+  if (!bossSpecialWarning || bossSpecialWarning.timer <= 0) return;
+
+  bossSpecialWarning.timer--;
+
+  const pulse = 0.55 + Math.sin(performance.now() * 0.018) * 0.45;
+
+  ctx.save();
+  ctx.textAlign = "center";
+
+  ctx.fillStyle = `rgba(0,0,0,${0.58 + pulse * 0.18})`;
+  ctx.fillRect(canvas.width / 2 - 270, 92, 540, 58);
+
+  ctx.strokeStyle =
+    bossSpecialWarning.type === "charge"
+      ? "rgba(255,80,50,0.95)"
+      : "rgba(255,190,70,0.95)";
+
+  ctx.lineWidth = 2;
+  ctx.strokeRect(canvas.width / 2 - 270, 92, 540, 58);
+
+  ctx.fillStyle =
+    bossSpecialWarning.type === "charge"
+      ? "#ff5a3d"
+      : "#ffd86b";
+
+  ctx.font = "bold 24px Arial";
+  ctx.fillText("⚠ " + bossSpecialWarning.text + " ⚠", canvas.width / 2, 128);
+
+  ctx.restore();
+}
+
+
 function drawHUD() {
-  scoreText.textContent = "Keşif Madalyonu: " + collectedMedalCount;
+  scoreText.textContent = "Scout Medallion: " + collectedMedalCount;
 
   ctx.save();
 
@@ -5723,7 +6577,7 @@ if (isRoofChaseSector) {
 
   ctx.fillStyle = "#f4d27a";
   ctx.font = "bold 15px Arial";
-  ctx.fillText("Keşif Madalyonu", 58, 592);
+  ctx.fillText("Scout Medallion", 58, 592);
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 24px Arial";
@@ -5733,7 +6587,7 @@ if (isRoofChaseSector) {
   if (player.gas <= 0) {
     ctx.fillStyle = "#ff5555";
     ctx.font = "bold 20px Arial";
-    ctx.fillText("Gaz bitti!", 540, 70);
+    ctx.fillText("OUT OF GAS!", 540, 70);
   }
 
   // TITAN YAKALAMA PANELİ
@@ -5831,26 +6685,239 @@ function drawLowHealthEffect() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+    function syncGameOverActions() {
+      const actions = document.getElementById("gameOverActions");
+      if (!actions) return;
+
+      actions.style.display = game.state === "lose" ? "flex" : "none";
+    }
+
     function drawGameMessage() {
+      syncGameOverActions();
       if (game.state === "playing") return;
 
-      ctx.fillStyle = "rgba(0,0,0,0.62)";
+      const isWin = game.state === "win";
+      const cx = canvas.width / 2;
+      const cardW = isWin ? 760 : 780;
+      const cardH = isWin ? 330 : 335;
+      const cardX = cx - cardW / 2;
+      const cardY = 156;
+      const accent = isWin ? "#f4d27a" : "#d83a32";
+
+      ctx.save();
+
+      // Cinematic dark overlay
+      const overlay = ctx.createRadialGradient(
+        cx,
+        canvas.height / 2,
+        120,
+        cx,
+        canvas.height / 2,
+        canvas.width * 0.82
+      );
+      overlay.addColorStop(0, "rgba(18,17,13,0.48)");
+      overlay.addColorStop(0.55, "rgba(8,8,9,0.82)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.96)");
+      ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "#fff";
+      if (!isWin) {
+        const pulse = 0.45 + Math.sin(performance.now() * 0.007) * 0.22;
+        ctx.fillStyle = `rgba(90,0,0,${0.08 + pulse * 0.045})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Panel shadow
+      ctx.fillStyle = "rgba(0,0,0,0.48)";
+      ctx.fillRect(cardX + 12, cardY + 14, cardW, cardH);
+
+      // Main metal report panel
+      const panelGradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+      panelGradient.addColorStop(0, "rgba(31,29,23,0.98)");
+      panelGradient.addColorStop(0.50, "rgba(13,14,14,0.99)");
+      panelGradient.addColorStop(1, "rgba(4,5,6,0.99)");
+      ctx.fillStyle = panelGradient;
+      ctx.fillRect(cardX, cardY, cardW, cardH);
+
+      // Outer and inner borders
+      ctx.strokeStyle = "rgba(236,190,88,0.92)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cardX, cardY, cardW, cardH);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.13)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cardX + 9, cardY + 9, cardW - 18, cardH - 18);
+
+      ctx.strokeStyle = "rgba(0,0,0,0.75)";
+      ctx.strokeRect(cardX + 4, cardY + 4, cardW - 8, cardH - 8);
+
+      // Top header strip
+      ctx.fillStyle = "rgba(0,0,0,0.38)";
+      ctx.fillRect(cardX, cardY, cardW, 70);
+
+      ctx.strokeStyle = "rgba(236,190,88,0.30)";
+      ctx.beginPath();
+      ctx.moveTo(cardX + 30, cardY + 70);
+      ctx.lineTo(cardX + cardW - 30, cardY + 70);
+      ctx.stroke();
+
+      // Corner brackets
+      ctx.strokeStyle = "rgba(236,190,88,0.74)";
+      ctx.lineWidth = 2;
+      const b = 28;
+      ctx.beginPath();
+      ctx.moveTo(cardX + 18, cardY + b);
+      ctx.lineTo(cardX + 18, cardY + 18);
+      ctx.lineTo(cardX + b, cardY + 18);
+      ctx.moveTo(cardX + cardW - b, cardY + 18);
+      ctx.lineTo(cardX + cardW - 18, cardY + 18);
+      ctx.lineTo(cardX + cardW - 18, cardY + b);
+      ctx.moveTo(cardX + 18, cardY + cardH - b);
+      ctx.lineTo(cardX + 18, cardY + cardH - 18);
+      ctx.lineTo(cardX + b, cardY + cardH - 18);
+      ctx.moveTo(cardX + cardW - b, cardY + cardH - 18);
+      ctx.lineTo(cardX + cardW - 18, cardY + cardH - 18);
+      ctx.lineTo(cardX + cardW - 18, cardY + cardH - b);
+      ctx.stroke();
+
+      // Failure stain, kept subtle
+      if (!isWin) {
+        const blood = ctx.createRadialGradient(cardX + 92, cardY + 112, 4, cardX + 92, cardY + 112, 112);
+        blood.addColorStop(0, "rgba(110,0,0,0.22)");
+        blood.addColorStop(0.45, "rgba(80,0,0,0.12)");
+        blood.addColorStop(1, "rgba(80,0,0,0)");
+        ctx.fillStyle = blood;
+        ctx.beginPath();
+        ctx.arc(cardX + 92, cardY + 112, 112, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Emblem
       ctx.textAlign = "center";
-      ctx.font = "bold 38px Arial";
-      ctx.fillText(game.state === "win" ? "KAZANDIN!" : "OYUN BİTTİ", canvas.width / 2, 220);
+      ctx.font = "bold 30px Arial";
+      ctx.fillStyle = isWin ? "#f4d27a" : "#e6dfc8";
+      ctx.shadowColor = "rgba(244,210,122,0.32)";
+      ctx.shadowBlur = 10;
+      ctx.fillText("⚔", cx, cardY + 45);
+      ctx.shadowBlur = 0;
 
-      ctx.font = "24px Arial";
-      ctx.fillText(game.message, canvas.width / 2, 270);
+      // Decorative separator around title
+      ctx.strokeStyle = "rgba(236,190,88,0.48)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - 192, cardY + 94);
+      ctx.lineTo(cx - 76, cardY + 94);
+      ctx.moveTo(cx + 76, cardY + 94);
+      ctx.lineTo(cx + 192, cardY + 94);
+      ctx.stroke();
 
-      ctx.font = "22px Arial";
-      ctx.fillText("Toplanan Keşif Madalyonu: " + collectedMedalCount, canvas.width / 2, 320);
+      // Title
+      ctx.font = "900 30px Arial";
+      ctx.letterSpacing = "3px";
+      ctx.fillStyle = accent;
+      ctx.strokeStyle = "rgba(0,0,0,0.95)";
+      ctx.lineWidth = 5;
+      const title = isWin ? "MISSION COMPLETE" : "MISSION FAILED";
+      ctx.strokeText(title, cx, cardY + 105);
+      ctx.fillText(title, cx, cardY + 105);
+      ctx.letterSpacing = "0px";
 
-      ctx.font = "18px Arial";
-      ctx.fillText("Tekrar başlamak için R tuşuna bas", canvas.width / 2, 370);
+      // Subtitle
+      ctx.font = "bold 17px Georgia";
+      ctx.fillStyle = "rgba(232,208,152,0.96)";
+      ctx.fillText(
+        isWin ? "Scout Regiment report confirmed." : "The soldier is out of combat.",
+        cx,
+        cardY + 135
+      );
+
+      // Message box
+      const msgX = cardX + 96;
+      const msgY = cardY + 156;
+      const msgW = cardW - 192;
+      const msgH = 70;
+      ctx.fillStyle = "rgba(0,0,0,0.34)";
+      ctx.fillRect(msgX, msgY, msgW, msgH);
+      ctx.strokeStyle = "rgba(236,190,88,0.28)";
+      ctx.strokeRect(msgX, msgY, msgW, msgH);
+
+      ctx.font = "bold 20px Georgia";
+      ctx.fillStyle = "#e8d098";
+      const primaryMessage = isWin
+        ? (game.message || "Area secured.")
+        : "Your health is depleted.";
+
+      ctx.fillText(
+        primaryMessage,
+        cx,
+        msgY + 28
+      );
+
+      ctx.font = "16px Georgia";
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.fillText(
+        isWin
+          ? "Your score and rewards are saved before moving forward."
+          : "Retry the mission, conserve gas, and strike the nape from behind.",
+        cx,
+        msgY + 54
+      );
+
+      // Statistics row
+      const statY = cardY + 248;
+      const statH = 58;
+      const statW = isWin ? 220 : 270;
+      const gap = 14;
+      const stats = isWin
+        ? [
+            ["SCOUT MEDALLIONS", collectedMedalCount, "✪"],
+            ["TITAN KILLS", titanKillCount, "⚔"],
+            ["MISSION SCORE", score, "▣"]
+          ]
+        : [
+            ["SCOUT MEDALLIONS", collectedMedalCount, "✪"],
+            ["TITAN KILLS", titanKillCount, "⚔"]
+          ];
+      const totalStatsWidth = statW * stats.length + gap * (stats.length - 1);
+      const startX = cx - totalStatsWidth / 2;
+
+      function drawMiniStat(x, label, value, icon) {
+        const statCenterX = x + statW / 2;
+
+        ctx.fillStyle = "rgba(255,255,255,0.045)";
+        ctx.fillRect(x, statY, statW, statH);
+        ctx.strokeStyle = "rgba(236,190,88,0.30)";
+        ctx.strokeRect(x, statY, statW, statH);
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.font = "bold 17px Arial";
+        ctx.fillStyle = "rgba(232,208,152,0.90)";
+        ctx.fillText(icon, statCenterX, statY + 14);
+
+        ctx.font = "900 11px Arial";
+        ctx.fillStyle = "#d6b66a";
+        ctx.fillText(label, statCenterX, statY + 32);
+
+        ctx.font = "bold 23px Arial";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(value, statCenterX, statY + 49);
+        ctx.textBaseline = "alphabetic";
+      }
+
+      stats.forEach((stat, index) => {
+        drawMiniStat(
+          startX + index * (statW + gap),
+          stat[0],
+          stat[1],
+          stat[2]
+        );
+      });
+
       ctx.textAlign = "start";
+      ctx.textBaseline = "alphabetic";
+      ctx.restore();
     }
 
     function checkObjectiveCompletion() {
@@ -5913,6 +6980,12 @@ updateLowGasWarning();
   checkObjectiveCompletion();
   updateCamera();
   updateAtmosphereParticles();
+
+
+  if (isBattle5Sector()) {
+  updateColossalBackgroundTitan();
+}
+
 }
 
     function draw() {
@@ -5961,8 +7034,6 @@ drawCoinPickupEffects();
 drawLowGasWarning();
 
 
-
-
 if (isRoofChaseSector) {
   rescuedCivilians.forEach(drawCivilian);
 
@@ -5974,6 +7045,7 @@ if (isRoofChaseSector) {
 drawBloodEffects();
 
 drawHUD();
+drawBossSpecialWarning();
 
 drawObjectiveCompleteNotice();
 drawLowHealthEffect();
@@ -6025,14 +7097,16 @@ function gameLoop() {
     const currentBattle = Number(gameMeta.dataset.level || 1);
     const currentSectorNumber = Number(gameMeta.dataset.sector || 1);
 
-    const isLanternSector =
+    function isBattle5Sector() {
+  return currentBattle === 5;
+}
+
+  const isLanternSector =
   currentBattle === 4 && currentSectorNumber >= 1 && currentSectorNumber <= 5;
 
   const isBossSector =
   currentSectorNumber === 10 ||
   (currentBattle === 3 && currentSectorNumber === 5);
-
-
 
 
     const nightSpriteCache = new Map();
@@ -6109,6 +7183,8 @@ const isRoofChaseSector = isCivilianRescueSector;
 
 const isFemaleTitanFinalSector =
   currentBattle === 3 && currentSectorNumber === 5;
+
+  resetColossalBackgroundTitan();
 
     loadBattleParallaxBackgrounds();
 
@@ -6256,6 +7332,20 @@ async function submitSectorCompletion() {
 
   return await response.json();
 }
+
+document.getElementById("gameOverRetryBtn").addEventListener("click", () => {
+  resetGame();
+  syncGameOverActions();
+});
+
+// Game Over screen should not save the sector. It only navigates away.
+document.getElementById("gameOverMenuBtn").addEventListener("click", () => {
+  window.location.href = "/menu";
+});
+
+document.getElementById("gameOverMapBtn").addEventListener("click", () => {
+  window.location.href = "/map";
+});
 
 document.getElementById("completeSectorBtn").addEventListener("click", () => {
   playSfx("sectorComplete", 0.7, 2000);

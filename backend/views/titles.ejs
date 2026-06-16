@@ -1,415 +1,402 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Titles</title>
+  <title>Scout Regiment Titles</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-
   <%- include("partials/music") %>
+
   <style>
+    :root{
+      --panel:rgba(23,25,18,.82);
+      --panel-soft:rgba(31,34,25,.74);
+      --line:rgba(206,178,119,.26);
+      --line-strong:rgba(206,178,119,.46);
+      --cream:#f1e7cf;
+      --muted:rgba(238,226,192,.72);
+      --gold:#c9aa69;
+    }
+
     *{
       margin:0;
       padding:0;
       box-sizing:border-box;
     }
 
+    html,body{
+      width:100%;
+      height:100%;
+    }
+
     body{
-      min-height:100vh;
       overflow:hidden;
-      font-family:"Inter", sans-serif;
-      background:#111;
-      color:#f5f0e6;
+      color:var(--cream);
+      font-family:"Inter",Arial,sans-serif;
+      background:
+        linear-gradient(rgba(8,10,8,.22),rgba(8,10,8,.42)),
+        url("/images/image6.png") center/cover fixed;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 0%,rgba(199,164,92,.05),transparent 36%),
+        linear-gradient(90deg,rgba(0,0,0,.18),transparent 18%,transparent 82%,rgba(0,0,0,.18));
     }
 
     .page{
-      position:relative;
       width:100%;
-      min-height:100vh;
+      height:100%;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:20px;
-      background:url("/images/image2.jpg") center/cover no-repeat;
-      isolation:isolate;
+      padding:16px;
     }
 
-    .page::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        radial-gradient(circle at center,
-          rgba(0,0,0,0.02) 25%,
-          rgba(0,0,0,0.22) 72%,
-          rgba(0,0,0,0.42) 100%);
-      z-index:1;
-      pointer-events:none;
-    }
-
-    .page::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(rgba(18,14,10,0.12), rgba(18,14,10,0.12));
-      z-index:1;
-      pointer-events:none;
-    }
-
-    .panel{
-      position:relative;
-      z-index:5;
-      width:min(980px, 96vw);
-      max-height:92vh;
+    .titles-shell{
+      width:min(980px,92vw);
+      height:min(640px,86vh);
+      display:flex;
+      flex-direction:column;
       overflow:hidden;
-      border-radius:24px;
-      background:rgba(32, 24, 16, 0.54);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-      border:1px solid rgba(255,255,255,0.10);
+      border:1px solid var(--line-strong);
+      background:var(--panel);
       box-shadow:
-        0 20px 50px rgba(0,0,0,0.30),
-        inset 0 1px 0 rgba(255,255,255,0.08);
+        0 24px 60px rgba(0,0,0,.58),
+        inset 0 0 0 4px rgba(50,37,23,.52);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
     }
 
-    .panel::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%, transparent 82%, rgba(0,0,0,0.06));
-      pointer-events:none;
+    .header{
+      flex:0 0 auto;
+      padding:16px 20px 14px;
+      text-align:center;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.08);
+    }
+
+    .header h1{
+      margin:0;
+      color:#efe1b8;
+      font-family:"Cinzel",serif;
+      font-size:36px;
+      line-height:1;
+      letter-spacing:1.6px;
+      text-transform:uppercase;
+    }
+
+    .header p{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.4;
     }
 
     .content{
-      position:relative;
-      z-index:2;
-      padding:26px 26px 20px;
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns:230px 1fr;
+      gap:12px;
+      padding:14px;
+      overflow:hidden;
+    }
+
+    .summary-panel{
       display:flex;
       flex-direction:column;
-      gap:18px;
+      gap:9px;
+      min-height:0;
     }
 
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      flex-wrap:wrap;
+    .summary-card{
+      padding:14px;
+      border:1px solid var(--line);
+      background:var(--panel-soft);
     }
 
-    .heading h1{
-      font-family:"Cinzel", serif;
-      font-size:34px;
-      line-height:1.1;
-      letter-spacing:0.5px;
-      color:#f4e7c8;
-      text-shadow:0 2px 8px rgba(0,0,0,0.25);
-      margin-bottom:6px;
-    }
-
-    .heading p{
+    .summary-label{
+      margin-bottom:7px;
+      color:var(--gold);
+      font-family:"Cinzel",serif;
       font-size:13px;
-      color:rgba(255,245,225,0.78);
-    }
-
-    .back-btn{
-      text-decoration:none;
-      border:none;
-      cursor:pointer;
-      font-family:"Cinzel", serif;
-      font-size:14px;
       font-weight:700;
-      color:#4f3920;
-      padding:12px 18px;
-      border-radius:12px;
-      background:linear-gradient(180deg, #f2dfb5, #d8b87a);
-      box-shadow:
-        0 8px 18px rgba(0,0,0,0.18),
-        inset 0 1px 0 rgba(255,255,255,0.35);
-      transition:all 0.18s ease;
-      flex-shrink:0;
-    }
-
-    .back-btn:hover{
-      transform:translateY(-2px);
-      box-shadow:
-        0 10px 22px rgba(0,0,0,0.22),
-        inset 0 1px 0 rgba(255,255,255,0.35);
-    }
-
-    .back-btn:active{
-      transform:scale(0.97);
-    }
-
-    .hero{
-      display:grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap:16px;
-    }
-
-    .hero-card,
-    .stats-card{
-      border-radius:18px;
-      padding:18px 18px 16px;
-      background:rgba(255,255,255,0.07);
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);
-    }
-
-    .hero-label,
-    .stats-label{
-      font-family:"Cinzel", serif;
-      font-size:13px;
       letter-spacing:1px;
       text-transform:uppercase;
-      color:#d9bd87;
-      margin-bottom:8px;
     }
 
     .current-title{
-      font-family:"Cinzel", serif;
-      font-size:28px;
-      color:#7ed8ff;
-      line-height:1.2;
-      text-shadow:0 2px 10px rgba(0,0,0,0.18);
-      margin-bottom:8px;
+      color:#ead08b;
+      font-family:"Cinzel",serif;
+      font-size:29px;
+      font-weight:800;
+      line-height:1.15;
+      overflow-wrap:anywhere;
     }
 
-    .hero-text{
-      font-size:13px;
-      line-height:1.7;
-      color:rgba(255,245,225,0.82);
-    }
-
-    .stats-grid{
+    .stats-row{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:12px;
-      margin-top:8px;
+      gap:8px;
     }
 
     .stat-box{
-      border-radius:14px;
-      padding:14px 14px 12px;
-      background:rgba(0,0,0,0.16);
-      border:1px solid rgba(255,255,255,0.06);
+      min-height:96px;
+      padding:13px 9px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      text-align:center;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.16);
     }
 
     .stat-name{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:0.8px;
-      color:rgba(255,235,205,0.65);
       margin-bottom:6px;
+      color:rgba(238,226,192,.60);
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.5px;
+      text-transform:uppercase;
     }
 
     .stat-value{
-      font-family:"Cinzel", serif;
-      font-size:24px;
-      color:#f5e7c8;
+      color:#f0ddb0;
+      font-family:"Cinzel",serif;
+      font-size:26px;
+      font-weight:800;
     }
 
-    .titles-wrap{
+    .titles-area{
+      min-width:0;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      padding:12px;
+      border:1px solid var(--line);
+      background:rgba(18,20,16,.24);
+    }
+
+    .titles-head{
+      flex:0 0 auto;
+      margin-bottom:9px;
+      padding-bottom:8px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .titles-head h2{
+      margin:0;
+      color:#e7d6ae;
+      font-family:"Cinzel",serif;
+      font-size:20px;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+    }
+
+    .titles-grid{
+      flex:1 1 auto;
+      min-height:0;
       display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:12px;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      grid-auto-rows:minmax(112px,auto);
+      gap:8px;
+      align-content:start;
+      overflow-y:auto;
+      padding-right:4px;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(201,167,99,.45) rgba(0,0,0,.12);
+    }
+
+    .titles-grid::-webkit-scrollbar{
+      width:7px;
+    }
+
+    .titles-grid::-webkit-scrollbar-track{
+      background:rgba(0,0,0,.12);
+    }
+
+    .titles-grid::-webkit-scrollbar-thumb{
+      background:rgba(201,167,99,.42);
+      border-radius:8px;
     }
 
     .title-card{
       position:relative;
-      border-radius:16px;
-      padding:14px 14px 12px;
-      background:rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.06),
-        0 4px 12px rgba(0,0,0,0.06);
-      transition:all 0.18s ease;
-      min-height:102px;
+      min-height:112px;
+      padding:13px;
       display:flex;
       flex-direction:column;
       justify-content:space-between;
-    }
-
-    .title-card:hover{
-      transform:translateY(-2px);
-      box-shadow:
-        0 10px 20px rgba(0,0,0,0.14),
-        inset 0 1px 0 rgba(255,255,255,0.08);
+      border:1px solid var(--line);
+      background:rgba(18,20,16,.42);
     }
 
     .title-card.unlocked{
+      border-color:rgba(197,163,102,.38);
       background:
-        linear-gradient(180deg, rgba(255,243,217,0.16), rgba(255,220,150,0.08));
-      border-color:rgba(220,185,110,0.28);
+        linear-gradient(90deg,rgba(166,128,57,.17),rgba(18,20,16,.32));
     }
 
     .title-card.locked{
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04));
+      opacity:.72;
     }
 
-    .title-head{
+    .title-top{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
+      gap:9px;
     }
 
     .title-name{
-      font-family:"Cinzel", serif;
+      color:#f0e5c9;
+      font-family:"Cinzel",serif;
       font-size:17px;
-      line-height:1.3;
-      color:#f4e7c8;
+      font-weight:800;
+      line-height:1.25;
+      overflow-wrap:anywhere;
     }
 
-    .title-icon{
-      font-size:18px;
-      flex-shrink:0;
+    .title-status{
+      width:25px;
+      height:25px;
+      flex:0 0 25px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      color:#d8bd82;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      font-size:13px;
     }
 
-    .title-desc{
+    .unlocked .title-status{
+      color:#dce9cf;
+      background:rgba(83,105,70,.26);
+      border-color:rgba(142,176,124,.36);
+    }
+
+    .requirement{
+      margin-top:8px;
+      padding-top:7px;
+      border-top:1px solid rgba(199,167,109,.12);
+      color:#c9ae72;
       font-size:12px;
-      line-height:1.6;
-      color:rgba(255,245,225,0.75);
-      margin-bottom:8px;
+      line-height:1.4;
     }
 
-    .title-requirement{
-      font-size:12px;
-      color:#d8bd8b;
-      line-height:1.5;
+    .requirement strong{
+      color:#f0dfb0;
     }
 
-    .title-requirement strong{
-      color:#fff0d0;
-    }
-
-    .footer-note{
-      text-align:center;
-      font-size:12px;
-      color:rgba(255,245,225,0.66);
-      padding-top:2px;
-    }
-
-    @media (max-width: 860px){
-      .hero{
-        grid-template-columns:1fr;
-      }
-
-      .titles-wrap{
-        grid-template-columns:1fr;
-      }
-
-      .panel{
-        max-height:94vh;
+    @media (max-width:900px){
+      .titles-shell{
+        width:min(760px,94vw);
       }
 
       .content{
+        grid-template-columns:205px 1fr;
+      }
+
+      .titles-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+
+    @media (max-width:720px){
+      body{
         overflow:auto;
       }
-    }
 
-    @media (max-width: 560px){
+      .page{
+        height:auto;
+        min-height:100vh;
+        align-items:flex-start;
+      }
+
+      .titles-shell{
+        height:auto;
+        max-height:none;
+      }
+
       .content{
-        padding:18px 16px 16px;
+        grid-template-columns:1fr;
+        overflow:visible;
       }
 
-      .heading h1{
-        font-size:28px;
-      }
-
-      .current-title{
-        font-size:23px;
-      }
-
-      .title-name{
-        font-size:15px;
-      }
-
-      .back-btn{
-        width:100%;
-        text-align:center;
+      .titles-grid{
+        grid-template-columns:1fr;
+        overflow-y:visible;
+        padding-right:0;
       }
     }
   </style>
 </head>
+
 <body>
+  <%- include("partials/top-controls") %>
+
   <div class="page">
-    <div class="panel">
-      <div class="content">
+    <main class="titles-shell">
+      <header class="header">
+        <h1>Titles</h1>
+        <p>Unlock new titles by defeating titans.</p>
+      </header>
 
-        <div class="topbar">
-          <div class="heading">
-            <h1>Titles</h1>
-            <p>Earn prestige titles as your legend grows.</p>
+      <section class="content">
+        <aside class="summary-panel">
+          <div class="summary-card">
+            <div class="summary-label">Current Title</div>
+            <div class="current-title"><%= user.title || "Cadet" %></div>
           </div>
 
-          <a class="back-btn" href="/menu">Back to Menu</a>
-        </div>
-
-        <div class="hero">
-          <div class="hero-card">
-            <div class="hero-label">Current Title</div>
-            <div class="current-title"><%= user.title %></div>
-            <div class="hero-text">
-              Your title reflects your progress and reputation on the battlefield.
-              Defeat more titans to unlock greater honors.
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-name">Titan Kills</div>
+              <div class="stat-value"><%= user.titanKills || 0 %></div>
             </div>
-          </div>
 
-          <div class="stats-card">
-            <div class="stats-label">Progress</div>
-            <div class="stats-grid">
-              <div class="stat-box">
-                <div class="stat-name">Titan Kills</div>
-                <div class="stat-value"><%= user.titanKills %></div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-name">Unlocked</div>
-                <div class="stat-value">
-                  <%= titleList.filter(title => user.titanKills >= title.minKills).length %>
-                </div>
+            <div class="stat-box">
+              <div class="stat-name">Unlocked</div>
+              <div class="stat-value">
+                <%= titleList.filter(title => (user.titanKills || 0) >= title.minKills).length %>
               </div>
             </div>
           </div>
-        </div>
+        </aside>
 
-        <div class="titles-wrap">
-          <% titleList.forEach(title => { 
-               const unlocked = user.titanKills >= title.minKills;
-          %>
-            <div class="title-card <%= unlocked ? 'unlocked' : 'locked' %>">
-              <div>
-                <div class="title-head">
+        <div class="titles-area">
+          <div class="titles-head">
+            <h2>Available Titles</h2>
+          </div>
+
+          <div class="titles-grid">
+            <% titleList.forEach(title => {
+                 const unlocked = (user.titanKills || 0) >= title.minKills;
+            %>
+              <article class="title-card <%= unlocked ? 'unlocked' : 'locked' %>">
+                <div class="title-top">
                   <div class="title-name"><%= title.name %></div>
-                  <div class="title-icon"><%= unlocked ? '✅' : '🔒' %></div>
+                  <div class="title-status"><%= unlocked ? '✓' : '🔒' %></div>
                 </div>
 
-                <div class="title-desc">
-                  <%= unlocked 
-                    ? 'Unlocked and available as part of your identity.' 
-                    : 'Still locked. Keep fighting to earn this title.' %>
+                <div class="requirement">
+                  <%= unlocked ? 'Unlocked' : 'Requires' %>:
+                  <strong><%= title.minKills %> titan kills</strong>
                 </div>
-              </div>
-
-              <div class="title-requirement">
-                Unlocks at <strong><%= title.minKills %></strong> titan kills
-              </div>
-            </div>
-          <% }) %>
+              </article>
+            <% }) %>
+          </div>
         </div>
-
-        <div class="footer-note">
-          Titles are unlocked permanently once their requirements are met.
-        </div>
-
-      </div>
-    </div>
+      </section>
+    </main>
   </div>
 </body>
 </html>

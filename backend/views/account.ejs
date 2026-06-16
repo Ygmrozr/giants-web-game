@@ -1,128 +1,510 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My Account</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scout Account</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <%- include("partials/music") %>
+<%- include("partials/top-controls") %>
+  
+
   <style>
-    body{
+    :root{
+      --panel:rgba(23,25,18,.80);
+      --panel-soft:rgba(31,34,25,.72);
+      --line:rgba(206,178,119,.26);
+      --line-strong:rgba(206,178,119,.46);
+      --cream:#f1e7cf;
+      --muted:rgba(238,226,192,.68);
+      --gold:#c9aa69;
+      --green:#68775d;
+      --red:#7d3e36;
+    }
+
+    *{
       margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    html,body{
+      min-height:100%;
+    }
+
+    body{
+      min-height:100vh;
+      overflow-x:hidden;
+      color:var(--cream);
+      font-family:"Inter",Arial,sans-serif;
+      background:
+        linear-gradient(rgba(8,10,8,.22),rgba(8,10,8,.42)),
+        url("/images/image7.png") center/cover fixed;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 0%,rgba(199,164,92,.05),transparent 36%),
+        linear-gradient(90deg,rgba(0,0,0,.18),transparent 18%,transparent 82%,rgba(0,0,0,.18));
+    }
+
+    .page{
       min-height:100vh;
       display:flex;
-      justify-content:center;
       align-items:center;
-      background:#111;
-      color:white;
-      font-family:Arial, Helvetica, sans-serif;
-      background-image:url("/images/image2.jpg");
-      background-size:cover;
-      background-position:center;
+      justify-content:center;
+      padding:18px;
     }
 
-    .box{
-      width:540px;
-      background:rgba(0,0,0,0.74);
-      padding:40px;
-      border-radius:12px;
+    .account-shell{
+      width:min(960px,92vw);
+      max-height:92vh;
+      overflow:auto;
+      border:1px solid var(--line-strong);
+      background:var(--panel);
+      box-shadow:
+        0 24px 60px rgba(0,0,0,.58),
+        inset 0 0 0 4px rgba(50,37,23,.52);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      scrollbar-width:thin;
+      scrollbar-color:rgba(201,167,99,.42) rgba(0,0,0,.12);
     }
 
-    h1{
-      text-align:center;
-      margin-bottom:20px;
+    .account-shell::-webkit-scrollbar{
+      width:7px;
     }
 
-    .avatar{
-      text-align:center;
-      margin-bottom:20px;
+    .account-shell::-webkit-scrollbar-track{
+      background:rgba(0,0,0,.12);
     }
 
-    .avatar img{
-      width:110px;
-      height:110px;
-      object-fit:cover;
-      border-radius:50%;
-      border:3px solid white;
-    }
-
-    .row{
-      margin-bottom:12px;
-      padding:10px;
-      background:rgba(255,255,255,0.08);
+    .account-shell::-webkit-scrollbar-thumb{
+      background:rgba(201,167,99,.42);
       border-radius:8px;
     }
 
-    form{
-      margin-top:15px;
+    .account-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      padding:16px 20px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.08);
+    }
+
+    .header-kicker{
+      display:block;
+      margin-bottom:5px;
+      color:var(--gold);
+      font-family:"Cinzel",serif;
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
+
+    .account-header h1{
+      margin:0;
+      color:#efe1b8;
+      font-family:"Cinzel",serif;
+      font-size:32px;
+      line-height:1;
+      letter-spacing:1.4px;
+      text-transform:uppercase;
+    }
+
+    .header-subtitle{
+      margin-top:7px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .back-link{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:145px;
+      padding:10px 14px;
+      color:#eadbb8;
+      text-decoration:none;
+      font-family:"Cinzel",serif;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.16);
+    }
+
+    .back-link:hover{
+      background:rgba(76,86,64,.26);
+      border-color:var(--line-strong);
+    }
+
+    .content{
+      display:grid;
+      grid-template-columns:250px 1fr;
+      gap:14px;
+      padding:14px;
+    }
+
+    .identity-panel,
+    .account-panel,
+    .titles-panel{
+      border:1px solid var(--line);
+      background:var(--panel-soft);
+    }
+
+    .identity-panel{
+      padding:14px;
+      align-self:start;
+    }
+
+    .avatar-frame{
+      width:118px;
+      height:118px;
+      margin:0 auto 12px;
+      padding:4px;
+      border:1px solid var(--line-strong);
+      background:linear-gradient(145deg,#6d5433,#2e2418);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.08),
+        0 8px 20px rgba(0,0,0,.34);
+    }
+
+    .avatar-frame img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+      background:#25251f;
+    }
+
+    .identity-name{
+      margin:0 0 6px;
+      color:#f0e5c9;
+      font-family:"Cinzel",serif;
+      font-size:23px;
+      text-align:center;
+      overflow-wrap:anywhere;
+    }
+
+    .identity-title{
+      margin-bottom:14px;
+      color:#ead08b;
+      font-family:"Cinzel",serif;
+      font-size:17px;
+      font-weight:800;
       text-align:center;
     }
 
+    .upload-form{
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid rgba(199,167,109,.12);
+    }
+
+    .file-label{
+      display:block;
+      margin-bottom:7px;
+      color:rgba(238,226,192,.55);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+    }
+
     input[type="file"]{
-      color:white;
+      width:100%;
       margin-bottom:10px;
+      color:var(--muted);
+      font-family:inherit;
+      font-size:11px;
     }
 
-    button{
-      padding:10px 14px;
-      border:none;
-      border-radius:6px;
+    input[type="file"]::file-selector-button{
+      margin-right:8px;
+      padding:7px 9px;
+      color:#eadbb8;
+      font-family:inherit;
+      font-size:11px;
+      font-weight:700;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
       cursor:pointer;
-      font-weight:bold;
     }
 
-    a{
-      display:inline-block;
-      margin-top:18px;
-      color:white;
-      text-decoration:none;
-      font-weight:bold;
+    .upload-btn{
+      width:100%;
+      min-height:36px;
+      color:#f0e7d7;
+      font-family:"Cinzel",serif;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid rgba(221,204,169,.28);
+      background:linear-gradient(180deg,#657458,#46513e);
+      cursor:pointer;
+    }
+
+    .upload-btn:hover{
+      filter:brightness(1.08);
+    }
+
+    .right-column{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+    }
+
+    .account-panel,
+    .titles-panel{
+      padding:14px;
+    }
+
+    .section-title{
+      margin-bottom:12px;
+      color:#e7d6ae;
+      font-family:"Cinzel",serif;
+      font-size:18px;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+    }
+
+    .details-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:9px;
+    }
+
+    .detail-card{
+      min-height:72px;
+      padding:11px 12px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.15);
+    }
+
+    .detail-label{
+      margin-bottom:6px;
+      color:rgba(238,226,192,.55);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+    }
+
+    .detail-value{
+      color:#f0ddb0;
+      font-family:"Cinzel",serif;
+      font-size:16px;
+      font-weight:800;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+
+    .detail-value.small{
+      font-family:"Inter",sans-serif;
+      font-size:13px;
+      font-weight:600;
+      color:#efe5cb;
+    }
+
+    .titles-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .title-item{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:8px 10px;
+      color:#f0e5c9;
+      font-family:"Cinzel",serif;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid var(--line);
+      background:rgba(18,20,16,.38);
+    }
+
+    .title-item::before{
+      content:"✓";
+      width:20px;
+      height:20px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      color:#dce9cf;
+      background:rgba(83,105,70,.24);
+      border:1px solid rgba(142,176,124,.34);
+      font-size:9px;
+    }
+
+    .empty-state{
+      padding:20px;
+      color:var(--muted);
+      text-align:center;
+      font-size:13px;
+      border:1px dashed rgba(199,167,109,.18);
+      background:rgba(0,0,0,.10);
+    }
+
+    @media (max-width:820px){
+      .content{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width:620px){
+      .page{
+        padding:10px;
+        align-items:flex-start;
+      }
+
+      .account-header{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .back-link{
+        width:100%;
+      }
+
+      .details-grid{
+        grid-template-columns:1fr;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div class="box">
-    <h1>My Account</h1>
+  <div class="page">
+    <main class="account-shell">
+      <header class="account-header">
+        <div>
+          <span class="header-kicker">Scout Regiment Record</span>
+          <h1>My Account</h1>
+          <p class="header-subtitle">Account details, progress, and profile settings.</p>
+        </div>
 
-    <div class="avatar">
-      <img src="<%= user.avatar %>" alt="avatar">
-    </div>
+        <a href="/menu" class="back-link">← Back to Menu</a>
+      </header>
 
-    <form action="/account/avatar" method="POST" enctype="multipart/form-data">
-      <input type="file" name="avatar" accept="image/*" required>
-      <br>
-      <button type="submit">Upload Avatar</button>
-    </form>
+      <section class="content">
+        <aside class="identity-panel">
+          <div class="avatar-frame">
+            <img
+              src="<%= user.avatar || '/images/default-avatar.png' %>"
+              alt="<%= user.username %> avatar"
+              onerror="this.onerror=null;this.src='/images/default-avatar.png';"
+            >
+          </div>
 
-    
-    <div class="row"><strong>Level:</strong> <%= level %></div>
+          <h2 class="identity-name"><%= user.username %></h2>
+          <div class="identity-title"><%= user.title || "Cadet" %></div>
 
-    
-    <div class="row"><strong>Username:</strong> <%= user.username %></div>
-    <div class="row"><strong>Title:</strong> <%= user.title %></div>
-    <div class="row"><strong>Email:</strong> <%= user.email %></div>
-    <div class="row"><strong>Total Score:</strong> <%= user.totalScore %></div>
-    <div class="row"><strong>Highest Score:</strong> <%= user.highestScore %></div>
-    <div class="row"><strong>Titan Kills:</strong> <%= user.titanKills %></div>
-    <div class="row"><strong>Coins:</strong> <%= user.coins %></div>
-    <div class="row"><strong>Selected Skin:</strong> <%= user.selectedSkin %></div>
-    <div class="row"><strong>Last Login:</strong> <%= user.lastLoginAt ? user.lastLoginAt.toLocaleString() : "No data" %></div>
-    <div class="row"><strong>Account Created:</strong> <%= user.createdAt ? user.createdAt.toLocaleString() : "No data" %></div>
-    <div class="row"><strong>Current Title:</strong> <%= user.title %></div>
+          <form class="upload-form" action="/account/avatar" method="POST" enctype="multipart/form-data">
+            <label class="file-label" for="avatarInput">Change Avatar</label>
+            <input id="avatarInput" type="file" name="avatar" accept="image/*" required>
+            <button class="upload-btn" type="submit">Upload Avatar</button>
+          </form>
+        </aside>
 
-<div class="row">
-  <strong>Unlocked Titles:</strong>
-  <div style="margin-top:10px;">
-    <% if(user.unlockedTitles && user.unlockedTitles.length > 0){ %>
-      <% user.unlockedTitles.forEach(title => { %>
-        <span style="display:inline-block; padding:6px 10px; margin:4px; border-radius:999px; background:rgba(255,255,255,0.12); font-weight:bold;">
-          <%= title %>
-        </span>
-      <% }) %>
-    <% } %>
-  </div>
-</div>
+        <div class="right-column">
+          <section class="account-panel">
+            <h2 class="section-title">Account Details</h2>
 
-    <a href="/menu">← Back to Menu</a>
+            <div class="details-grid">
+              <div class="detail-card">
+                <div class="detail-label">Level</div>
+                <div class="detail-value"><%= level || 1 %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Username</div>
+                <div class="detail-value small"><%= user.username %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Email</div>
+                <div class="detail-value small"><%= user.email %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Current Title</div>
+                <div class="detail-value small"><%= user.title || "Cadet" %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Total Score</div>
+                <div class="detail-value"><%= user.totalScore || 0 %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Highest Score</div>
+                <div class="detail-value"><%= user.highestScore || 0 %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Titan Kills</div>
+                <div class="detail-value"><%= user.titanKills || 0 %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Scout Medallions</div>
+                <div class="detail-value"><%= user.coins || 0 %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Selected Skin</div>
+                <div class="detail-value small"><%= user.selectedSkin || "Default" %></div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Last Login</div>
+                <div class="detail-value small">
+                  <%= user.lastLoginAt ? user.lastLoginAt.toLocaleString("en-GB") : "No data" %>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Account Created</div>
+                <div class="detail-value small">
+                  <%= user.createdAt ? user.createdAt.toLocaleString("en-GB") : "No data" %>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Unlocked Titles</div>
+                <div class="detail-value"><%= user.unlockedTitles ? user.unlockedTitles.length : 0 %></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="titles-panel">
+            <h2 class="section-title">Unlocked Titles</h2>
+
+            <% if(user.unlockedTitles && user.unlockedTitles.length > 0){ %>
+              <div class="titles-list">
+                <% user.unlockedTitles.forEach(title => { %>
+                  <div class="title-item"><%= title %></div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="empty-state">No titles have been unlocked yet.</div>
+            <% } %>
+          </section>
+        </div>
+      </section>
+    </main>
   </div>
 </body>
 </html>

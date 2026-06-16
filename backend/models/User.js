@@ -73,11 +73,6 @@ const userSchema = new mongoose.Schema({
   default: ["Recruit"]
   },
 
-  unlockedCharacters: {
-  type: [String],
-  default: ["eren"]
-},
-
 currentLevel: {
   type: Number,
   default: 1

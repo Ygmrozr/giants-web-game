@@ -42,7 +42,7 @@
       position:relative;
       width:100%;
       height:100%;
-      background:url("/images/map-menu.png") center/cover no-repeat;
+      background:url("/images/menu.png") center/cover no-repeat;
       isolation:isolate;
     }
 
@@ -126,17 +126,17 @@
       position:absolute;
       z-index:10;
       overflow:hidden;
-      border-radius:18px;
+      border-radius:3px;
       background:
-        radial-gradient(circle at 50% 20%, rgba(255,246,220,0.12), transparent 38%),
-        linear-gradient(180deg, rgba(70,50,26,0.86), rgba(43,31,18,0.90));
-      border:1px solid rgba(215,182,112,0.20);
+        radial-gradient(circle at 50% 0%, rgba(255,242,204,0.08), transparent 34%),
+        linear-gradient(180deg, rgba(48,38,28,0.90), rgba(20,16,13,0.94));
+      border:1px solid rgba(209,170,95,0.38);
       box-shadow:
-        0 18px 34px rgba(0,0,0,0.28),
-        inset 0 1px 0 rgba(255,245,220,0.12),
-        inset 0 -1px 0 rgba(0,0,0,0.22);
-      backdrop-filter:blur(8px);
-      -webkit-backdrop-filter:blur(8px);
+        0 16px 34px rgba(0,0,0,0.44),
+        inset 0 0 0 1px rgba(255,255,255,0.035),
+        inset 0 -18px 34px rgba(0,0,0,0.14);
+      backdrop-filter:blur(7px);
+      -webkit-backdrop-filter:blur(7px);
     }
 
     .aot-panel::before{
@@ -158,9 +158,9 @@
     .aot-panel::after{
       content:"";
       position:absolute;
-      inset:8px;
-      border:1px solid rgba(232,205,146,0.10);
-      border-radius:12px;
+      inset:6px;
+      border:1px solid rgba(231,206,153,0.08);
+      border-radius:1px;
       pointer-events:none;
       box-shadow:inset 0 0 18px rgba(0,0,0,0.10);
     }
@@ -205,7 +205,7 @@
     .metal-frame{
       position:absolute;
       inset:0;
-      border-radius:18px;
+      border-radius:3px;
       pointer-events:none;
       z-index:3;
       background:
@@ -277,7 +277,7 @@
     .player-name,
     .menu-title{
       font-family:"Cinzel", serif;
-      color:#f4e4bc;
+      color:#f0dfb7;
       text-shadow:0 2px 8px rgba(0,0,0,0.28);
     }
 
@@ -347,7 +347,7 @@
     }
 
     .profile-title span{
-      color:#8ddcff;
+      color:#d7bd83;
       font-weight:800;
     }
 
@@ -360,9 +360,9 @@
 
     .stat-box{
       padding:12px 12px 10px;
-      border-radius:12px;
-      background:rgba(255,245,220,0.06);
-      border:1px solid rgba(255,255,255,0.08);
+      border-radius:2px;
+      background:rgba(255,245,220,0.045);
+      border:1px solid rgba(215,179,108,0.12);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.04),
         0 4px 10px rgba(0,0,0,0.12);
@@ -434,7 +434,7 @@
     }
 
     .player-title span{
-      color:#8ddcff;
+      color:#d7bd83;
       font-weight:800;
       text-transform:none;
       letter-spacing:0;
@@ -455,26 +455,26 @@
     .progress-bar{
       width:100%;
       height:14px;
-      border-radius:999px;
+      border-radius:1px;
       overflow:hidden;
-      background:rgba(255,245,220,0.06);
-      border:1px solid rgba(255,255,255,0.06);
-      box-shadow:inset 0 2px 6px rgba(0,0,0,0.18);
+      background:rgba(7,8,7,0.66);
+      border:1px solid rgba(215,179,108,0.20);
+      box-shadow:inset 0 2px 5px rgba(0,0,0,0.55);
     }
 
     .progress{
       height:100%;
-      border-radius:999px;
+      border-radius:0;
       background:
         repeating-linear-gradient(
           45deg,
-          rgba(255,255,255,0.18) 0px,
-          rgba(255,255,255,0.18) 4px,
-          rgba(255,255,255,0.02) 4px,
-          rgba(255,255,255,0.02) 8px
+          rgba(255,255,255,0.10) 0px,
+          rgba(255,255,255,0.10) 4px,
+          transparent 4px,
+          transparent 8px
         ),
-        linear-gradient(90deg, #30c8f7, #49a7ff);
-      box-shadow:0 0 12px rgba(73,167,255,0.22);
+        linear-gradient(90deg, #59664f, #9b8248);
+      box-shadow:0 0 9px rgba(150,123,68,0.22);
       transition:width 0.4s ease;
     }
 
@@ -512,9 +512,9 @@
       bottom:34px;
       width:220px;
       padding:10px 12px;
-      border-radius:14px;
-      background:rgba(38,28,18,0.95);
-      border:1px solid rgba(255,255,255,0.08);
+      border-radius:2px;
+      background:linear-gradient(180deg, rgba(47,38,28,0.97), rgba(23,19,15,0.98));
+      border:1px solid rgba(205,165,88,0.42);
       color:#f6ead1;
       font-size:12px;
       line-height:1.6;
@@ -559,12 +559,11 @@
       font-weight:700;
       padding:14px 18px;
       margin-bottom:12px;
-      border-radius:14px;
-      color:#f7e7c6;
+      border-radius:2px;
+      color:#f1e4c6;
       background:
-        radial-gradient(circle at 18% 50%, rgba(0,255,180,0.08), transparent 42%),
-        linear-gradient(180deg, rgba(122,90,43,0.96), rgba(74,52,26,0.98));
-      border:1px solid rgba(215,180,110,0.25);
+        linear-gradient(180deg, rgba(90,102,81,0.96), rgba(55,64,50,0.98));
+      border:1px solid rgba(212,173,99,0.26);
       box-shadow:
         0 10px 20px rgba(0,0,0,0.35),
         inset 0 1px 0 rgba(255,240,200,0.25),
@@ -583,7 +582,7 @@
       top:0;
       bottom:0;
       width:4px;
-      background:linear-gradient(180deg, rgba(0,255,180,0), rgba(0,255,180,0.85), rgba(0,255,180,0));
+      background:linear-gradient(180deg, rgba(125,224,180,0), rgba(125,224,180,0.72), rgba(125,224,180,0));
       opacity:0.75;
     }
 
@@ -606,8 +605,7 @@
     .menu-link:hover{
       transform:translateY(-3px) scale(1.02);
       background:
-        radial-gradient(circle at 24% 50%, rgba(0,255,180,0.18), transparent 46%),
-        linear-gradient(180deg, rgba(156,116,54,0.98), rgba(90,63,31,0.99));
+        linear-gradient(180deg, rgba(108,121,94,0.98), rgba(62,73,56,0.99));
       box-shadow:
         0 14px 30px rgba(0,0,0,0.45),
         0 0 18px rgba(255,220,140,0.25),
@@ -621,8 +619,7 @@
 
     .menu-link.logout{
       background:
-        radial-gradient(circle at 18% 50%, rgba(255,80,80,0.12), transparent 42%),
-        linear-gradient(180deg, rgba(107,45,45,0.96), rgba(58,24,24,0.98));
+        linear-gradient(180deg, rgba(112,49,49,0.96), rgba(64,27,27,0.98));
       border-color:rgba(255,120,120,0.30);
     }
 
@@ -662,9 +659,10 @@
       width:52px;
       height:52px;
       border-radius:50%;
-      border:1px solid rgba(225,190,120,0.18);
+      border:1px solid rgba(219,181,106,0.48);
       background:
-        linear-gradient(180deg, rgba(120,83,42,0.94), rgba(85,58,30,0.98));
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.14), transparent 32%),
+        linear-gradient(180deg, #6b4b2d, #302217);
       color:#f6e8ca;
       font-size:20px;
       cursor:pointer;
@@ -780,6 +778,42 @@
         right:14px;
       }
     }
+  
+    .menu-frame{
+      position:absolute;
+      inset:14px;
+      z-index:4;
+      pointer-events:none;
+      border:1px solid rgba(205,170,95,.34);
+      box-shadow:
+        inset 0 0 0 5px rgba(12,10,8,.60),
+        inset 0 0 0 7px rgba(169,122,53,.10),
+        0 0 0 1px rgba(0,0,0,.70);
+    }
+
+    .menu-frame::before,
+    .menu-frame::after{
+      content:"";
+      position:absolute;
+      width:66px;
+      height:66px;
+      border-color:rgba(223,192,122,.58);
+    }
+
+    .menu-frame::before{
+      top:9px;
+      left:9px;
+      border-top:2px solid;
+      border-left:2px solid;
+    }
+
+    .menu-frame::after{
+      right:9px;
+      bottom:9px;
+      border-right:2px solid;
+      border-bottom:2px solid;
+    }
+
   </style>
 </head>
 <body>
@@ -788,13 +822,14 @@
   const safeProgress = isNaN(progress) ? 0 : progress;
   const progressPercent = Math.max(0, Math.min(100, safeProgress * 100)).toFixed(2);
 
-  const currentCharacter = user.selectedCharacter || "Eren Yeager";
   const avatarSrc = user.avatar || "";
 %>
 
 <%- include("partials/music") %>
+<%- include("partials/top-controls") %>
 
 <div class="menu-container">
+  <div class="menu-frame"></div>
 
   <div class="notification-stack">
     <% if(titleUnlocked){ %>
@@ -827,7 +862,6 @@
             <div class="profile-name"><%= user.username %></div>
             <div class="profile-title">
               Title: <span><%= user.title %></span><br>
-              Character: <strong><%= currentCharacter %></strong>
             </div>
           </div>
         </div>
@@ -931,24 +965,24 @@
         <span class="menu-text">My Account</span>
       </a>
 
-      <a class="menu-link" href="/leaderboard">
-        <span class="menu-icon">🏆</span>
-        <span class="menu-text">Leaderboard</span>
-      </a>
-
       <a class="menu-link" href="/market">
         <span class="menu-icon">💰</span>
         <span class="menu-text">Market</span>
       </a>
 
-      <a class="menu-link" href="/how-to-play">
-        <span class="menu-icon">📖</span>
-        <span class="menu-text">How to Play</span>
+      <a class="menu-link" href="/leaderboard">
+        <span class="menu-icon">🏆</span>
+        <span class="menu-text">Leaderboard</span>
       </a>
 
       <a class="menu-link" href="/titles">
         <span class="menu-icon">✦</span>
         <span class="menu-text">Titles</span>
+      </a>
+
+      <a class="menu-link" href="/how-to-play">
+        <span class="menu-icon">📖</span>
+        <span class="menu-text">How to Play</span>
       </a>
 
       <a class="menu-link logout" href="/logout">
@@ -957,8 +991,7 @@
       </a>
     </div>
   </div>
-
-  <button class="music-btn" onclick="toggleMusic()">♫</button>
+  
 
   <div class="wings-emblem">
     <img src="/images/book-cover.png" alt="Wings of Freedom">

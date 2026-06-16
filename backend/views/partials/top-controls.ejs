@@ -1,0 +1,247 @@
+<div class="global-top-controls">
+  <button type="button" class="global-control-btn" id="globalBackBtn" aria-label="Go back" title="Back">
+    ←
+  </button>
+
+  <button type="button" class="global-control-btn" id="globalMusicBtn" aria-label="Toggle music" title="Music">
+    ♫
+  </button>
+</div>
+
+<style>
+  .global-top-controls{
+    position:fixed;
+    top:18px;
+    right:20px;
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+
+  .global-control-btn{
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    color:#eadbb8;
+    font-family:Georgia, "Times New Roman", serif;
+    font-size:20px;
+    font-weight:bold;
+    border:1px solid rgba(206,178,119,.46);
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 35% 28%, rgba(255,255,255,.13), transparent 31%),
+      linear-gradient(180deg, rgba(94,69,40,.96), rgba(41,31,22,.98));
+    box-shadow:
+      0 7px 18px rgba(0,0,0,.42),
+      inset 0 0 0 2px rgba(0,0,0,.22);
+    cursor:pointer;
+    transition:transform .18s ease, filter .18s ease, opacity .18s ease;
+  }
+
+  .global-control-btn:hover{
+    transform:translateY(-2px);
+    filter:brightness(1.1);
+  }
+
+  .global-control-btn:active{
+    transform:scale(.94);
+  }
+
+  .global-control-btn.music-off{
+    opacity:.58;
+  }
+
+  .global-control-btn.control-disabled,
+  .global-control-btn:disabled{
+    opacity:.35;
+    filter:grayscale(.55);
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .global-control-btn.control-disabled:hover,
+  .global-control-btn:disabled:hover{
+    transform:none;
+    filter:grayscale(.55);
+  }
+
+  @media (max-width:600px){
+    .global-top-controls{
+      top:12px;
+      right:12px;
+      gap:7px;
+    }
+
+    .global-control-btn{
+      width:40px;
+      height:40px;
+      font-size:18px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const backBtn = document.getElementById("globalBackBtn");
+    const musicBtn = document.getElementById("globalMusicBtn");
+    const bgMusic = document.getElementById("bgMusic");
+
+    const NAV_STACK_KEY = "appNavigationStack";
+    const MAX_BACK_COUNT = 5;
+    const FALLBACK_ROUTE = "/menu";
+
+    const ignoredRoutes = [
+      "/login",
+      "/register",
+      "/forgot",
+      "/logout"
+    ];
+
+    function getCurrentRoute() {
+      return window.location.pathname + window.location.search + window.location.hash;
+    }
+
+    function normalizeRoute(route) {
+      if (!route) return "";
+      return route.replace(/\/+$/, "") || "/";
+    }
+
+    function isIgnoredRoute(route) {
+      const cleanRoute = normalizeRoute(route).split("?")[0];
+
+      return ignoredRoutes.some(ignoredRoute => {
+        return cleanRoute === ignoredRoute;
+      });
+    }
+
+    function getNavigationStack() {
+      try {
+        const raw = sessionStorage.getItem(NAV_STACK_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveNavigationStack(stack) {
+      const cleanedStack = stack
+        .filter(Boolean)
+        .filter(route => !isIgnoredRoute(route))
+        .slice(-MAX_BACK_COUNT);
+
+      sessionStorage.setItem(NAV_STACK_KEY, JSON.stringify(cleanedStack));
+    }
+
+    function registerCurrentPage() {
+      const currentRoute = getCurrentRoute();
+
+      if (isIgnoredRoute(currentRoute)) return;
+
+      const stack = getNavigationStack();
+      const lastRoute = stack[stack.length - 1];
+
+      if (lastRoute !== currentRoute) {
+        stack.push(currentRoute);
+      }
+
+      saveNavigationStack(stack);
+      updateBackButton();
+    }
+
+    function updateBackButton() {
+      if (!backBtn) return;
+
+      const currentRoute = getCurrentRoute();
+      const stack = getNavigationStack();
+
+      const previousPages = stack.filter(route => {
+        return route && route !== currentRoute && !isIgnoredRoute(route);
+      });
+
+      const canGoBack = previousPages.length > 0;
+
+      backBtn.disabled = !canGoBack;
+      backBtn.classList.toggle("control-disabled", !canGoBack);
+      backBtn.title = canGoBack ? "Back" : "No previous page";
+    }
+
+    function goBack() {
+      const currentRoute = getCurrentRoute();
+      const stack = getNavigationStack();
+
+      if (stack[stack.length - 1] === currentRoute) {
+        stack.pop();
+      }
+
+      let previousRoute = null;
+
+      while (stack.length > 0) {
+        const candidateRoute = stack.pop();
+
+        if (
+          candidateRoute &&
+          candidateRoute !== currentRoute &&
+          !isIgnoredRoute(candidateRoute)
+        ) {
+          previousRoute = candidateRoute;
+          break;
+        }
+      }
+
+      saveNavigationStack(stack);
+
+      if (previousRoute) {
+        window.location.href = previousRoute;
+        return;
+      }
+
+      if (currentRoute !== FALLBACK_ROUTE) {
+        window.location.href = FALLBACK_ROUTE;
+      }
+    }
+
+    function updateMusicButton() {
+      if (!musicBtn || !bgMusic) return;
+
+      const musicIsOff = bgMusic.paused;
+
+      musicBtn.classList.toggle("music-off", musicIsOff);
+      musicBtn.textContent = musicIsOff ? "♪" : "♫";
+      musicBtn.title = musicIsOff ? "Play music" : "Pause music";
+    }
+
+    function toggleMusic() {
+      if (!bgMusic) return;
+
+      if (bgMusic.paused) {
+        bgMusic.volume = 0.3;
+
+        bgMusic.play()
+          .then(() => {
+            localStorage.setItem("bgMusicPlaying", "true");
+            updateMusicButton();
+          })
+          .catch(() => {});
+      } else {
+        bgMusic.pause();
+        localStorage.setItem("bgMusicPlaying", "false");
+        updateMusicButton();
+      }
+    }
+
+    backBtn?.addEventListener("click", goBack);
+    musicBtn?.addEventListener("click", toggleMusic);
+
+    bgMusic?.addEventListener("play", updateMusicButton);
+    bgMusic?.addEventListener("pause", updateMusicButton);
+
+    registerCurrentPage();
+    updateMusicButton();
+  });
+</script>
