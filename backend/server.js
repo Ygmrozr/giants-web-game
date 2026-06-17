@@ -120,7 +120,6 @@ const stageData = [
   }
 ];
 
-
 const titleList = [
   { name: "Recruit", minKills: 0 },
   { name: "Cadet", minKills: 5 },
@@ -135,68 +134,21 @@ const titleList = [
   { name: "Humanity's Strongest", minKills: 500 }
 ];
 
-const chestRewards = [
-  {
-    type: "coins",
-    amount: 50,
-    rarity: "common",
-    weight: 35
-  },
-  {
-    type: "coins",
-    amount: 75,
-    rarity: "common",
-    weight: 25
-  },
-  {
-    type: "badge",
-    badgeKey: "armin_scout",
-    rarity: "rare",
-    weight: 15
-  },
-  {
-    type: "badge",
-    badgeKey: "sasha_potato",
-    rarity: "rare",
-    weight: 15
-  },
-  {
-    type: "badge",
-    badgeKey: "historia_queen",
-    rarity: "epic",
-    weight: 5
-  },
-  {
-    type: "badge",
-    badgeKey: "mikasa_scarf",
-    rarity: "epic",
-    weight: 4
-  },
-  {
-    type: "badge",
-    badgeKey: "mikasa_elite",
-    rarity: "legendary",
-    weight: 0.7
-  },
-  {
-    type: "badge",
-    badgeKey: "wings_gold",
-    rarity: "legendary",
-    weight: 0.3
-  }
-];
-
 const chestConfigs = {
   scout: {
     name: "Scout Chest",
     price: 1,
     rewards: [
-      { type: "coins", amount: 50, rarity: "common", weight: 35 },
-      { type: "coins", amount: 100, rarity: "common", weight: 20 },
-      { type: "gasKit", amount: 1, rarity: "common", weight: 18 },
-      { type: "medkit", amount: 1, rarity: "rare", weight: 12 },
-      { type: "badge", badgeKey: "armin_scout", rarity: "rare", weight: 8 },
-      { type: "badge", badgeKey: "sasha_potato", rarity: "rare", weight: 7 }
+      { type: "badge", badgeKey: "1", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "2", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "3", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "4", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "5", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "6", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "7", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "8", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "9", rarity: "rare", weight: 10 },
+      { type: "badge", badgeKey: "10", rarity: "rare", weight: 10 }
     ]
   },
 
@@ -204,67 +156,59 @@ const chestConfigs = {
     name: "Elite Chest",
     price: 3,
     rewards: [
-      { type: "coins", amount: 200, rarity: "common", weight: 25 },
-      { type: "gasKit", amount: 2, rarity: "rare", weight: 18 },
-      { type: "medkit", amount: 2, rarity: "rare", weight: 16 },
-      { type: "boostCore", amount: 1, rarity: "epic", weight: 14 },
-      { type: "badge", badgeKey: "historia_queen", rarity: "epic", weight: 12 },
-      { type: "badge", badgeKey: "mikasa_scarf", rarity: "epic", weight: 10 },
-      { type: "coins", amount: 500, rarity: "epic", weight: 5 }
+      { type: "badge", badgeKey: "mikasa", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "armin", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "levi", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "historia", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "sasha", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "jean", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "eren", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "erwin", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "hange", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "reiner", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "annie", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "connie", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "ymir", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "pixis", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "hannes", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "armored", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "female", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "attack", rarity: "epic", weight: 5 },
+      { type: "badge", badgeKey: "colossal", rarity: "epic", weight: 5 }, { type: "badge", badgeKey: "beast", rarity: "epic", weight: 5 }
     ]
   },
 
   legend: {
     name: "Legend Chest",
-    price: 3,
+    price: 5,
     rewards: [
-      { type: "coins", amount: 500, rarity: "rare", weight: 25 },
-      { type: "gasKit", amount: 3, rarity: "rare", weight: 18 },
-      { type: "medkit", amount: 3, rarity: "rare", weight: 16 },
-      { type: "boostCore", amount: 2, rarity: "epic", weight: 14 },
-      { type: "reviveToken", amount: 1, rarity: "legendary", weight: 10 },
-      { type: "badge", badgeKey: "mikasa_elite", rarity: "legendary", weight: 9 },
-      { type: "badge", badgeKey: "wings_gold", rarity: "legendary", weight: 8 }
+      { type: "badge", badgeKey: "historia", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "book", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "old", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "fun", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "sea", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "team", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "kaya", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "enemy", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "goodbye", rarity: "legendary", weight: 10 },
+      { type: "badge", badgeKey: "dream", rarity: "legendary", weight: 10 }
     ]
   }
 };
     const badgePool = [
-  {
-    key: "armin_scout",
-    name: "Armin Scout Rozeti",
-    rarity: "rare",
-    icon: "/images/badges/armin_scout.png"
-  },
-  {
-    key: "sasha_potato",
-    name: "Sasha Potato Rozeti",
-    rarity: "rare",
-    icon: "/images/badges/sasha_potato.png"
-  },
-  {
-    key: "historia_queen",
-    name: "Historia Queen Rozeti",
-    rarity: "epic",
-    icon: "/images/badges/historia_queen.png"
-  },
-  {
-    key: "mikasa_scarf",
-    name: "Mikasa Scarf Rozeti",
-    rarity: "epic",
-    icon: "/images/badges/mikasa_scarf.png"
-  },
-  {
-    key: "mikasa_elite",
-    name: "Elite Mikasa Rozeti",
-    rarity: "legendary",
-    icon: "/images/badges/mikasa_elite.png"
-  },
-  {
-    key: "wings_gold",
-    name: "Golden Wings Rozeti",
-    rarity: "legendary",
-    icon: "/images/badges/wings_gold.png"
-  }
+  { key: "1", name: "Wings of Freedom", rarity: "rare", icon: "/images/badges/rare/1.png"}, { key: "2", name: "Bastion Defender", rarity: "rare", icon: "/images/badges/rare/2.png"},
+{ key: "3", name: "Eternal Lantern", rarity: "rare", icon: "/images/badges/rare/3.png"}, { key: "4", name: "Dual Blade Master", rarity: "rare", icon: "/images/badges/rare/4.png"},
+{ key: "5", name: "Titan Slayer", rarity: "rare", icon: "/images/badges/rare/5.png"}, { key: "6", name: "Iron Steed", rarity: "rare", icon: "/images/badges/rare/6.png"},
+{ key: "7", name: "Flame Signal", rarity: "rare", icon: "/images/badges/rare/7.png"}, { key: "8", name: "Crown of the Walls", rarity: "rare", icon: "/images/badges/rare/8.png"},
+{ key: "9", name: "Storm of Spears", rarity: "rare", icon: "/images/badges/rare/9.png"}, { key: "10", name: "Skybound Wings", rarity: "rare", icon: "/images/badges/rare/10.png"},
+
+  { key: "mikasa", name: "Mikasa Ackerman ", rarity: "epic", icon: "/images/badges/epic/1.png"}, { key: "armin", name: "Armin Arlert", rarity: "epic", icon: "/images/badges/epic/2.png"},
+  { key: "levi", name: "Levi Ackerman", rarity: "epic", icon: "/images/badges/epic/3.png"}, { key: "historia", name: "Historia Reiss", rarity: "epic", icon: "/images/badges/epic/4.png"},
+{ key: "sasha", name: "Sasha Braus", rarity: "epic", icon: "/images/badges/epic/5.png"}, { key: "jean", name: "Jean Kirschtein", rarity: "epic", icon: "/images/badges/epic/6.png"},
+{ key: "eren", name: "Eren Jaeger", rarity: "epic", icon: "/images/badges/epic/7.png"}, { key: "erwin", name: "Erwin Smith", rarity: "epic", icon: "/images/badges/epic/8.png"},
+{ key: "hange", name: "Hange Zoe", rarity: "epic", icon: "/images/badges/epic/9.png"}, { key: "reiner", name: "Reiner Braun", rarity: "epic", icon: "/images/badges/epic/10.png"},
+  { key: "annie", name: "Annie Leonhart", rarity: "epic", icon: "/images/badges/epic/11.png"}, { key: "connie", name: "Connie Springer", rarity: "epic", icon: "/images/badges/epic/12.png"},
+  { key: "ymir", name: "Ymir", rarity: "epic", icon: "/images/badges/epic/13.png"}, { key: "pixis", name: "Dot Pixis", rarity: "epic", icon: "/images/badges/epic/14.png"},
+{ key: "hannes", name: "Hannes", rarity: "epic", icon: "/images/badges/epic/15.png"}, { key: "armored", name: "Armored Titan ", rarity: "epic", icon: "/images/badges/epic/16.png"},
+{ key: "petra", name: "Petra Ral", rarity: "epic", icon: "/images/badges/epic/17.png"}, { key: "bertholt", name: "Bertholt Hoover ", rarity: "epic", icon: "/images/badges/epic/18.png"},
+{ key: "ymirfritz", name: "Ymir Fritz", rarity: "epic", icon: "/images/badges/epic/19.png"}, { key: "grisha", name: "Grisha Jaeger", rarity: "epic", icon: "/images/badges/epic/20.png"},
+
+{ key: "historia", name: "True Queen", rarity: "legendary", icon: "/images/badges/legendary/1.png"}, { key: "book", name: "Book of Dreams", rarity: "legendary", icon: "/images/badges/legendary/2.png"},
+  { key: "childhood", name: "Childhood Bonds", rarity: "legendary", icon: "/images/badges/legendary/3.png"}, { key: "cadets", name: "Cadet Memories", rarity: "legendary", icon: "/images/badges/legendary/4.png"},
+{ key: "sea", name: "The Sea", rarity: "legendary", icon: "/images/badges/legendary/5.png"}, { key: "team", name: "Vanguard Trio", rarity: "legendary", icon: "/images/badges/legendary/6.png"},
+{ key: "kaya", name: "Sasha & Kaya", rarity: "legendary", icon: "/images/badges/legendary/7.png"}, { key: "enemy", name: "Beyond the Walls", rarity: "legendary", icon: "/images/badges/legendary/8.png"},
+{ key: "goodbye", name: "Freedom's Promise", rarity: "legendary", icon: "/images/badges/legendary/9.png"}, { key: "dream", name: "Final Goodbye", rarity: "legendary", icon: "/images/badges/legendary/10.png"}
 ];
 
 
@@ -330,20 +274,6 @@ function getUnlockedTitlesByKills(titanKills) {
     .map(title => title.name);
 }
 
-function getRandomChestReward() {
-  const totalWeight = chestRewards.reduce((sum, reward) => sum + reward.weight, 0);
-  let roll = Math.random() * totalWeight;
-
-  for (const reward of chestRewards) {
-    roll -= reward.weight;
-
-    if (roll <= 0) {
-      return reward;
-    }
-  }
-
-  return chestRewards[0];
-}
 
 function getRandomWeightedReward(rewards) {
   const totalWeight = rewards.reduce((sum, reward) => {
@@ -637,6 +567,7 @@ const chestPrice = chest.price;
       rarity: reward.rarity,
       duplicate: false,
       coinsGained: 0,
+      compensationReason: null,
       badge: null
     };
 
@@ -646,27 +577,28 @@ const chestPrice = chest.price;
     }
 
     if (reward.type === "badge") {
-      const badge = getBadgeByKey(reward.badgeKey);
+  const badge = getBadgeByKey(reward.badgeKey);
 
-      if (badge) {
-        result.badge = badge;
+  if (badge) {
+    result.badge = badge;
 
-        if (user.ownedBadges.includes(badge.key)) {
-          result.duplicate = true;
+    if (user.ownedBadges.includes(badge.key)) {
 
-          const duplicateReward =
-            badge.rarity === "legendary" ? 250 :
-            badge.rarity === "epic" ? 150 :
-            badge.rarity === "rare" ? 90 :
-            50;
+      result.duplicate = true;
 
-          user.coins += duplicateReward;
-          result.coinsGained = duplicateReward;
-        } else {
-          user.ownedBadges.push(badge.key);
-        }
-      }
+      const duplicateReward = Math.ceil(chestPrice / 2);
+
+      user.coins += duplicateReward;
+      result.coinsGained = duplicateReward;
+      result.compensationReason = "Duplicate badge compensation";
+
+    } else {
+
+      user.ownedBadges.push(badge.key);
+
     }
+  }
+}
 
     await user.save();
 

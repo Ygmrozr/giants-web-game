@@ -238,29 +238,182 @@
     .lower-grid{
       grid-column:1 / -1;
       display:grid;
-      grid-template-columns:1.2fr .8fr;
+      grid-template-columns:1.45fr .55fr;
       gap:10px;
     }
 
     .collection-panel,.titles-panel{padding:16px;min-height:250px;}
 
+
+    .badge-groups{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .badge-group{
+      padding:12px;
+      border:1px solid rgba(201,170,105,.18);
+      background:rgba(0,0,0,.12);
+    }
+
+    .badge-group-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+      padding-bottom:8px;
+      border-bottom:1px solid rgba(201,170,105,.18);
+    }
+
+    .badge-group-title{
+      margin:0;
+      font-family:"Cinzel",serif;
+      font-size:15px;
+      font-weight:800;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
+    }
+
+    .badge-count{
+      min-width:27px;
+      height:27px;
+      padding:0 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:20px;
+      font-family:"Cinzel",serif;
+      font-size:12px;
+      font-weight:800;
+      background:rgba(0,0,0,.25);
+    }
+
     .badge-grid{
       display:grid;
       grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:7px;
+      gap:10px;
     }
 
     .badge-card{
-      min-height:96px;
-      padding:8px 5px;
+      min-height:122px;
+      padding:10px 6px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
       text-align:center;
-      border:1px solid var(--line);
-      background:rgba(18,20,16,.40);
+      border:1px solid rgba(201,170,105,.18);
+      background:rgba(0,0,0,.16);
+      transition:transform .18s ease, filter .18s ease;
     }
 
-    .badge-card img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.34));}
-    .badge-name{margin-top:8px;color:#f0e5c9;font-family:"Cinzel",serif;font-size:12px;font-weight:800;line-height:1.25;}
-    .badge-rarity{margin-top:4px;color:#c9ae72;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
+    .badge-card:hover{
+      transform:translateY(-3px);
+      filter:brightness(1.12);
+    }
+
+    .badge-card img{
+      width:76px;
+      height:76px;
+      display:block;
+      border-radius:50%;
+      object-fit:cover;
+    }
+
+    .badge-name{
+      margin-top:8px;
+      color:#f0e5c9;
+      font-family:"Cinzel",serif;
+      font-size:10px;
+      font-weight:700;
+      line-height:1.3;
+    }
+
+    .badge-rarity{
+      margin-top:5px;
+      font-size:9px;
+      font-weight:800;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .badge-group.legendary{
+      border-color:rgba(255,190,60,.42);
+      background:
+        radial-gradient(circle at top,rgba(255,183,45,.08),transparent 55%),
+        rgba(0,0,0,.15);
+    }
+
+    .badge-group.legendary .badge-group-title,
+    .badge-group.legendary .badge-rarity{color:#ffd36c;}
+
+    .badge-group.legendary .badge-count{
+      color:#ffd36c;
+      border:1px solid rgba(255,190,60,.35);
+    }
+
+    .badge-group.legendary .badge-card{border-color:rgba(255,190,60,.30);}
+
+    .badge-group.legendary img{
+      border:2px solid #d6a93f;
+      box-shadow:0 0 8px rgba(255,190,60,.65),0 0 22px rgba(255,150,30,.35);
+    }
+
+    .badge-group.epic{
+      border-color:rgba(180,80,255,.38);
+      background:
+        radial-gradient(circle at top,rgba(163,66,255,.08),transparent 55%),
+        rgba(0,0,0,.15);
+    }
+
+    .badge-group.epic .badge-group-title,
+    .badge-group.epic .badge-rarity{color:#d293ff;}
+
+    .badge-group.epic .badge-count{
+      color:#d293ff;
+      border:1px solid rgba(180,80,255,.32);
+    }
+
+    .badge-group.epic .badge-card{border-color:rgba(180,80,255,.25);}
+
+    .badge-group.epic img{
+      border:2px solid #9f54d6;
+      box-shadow:0 0 8px rgba(180,80,255,.60),0 0 20px rgba(125,35,220,.32);
+    }
+
+    .badge-group.rare{
+      border-color:rgba(80,150,255,.38);
+      background:
+        radial-gradient(circle at top,rgba(55,135,255,.08),transparent 55%),
+        rgba(0,0,0,.15);
+    }
+
+    .badge-group.rare .badge-group-title,
+    .badge-group.rare .badge-rarity{color:#7ebaff;}
+
+    .badge-group.rare .badge-count{
+      color:#7ebaff;
+      border:1px solid rgba(80,150,255,.32);
+    }
+
+    .badge-group.rare .badge-card{border-color:rgba(80,150,255,.25);}
+
+    .badge-group.rare img{
+      border:2px solid #4f91df;
+      box-shadow:0 0 8px rgba(80,150,255,.60),0 0 20px rgba(30,100,220,.30);
+    }
+
+    .badge-group-empty{
+      padding:15px;
+      color:rgba(238,226,192,.48);
+      text-align:center;
+      font-size:12px;
+      border:1px dashed rgba(201,170,105,.15);
+    }
+
+    .collection-panel{min-height:420px;}
 
     .empty-state{
       padding:28px 18px;
@@ -416,14 +569,95 @@
                 Open supply chests to earn new badges.
               </div>
             <% } else { %>
-              <div class="badge-grid">
-                <% ownedBadgeItems.forEach(badge => { %>
-                  <article class="badge-card">
-                    <img src="<%= badge.icon %>" alt="<%= badge.name %>">
-                    <div class="badge-name"><%= badge.name %></div>
-                    <div class="badge-rarity"><%= badge.rarity %></div>
-                  </article>
-                <% }) %>
+              <%
+                const legendaryBadges = ownedBadgeItems.filter(
+                  badge => String(badge.rarity || "").toLowerCase() === "legendary"
+                );
+
+                const epicBadges = ownedBadgeItems.filter(
+                  badge => String(badge.rarity || "").toLowerCase() === "epic"
+                );
+
+                const rareBadges = ownedBadgeItems.filter(
+                  badge => String(badge.rarity || "").toLowerCase() === "rare"
+                );
+              %>
+
+              <div class="badge-groups">
+                <section class="badge-group legendary">
+                  <div class="badge-group-header">
+                    <h3 class="badge-group-title">Legendary Badges</h3>
+                    <span class="badge-count"><%= legendaryBadges.length %></span>
+                  </div>
+
+                  <% if(legendaryBadges.length === 0){ %>
+                    <div class="badge-group-empty">No Legendary badges collected.</div>
+                  <% } else { %>
+                    <div class="badge-grid">
+                      <% legendaryBadges.forEach(badge => { %>
+                        <article class="badge-card">
+                          <img
+                            src="<%= badge.icon %>"
+                            alt="<%= badge.name %>"
+                            onerror="this.onerror=null;this.src='/images/default-badge.png';"
+                          >
+                          <div class="badge-name"><%= badge.name %></div>
+                          <div class="badge-rarity">Legendary</div>
+                        </article>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </section>
+
+                <section class="badge-group epic">
+                  <div class="badge-group-header">
+                    <h3 class="badge-group-title">Epic Badges</h3>
+                    <span class="badge-count"><%= epicBadges.length %></span>
+                  </div>
+
+                  <% if(epicBadges.length === 0){ %>
+                    <div class="badge-group-empty">No Epic badges collected.</div>
+                  <% } else { %>
+                    <div class="badge-grid">
+                      <% epicBadges.forEach(badge => { %>
+                        <article class="badge-card">
+                          <img
+                            src="<%= badge.icon %>"
+                            alt="<%= badge.name %>"
+                            onerror="this.onerror=null;this.src='/images/default-badge.png';"
+                          >
+                          <div class="badge-name"><%= badge.name %></div>
+                          <div class="badge-rarity">Epic</div>
+                        </article>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </section>
+
+                <section class="badge-group rare">
+                  <div class="badge-group-header">
+                    <h3 class="badge-group-title">Rare Badges</h3>
+                    <span class="badge-count"><%= rareBadges.length %></span>
+                  </div>
+
+                  <% if(rareBadges.length === 0){ %>
+                    <div class="badge-group-empty">No Rare badges collected.</div>
+                  <% } else { %>
+                    <div class="badge-grid">
+                      <% rareBadges.forEach(badge => { %>
+                        <article class="badge-card">
+                          <img
+                            src="<%= badge.icon %>"
+                            alt="<%= badge.name %>"
+                            onerror="this.onerror=null;this.src='/images/default-badge.png';"
+                          >
+                          <div class="badge-name"><%= badge.name %></div>
+                          <div class="badge-rarity">Rare</div>
+                        </article>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </section>
               </div>
             <% } %>
           </section>
